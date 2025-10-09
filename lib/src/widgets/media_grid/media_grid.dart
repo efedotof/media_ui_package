@@ -54,14 +54,24 @@ class _MediaGridState extends State<MediaGrid> {
   Widget build(BuildContext context) {
     final state = _controller;
 
-    if (!state.hasPermission && !state.isLoading) {
-      return state.buildErrorWidget(_controller.checkPermissionAndLoadMedia);
+    // Показываем индикатор запроса разрешения
+    if (state.isRequestingPermission) {
+      return state.buildLoadingWidget();
     }
 
+    // Показываем ошибку, если нет разрешения и не загружается
+    if (!state.hasPermission && !state.isLoading) {
+      return state.buildErrorWidget(() {
+        _controller.checkPermissionAndLoadMedia();
+      });
+    }
+
+    // Показываем загрузку при первой загрузке
     if (state.isLoading && state.mediaItems.isEmpty) {
       return state.buildLoadingWidget();
     }
 
+    // Показываем пустой виджет, если медиа нет
     if (state.mediaItems.isEmpty) {
       return state.buildEmptyWidget();
     }
@@ -97,8 +107,9 @@ class _MediaGridState extends State<MediaGrid> {
                       )
                     : Text(
                         'No more items',
-                        style:
-                            TextStyle(color: widget.theme.secondaryTextColor),
+                        style: TextStyle(
+                          color: widget.theme.secondaryTextColor,
+                        ),
                       ),
               ),
             );
@@ -118,7 +129,8 @@ class _MediaGridState extends State<MediaGrid> {
             selectionIndex: selectionIndex,
             theme: widget.theme,
             thumbnailFuture: state.getThumbnailFuture(item),
-            onThumbnailTap: () => _controller.openFullScreenView(context, index),
+            onThumbnailTap: () =>
+                _controller.openFullScreenView(context, index),
             onSelectionTap: () => widget.onItemSelected(item, !isSelected),
           );
         },

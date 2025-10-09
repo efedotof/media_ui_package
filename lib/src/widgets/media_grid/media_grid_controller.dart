@@ -24,6 +24,7 @@ class MediaGridController {
   bool isLoadingMore = false;
   bool hasMoreItems = true;
   bool hasPermission = false;
+  bool isRequestingPermission = false;
   int currentOffset = 0;
 
   static const int pageSize = 30;
@@ -55,16 +56,40 @@ class MediaGridController {
 
   Future<void> checkPermissionAndLoadMedia() async {
     try {
-      hasPermission =
-          await mediaLibrary.checkPermission() ||
-          await mediaLibrary.requestPermission();
+      // Сначала проверяем текущее разрешение
+      bool permissionChecked = await mediaLibrary.checkPermission();
 
+      // Если разрешения нет и мы еще не запрашиваем - запрашиваем
+      if (!permissionChecked && !isRequestingPermission) {
+        setState(() {
+          isRequestingPermission = true;
+        });
+
+        // Запрашиваем разрешение
+        permissionChecked = await mediaLibrary.requestPermission();
+
+        setState(() {
+          isRequestingPermission = false;
+        });
+      }
+
+      setState(() {
+        hasPermission = permissionChecked;
+      });
+
+      // Если разрешение получено - загружаем медиа
       if (hasPermission) {
         await loadMedia(reset: true);
       }
+    } catch (e) {
+      debugPrint('Error checking permission: $e');
+      setState(() {
+        isRequestingPermission = false;
+      });
     } finally {
-      isLoading = false;
-      onUpdate();
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -79,7 +104,14 @@ class MediaGridController {
     } else if (isLoadingMore) {
       return;
     }
-    isLoadingMore = !reset;
+
+    setState(() {
+      if (reset) {
+        isLoading = true;
+      } else {
+        isLoadingMore = true;
+      }
+    });
 
     try {
       final mediaData = await MediaGridLoader.loadMedia(
@@ -102,9 +134,10 @@ class MediaGridController {
     } catch (e) {
       debugPrint('Error loading media: $e');
     } finally {
-      isLoading = false;
-      isLoadingMore = false;
-      onUpdate();
+      setState(() {
+        isLoading = false;
+        isLoadingMore = false;
+      });
     }
   }
 
@@ -132,10 +165,44 @@ class MediaGridController {
     );
   }
 
-  Widget buildErrorWidget(VoidCallback retry) =>
-      MediaGridLoader.errorWidget(theme, retry);
-  Widget buildLoadingWidget() => MediaGridLoader.loadingWidget(theme);
+  Widget buildErrorWidget(VoidCallback retry) {
+    if (isRequestingPermission) {
+      return _buildRequestingPermissionWidget();
+    }
+    return MediaGridLoader.errorWidget(theme, retry);
+  }
+
+  Widget buildLoadingWidget() {
+    if (isRequestingPermission) {
+      return _buildRequestingPermissionWidget();
+    }
+    return MediaGridLoader.loadingWidget(theme);
+  }
+
   Widget buildEmptyWidget() => MediaGridLoader.emptyWidget(theme);
 
-  void dispose() => scrollController?.dispose();
+  Widget _buildRequestingPermissionWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(color: theme.primaryColor),
+          const SizedBox(height: 16),
+          Text(
+            'Requesting permission...',
+            style: TextStyle(color: theme.textColor, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void setState(VoidCallback fn) {
+    fn();
+    onUpdate();
+  }
+
+  void dispose() {
+    scrollController?.dispose();
+  }
 }

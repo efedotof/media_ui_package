@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 
-import 'media_grid/media_grid.dart';
-
 class MediaPickerBottomSheet extends StatefulWidget {
   final List<MediaItem> initialSelection;
   final int maxSelection;
