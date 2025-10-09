@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
-import 'full_screen_media_view.dart';
 
 class MediaGrid extends StatefulWidget {
   final List<MediaItem> selectedItems;
@@ -59,7 +58,6 @@ class _MediaGridState extends State<MediaGrid> {
       );
     });
 
-    // Предзагрузка thumbnail'ов
     if (widget.thumbnailBuilder != null) {
       for (final item in _mediaItems) {
         _loadThumbnail(item);
@@ -78,7 +76,7 @@ class _MediaGridState extends State<MediaGrid> {
         });
       }
     } catch (e) {
-      // Игнорируем ошибки загрузки thumbnail'ов
+      debugPrint("Произошла ошибка:$e");
     }
   }
 
