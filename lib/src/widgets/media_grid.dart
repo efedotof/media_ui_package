@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
+import 'full_screen_media_view.dart';
 
 class MediaGrid extends StatefulWidget {
   final List<MediaItem> selectedItems;
@@ -7,6 +10,7 @@ class MediaGrid extends StatefulWidget {
   final MediaPickerTheme theme;
   final bool showVideos;
   final ScrollController? scrollController;
+  final Future<Uint8List?> Function(MediaItem)? thumbnailBuilder;
 
   const MediaGrid({
     super.key,
@@ -15,6 +19,7 @@ class MediaGrid extends StatefulWidget {
     required this.theme,
     this.showVideos = true,
     this.scrollController,
+    this.thumbnailBuilder,
   });
 
   @override
@@ -24,6 +29,7 @@ class MediaGrid extends StatefulWidget {
 class _MediaGridState extends State<MediaGrid> {
   List<MediaItem> _mediaItems = [];
   final double _gridSpacing = 1.5;
+  final Map<String, Uint8List?> _thumbnailCache = {};
 
   @override
   void initState() {
@@ -52,6 +58,28 @@ class _MediaGridState extends State<MediaGrid> {
         ),
       );
     });
+
+    // Предзагрузка thumbnail'ов
+    if (widget.thumbnailBuilder != null) {
+      for (final item in _mediaItems) {
+        _loadThumbnail(item);
+      }
+    }
+  }
+
+  Future<void> _loadThumbnail(MediaItem item) async {
+    if (_thumbnailCache.containsKey(item.id)) return;
+
+    try {
+      final thumbnail = await widget.thumbnailBuilder!(item);
+      if (thumbnail != null) {
+        setState(() {
+          _thumbnailCache[item.id] = thumbnail;
+        });
+      }
+    } catch (e) {
+      // Игнорируем ошибки загрузки thumbnail'ов
+    }
   }
 
   bool _isSelected(MediaItem item) {
@@ -59,9 +87,24 @@ class _MediaGridState extends State<MediaGrid> {
   }
 
   int _getSelectionIndex(MediaItem item) {
-    return widget.selectedItems
-            .indexWhere((selected) => selected.id == item.id) +
+    return widget.selectedItems.indexWhere(
+          (selected) => selected.id == item.id,
+        ) +
         1;
+  }
+
+  void _openFullScreenView(int index) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => FullScreenMediaView(
+          mediaItems: _mediaItems,
+          initialIndex: index,
+          selectedItems: widget.selectedItems,
+          onItemSelected: widget.onItemSelected,
+          theme: widget.theme,
+        ),
+      ),
+    );
   }
 
   @override
@@ -88,7 +131,9 @@ class _MediaGridState extends State<MediaGrid> {
             isSelected: isSelected,
             selectionIndex: selectionIndex,
             theme: widget.theme,
-            onTap: () {
+            thumbnail: _thumbnailCache[item.id],
+            onThumbnailTap: () => _openFullScreenView(index),
+            onSelectionTap: () {
               widget.onItemSelected(item, !isSelected);
             },
           );
@@ -103,102 +148,128 @@ class _MediaGridItem extends StatelessWidget {
   final bool isSelected;
   final int selectionIndex;
   final MediaPickerTheme theme;
-  final VoidCallback onTap;
+  final Uint8List? thumbnail;
+  final VoidCallback onThumbnailTap;
+  final VoidCallback onSelectionTap;
 
   const _MediaGridItem({
     required this.item,
     required this.isSelected,
     required this.selectionIndex,
     required this.theme,
-    required this.onTap,
+    required this.thumbnail,
+    required this.onThumbnailTap,
+    required this.onSelectionTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Container(
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        GestureDetector(
+          onTap: onThumbnailTap,
+          child: Container(
             decoration: BoxDecoration(
               color: Colors.grey[300],
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Center(
-              child: Icon(
-                item.type == 'video' ? Icons.videocam : Icons.photo,
-                color: Colors.grey[600],
-                size: 32,
+            child: thumbnail != null
+                ? Image.memory(
+                    thumbnail!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _buildPlaceholder();
+                    },
+                  )
+                : _buildPlaceholder(),
+          ),
+        ),
+
+        if (isSelected)
+          Container(
+            decoration: BoxDecoration(
+              color: theme.primaryColor.withAlpha(30),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: theme.primaryColor, width: 3),
+            ),
+          ),
+
+        Positioned(
+          top: 6,
+          right: 6,
+          child: GestureDetector(
+            onTap: onSelectionTap,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? theme.primaryColor
+                    : Colors.white.withAlpha(200),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? theme.primaryColor : Colors.white,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? Center(
+                      child: Text(
+                        '$selectionIndex',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+          ),
+        ),
+
+        if (item.type == 'video')
+          Positioned(
+            bottom: 6,
+            left: 6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black.withAlpha(180),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.play_arrow, color: Colors.white, size: 12),
+                  SizedBox(width: 2),
+                  Text(
+                    _formatDuration(item.duration ?? 0),
+                    style: TextStyle(color: Colors.white, fontSize: 10),
+                  ),
+                ],
               ),
             ),
           ),
-          if (isSelected)
-            Container(
-              decoration: BoxDecoration(
-                color: theme.primaryColor.withAlpha(3),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: theme.primaryColor,
-                  width: 3,
-                ),
-              ),
-            ),
-          if (isSelected)
-            Positioned(
-              top: 6,
-              right: 6,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: theme.primaryColor,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    '$selectionIndex',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          if (item.type == 'video')
-            Positioned(
-              bottom: 6,
-              left: 6,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withAlpha(7),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(
-                      Icons.play_arrow,
-                      color: Colors.white,
-                      size: 12,
-                    ),
-                    SizedBox(width: 2),
-                    Text(
-                      '1:30',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
+      ],
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Center(
+      child: Icon(
+        item.type == 'video' ? Icons.videocam : Icons.photo,
+        color: Colors.grey[600],
+        size: 32,
       ),
     );
+  }
+
+  String _formatDuration(int milliseconds) {
+    final duration = Duration(milliseconds: milliseconds);
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds.remainder(60);
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }

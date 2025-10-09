@@ -1,6 +1,7 @@
+import 'dart:typed_data' show Uint8List;
+
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
-import 'media_grid.dart';
 import 'selection_app_bar.dart';
 
 class MediaPickerScreen extends StatefulWidget {
@@ -11,6 +12,7 @@ class MediaPickerScreen extends StatefulWidget {
   final MediaPickerTheme theme;
   final String title;
   final Function(List<MediaItem>)? onSelectionChanged;
+  final Future<Uint8List?> Function(MediaItem)? thumbnailBuilder;
 
   const MediaPickerScreen({
     super.key,
@@ -21,6 +23,7 @@ class MediaPickerScreen extends StatefulWidget {
     this.theme = const MediaPickerTheme(),
     this.title = 'Select Media',
     this.onSelectionChanged,
+    this.thumbnailBuilder,
   });
 
   @override
@@ -88,6 +91,7 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
           onItemSelected: _onItemSelected,
           theme: widget.theme,
           showVideos: widget.showVideos,
+          thumbnailBuilder: widget.thumbnailBuilder,
         ),
       ),
     );
