@@ -13,25 +13,34 @@ class MediaGridLoader {
     required int offset,
     required String? albumId,
   }) async {
-    switch (type) {
-      case MediaType.images:
-        return await mediaLibrary.getImages(
-          limit: limit,
-          offset: offset,
-          albumId: albumId,
-        );
-      case MediaType.videos:
-        return await mediaLibrary.getVideos(
-          limit: limit,
-          offset: offset,
-          albumId: albumId,
-        );
-      case MediaType.all:
-        return await mediaLibrary.getAllMedia(
-          limit: limit,
-          offset: offset,
-          albumId: albumId,
-        );
+    try {
+      debugPrint(
+        'Loading media from device library: type=$type, limit=$limit, offset=$offset',
+      );
+
+      switch (type) {
+        case MediaType.images:
+          return await mediaLibrary.getImages(
+            limit: limit,
+            offset: offset,
+            albumId: albumId,
+          );
+        case MediaType.videos:
+          return await mediaLibrary.getVideos(
+            limit: limit,
+            offset: offset,
+            albumId: albumId,
+          );
+        case MediaType.all:
+          return await mediaLibrary.getAllMedia(
+            limit: limit,
+            offset: offset,
+            albumId: albumId,
+          );
+      }
+    } catch (e) {
+      debugPrint('Error in loadMedia: $e');
+      return null;
     }
   }
 
@@ -48,42 +57,60 @@ class MediaGridLoader {
   }
 
   static Future<void> _loadThumbnail(
-    MediaGridController c,
+    MediaGridController controller,
     MediaItem item,
   ) async {
-    if (c.thumbnailCompleters.containsKey(item.id)) return;
+    if (controller.thumbnailCompleters.containsKey(item.id)) return;
 
     final completer = Completer<Uint8List?>();
-    c.thumbnailCompleters[item.id] = completer;
+    controller.thumbnailCompleters[item.id] = completer;
 
     try {
-      final thumb =
-          await (c.thumbnailBuilder?.call(item) ??
-              c.mediaLibrary.getThumbnail(
-                mediaId: item.id,
-                mediaType: item.type,
-                width: 200,
-                height: 200,
-              ));
-      if (thumb != null) c.thumbnailCache[item.id] = thumb;
-      completer.complete(thumb);
-    } catch (_) {
+      debugPrint('Loading thumbnail for: ${item.id}, type: ${item.type}');
+
+      Uint8List? thumbnail;
+
+      if (controller.thumbnailBuilder != null) {
+        thumbnail = await controller.thumbnailBuilder!(item);
+      } else {
+        thumbnail = await controller.mediaLibrary.getThumbnail(
+          mediaId: item.id,
+          mediaType: item.type,
+          width: 200,
+          height: 200,
+        );
+      }
+
+      if (thumbnail != null) {
+        debugPrint('Thumbnail loaded successfully: ${thumbnail.length} bytes');
+        controller.thumbnailCache[item.id] = thumbnail;
+      } else {
+        debugPrint('Thumbnail is null for: ${item.id}');
+      }
+
+      completer.complete(thumbnail);
+    } catch (e) {
+      debugPrint('Error loading thumbnail for ${item.id}: $e');
       completer.complete(null);
     } finally {
-      c.thumbnailCompleters.remove(item.id);
+      controller.thumbnailCompleters.remove(item.id);
     }
   }
 
   static Future<Uint8List?> getThumbnailFuture(
-    MediaGridController c,
+    MediaGridController controller,
     MediaItem item,
   ) async {
-    if (c.thumbnailCache.containsKey(item.id)) return c.thumbnailCache[item.id];
-    if (c.thumbnailCompleters.containsKey(item.id)) {
-      return await c.thumbnailCompleters[item.id]!.future;
+    if (controller.thumbnailCache.containsKey(item.id)) {
+      return controller.thumbnailCache[item.id];
     }
-    _loadThumbnail(c, item);
-    return await c.thumbnailCompleters[item.id]?.future;
+
+    if (controller.thumbnailCompleters.containsKey(item.id)) {
+      return await controller.thumbnailCompleters[item.id]!.future;
+    }
+
+    _loadThumbnail(controller, item);
+    return await controller.thumbnailCompleters[item.id]?.future;
   }
 
   // --- UI placeholders ---

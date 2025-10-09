@@ -56,17 +56,17 @@ class MediaGridController {
 
   Future<void> checkPermissionAndLoadMedia() async {
     try {
-      // Сначала проверяем текущее разрешение
       bool permissionChecked = await mediaLibrary.checkPermission();
+      debugPrint('Permission checked: $permissionChecked');
 
-      // Если разрешения нет и мы еще не запрашиваем - запрашиваем
       if (!permissionChecked && !isRequestingPermission) {
+        debugPrint('Requesting permission...');
         setState(() {
           isRequestingPermission = true;
         });
 
-        // Запрашиваем разрешение
         permissionChecked = await mediaLibrary.requestPermission();
+        debugPrint('Permission granted: $permissionChecked');
 
         setState(() {
           isRequestingPermission = false;
@@ -77,9 +77,11 @@ class MediaGridController {
         hasPermission = permissionChecked;
       });
 
-      // Если разрешение получено - загружаем медиа
       if (hasPermission) {
+        debugPrint('Loading media with permission...');
         await loadMedia(reset: true);
+      } else {
+        debugPrint('No permission granted');
       }
     } catch (e) {
       debugPrint('Error checking permission: $e');
@@ -100,20 +102,22 @@ class MediaGridController {
       thumbnailCache.clear();
       thumbnailCompleters.clear();
       hasMoreItems = true;
-      isLoading = true;
+      setState(() {
+        isLoading = true;
+      });
     } else if (isLoadingMore) {
       return;
+    } else {
+      setState(() {
+        isLoadingMore = true;
+      });
     }
 
-    setState(() {
-      if (reset) {
-        isLoading = true;
-      } else {
-        isLoadingMore = true;
-      }
-    });
-
     try {
+      debugPrint(
+        'Loading media: type=$mediaType, limit=$pageSize, offset=$currentOffset, albumId=$albumId',
+      );
+
       final mediaData = await MediaGridLoader.loadMedia(
         mediaLibrary: mediaLibrary,
         type: mediaType,
@@ -122,14 +126,24 @@ class MediaGridController {
         albumId: albumId,
       );
 
+      debugPrint('Media data received: ${mediaData?.length} items');
+
       if (mediaData != null && mediaData.isNotEmpty) {
         final newItems = mediaData.map(MediaItem.fromMap).toList();
-        mediaItems.addAll(newItems);
-        currentOffset += newItems.length;
-        hasMoreItems = newItems.length == pageSize;
+        debugPrint('Converted to ${newItems.length} MediaItems');
+
+        setState(() {
+          mediaItems.addAll(newItems);
+          currentOffset += newItems.length;
+          hasMoreItems = newItems.length == pageSize;
+        });
+
         MediaGridLoader.preloadThumbnails(this, newItems);
       } else {
-        hasMoreItems = false;
+        debugPrint('No media data received or empty');
+        setState(() {
+          hasMoreItems = false;
+        });
       }
     } catch (e) {
       debugPrint('Error loading media: $e');
