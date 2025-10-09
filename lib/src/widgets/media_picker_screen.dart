@@ -1,7 +1,8 @@
 import 'dart:typed_data' show Uint8List;
-
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
+import 'package:media_ui_package/src/models/media_type.dart';
+import 'media_grid/media_grid.dart';
 import 'selection_app_bar.dart';
 
 class MediaPickerScreen extends StatefulWidget {
@@ -13,6 +14,8 @@ class MediaPickerScreen extends StatefulWidget {
   final String title;
   final Function(List<MediaItem>)? onSelectionChanged;
   final Future<Uint8List?> Function(MediaItem)? thumbnailBuilder;
+  final String? albumId;
+  final MediaType mediaType;
 
   const MediaPickerScreen({
     super.key,
@@ -24,6 +27,8 @@ class MediaPickerScreen extends StatefulWidget {
     this.title = 'Select Media',
     this.onSelectionChanged,
     this.thumbnailBuilder,
+    this.albumId,
+    this.mediaType = MediaType.all,
   });
 
   @override
@@ -49,7 +54,9 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
           _selectedItems = [item];
         }
       } else {
-        _selectedItems.remove(item);
+        _selectedItems.removeWhere(
+          (selectedItem) => selectedItem.id == item.id,
+        );
       }
       widget.onSelectionChanged?.call(_selectedItems);
     });
@@ -92,6 +99,8 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
           theme: widget.theme,
           showVideos: widget.showVideos,
           thumbnailBuilder: widget.thumbnailBuilder,
+          albumId: widget.albumId,
+          mediaType: widget.mediaType,
         ),
       ),
     );

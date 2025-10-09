@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
-import 'media_grid.dart';
+
+import 'media_grid/media_grid.dart';
 
 class MediaPickerDialog extends StatefulWidget {
   final List<MediaItem> initialSelection;
@@ -68,10 +69,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
         borderRadius: BorderRadius.circular(widget.theme.borderRadius),
       ),
       child: Container(
-        constraints: const BoxConstraints(
-          maxWidth: 500,
-          maxHeight: 700,
-        ),
+        constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
         child: Column(
           children: [
             Container(
@@ -100,9 +98,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                   if (widget.allowMultiple)
                     Text(
                       '${_selectedItems.length}/${widget.maxSelection}',
-                      style: TextStyle(
-                        color: widget.theme.secondaryTextColor,
-                      ),
+                      style: TextStyle(color: widget.theme.secondaryTextColor),
                     ),
                   const SizedBox(width: 16),
                   IconButton(
@@ -147,15 +143,18 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed:
-                          _selectedItems.isNotEmpty ? _confirmSelection : null,
+                      onPressed: _selectedItems.isNotEmpty
+                          ? _confirmSelection
+                          : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: widget.theme.primaryColor,
                         foregroundColor: Colors.white,
                       ),
-                      child: Text(widget.allowMultiple
-                          ? 'Select (${_selectedItems.length})'
-                          : 'Select'),
+                      child: Text(
+                        widget.allowMultiple
+                            ? 'Select (${_selectedItems.length})'
+                            : 'Select',
+                      ),
                     ),
                   ),
                 ],

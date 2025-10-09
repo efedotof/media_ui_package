@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
-import 'media_grid.dart';
+
+import 'media_grid/media_grid.dart';
 
 class MediaPickerBottomSheet extends StatefulWidget {
   final List<MediaItem> initialSelection;
@@ -104,12 +105,15 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                        color: widget.theme.borderColor.withAlpha(3)),
+                      color: widget.theme.borderColor.withAlpha(3),
+                    ),
                   ),
                 ),
                 child: Row(
@@ -188,7 +192,8 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                   color: widget.theme.appBarColor,
                   border: Border(
                     top: BorderSide(
-                        color: widget.theme.borderColor.withAlpha(3)),
+                      color: widget.theme.borderColor.withAlpha(3),
+                    ),
                   ),
                 ),
                 child: SafeArea(
