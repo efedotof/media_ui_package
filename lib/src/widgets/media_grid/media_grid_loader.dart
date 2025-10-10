@@ -48,11 +48,19 @@ class MediaGridLoader {
     MediaGridController controller,
     List<MediaItem> mediaItems,
   ) {
+    final futures = <Future>[];
+
     for (final item in mediaItems) {
       if (!controller.thumbnailCache.containsKey(item.id) &&
           !controller.thumbnailCompleters.containsKey(item.id)) {
-        _loadThumbnail(controller, item);
+        futures.add(_loadThumbnail(controller, item));
       }
+    }
+
+    if (futures.isNotEmpty) {
+      Future.wait(futures).catchError((e) {
+        debugPrint('Error in preloadThumbnails: $e');
+      });
     }
   }
 
@@ -60,7 +68,9 @@ class MediaGridLoader {
     MediaGridController controller,
     MediaItem item,
   ) async {
-    if (controller.thumbnailCompleters.containsKey(item.id)) return;
+    if (controller.thumbnailCompleters.containsKey(item.id)) {
+      return;
+    }
 
     final completer = Completer<Uint8List?>();
     controller.thumbnailCompleters[item.id] = completer;
@@ -109,70 +119,7 @@ class MediaGridLoader {
       return await controller.thumbnailCompleters[item.id]!.future;
     }
 
-    _loadThumbnail(controller, item);
+    unawaited(_loadThumbnail(controller, item));
     return await controller.thumbnailCompleters[item.id]?.future;
   }
-
-  // --- UI placeholders ---
-
-  static Widget errorWidget(
-    MediaPickerTheme theme,
-    VoidCallback retry,
-  ) => Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.error_outline, size: 64, color: theme.secondaryTextColor),
-        const SizedBox(height: 16),
-        Text(
-          'Permission Required',
-          style: TextStyle(
-            color: theme.textColor,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'This app needs access to your photos.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: theme.secondaryTextColor),
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: retry,
-          style: ElevatedButton.styleFrom(backgroundColor: theme.primaryColor),
-          child: const Text(
-            'Grant Permission',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-      ],
-    ),
-  );
-
-  static Widget loadingWidget(MediaPickerTheme theme) => Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        CircularProgressIndicator(color: theme.primaryColor),
-        const SizedBox(height: 16),
-        Text(
-          'Loading media...',
-          style: TextStyle(color: theme.secondaryTextColor),
-        ),
-      ],
-    ),
-  );
-
-  static Widget emptyWidget(MediaPickerTheme theme) => Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.photo_library, size: 64, color: theme.secondaryTextColor),
-        const SizedBox(height: 16),
-        Text('No media found', style: TextStyle(color: theme.textColor)),
-      ],
-    ),
-  );
 }

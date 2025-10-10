@@ -5,7 +5,6 @@ class SelectionAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final int selectedCount;
   final int maxSelection;
-  final MediaPickerTheme theme;
   final VoidCallback onClear;
   final VoidCallback onDone;
   final VoidCallback? onBack;
@@ -15,7 +14,6 @@ class SelectionAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     required this.selectedCount,
     required this.maxSelection,
-    required this.theme,
     required this.onClear,
     required this.onDone,
     this.onBack,
@@ -26,9 +24,13 @@ class SelectionAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    MediaPickerConfig.of(context);
+
     return AppBar(
-      backgroundColor: theme.appBarColor,
-      foregroundColor: theme.textColor,
+      backgroundColor: colorScheme.surface,
+      foregroundColor: colorScheme.onSurface,
       elevation: 0,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,7 +44,10 @@ class SelectionAppBar extends StatelessWidget implements PreferredSizeWidget {
             selectedCount > 0
                 ? '$selectedCount/$maxSelection selected'
                 : 'Select up to $maxSelection items',
-            style: TextStyle(color: theme.secondaryTextColor, fontSize: 13),
+            style: TextStyle(
+              color: colorScheme.onSurface.withAlpha(7),
+              fontSize: 13,
+            ),
           ),
         ],
       ),
@@ -50,10 +55,10 @@ class SelectionAppBar extends StatelessWidget implements PreferredSizeWidget {
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: theme.textColor.withAlpha(1),
+            color: colorScheme.onSurface.withAlpha(1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.close, size: 20),
+          child: Icon(Icons.close, size: 20, color: colorScheme.onSurface),
         ),
         onPressed: onBack ?? () => Navigator.of(context).pop(),
       ),
@@ -64,8 +69,8 @@ class SelectionAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: ElevatedButton.icon(
               onPressed: onDone,
               style: ElevatedButton.styleFrom(
-                backgroundColor: theme.primaryColor,
-                foregroundColor: Colors.white,
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 8,
@@ -76,14 +81,14 @@ class SelectionAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               icon: Container(
                 padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(
+                  color: colorScheme.onPrimary,
                   shape: BoxShape.circle,
                 ),
                 child: Text(
                   '$selectedCount',
                   style: TextStyle(
-                    color: theme.primaryColor,
+                    color: colorScheme.primary,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),

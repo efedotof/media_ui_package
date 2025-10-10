@@ -11,7 +11,7 @@ class FullScreenMediaOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentItem = controller.mediaItems[controller.currentIndex];
     final selected = controller.isSelected(currentItem);
-
+    final theme = Theme.of(context);
     return Stack(
       children: [
         Positioned(
@@ -40,7 +40,7 @@ class FullScreenMediaOverlay extends StatelessWidget {
                   ? Container(
                       margin: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: controller.theme.primaryColor,
+                        color: theme.primaryColor,
                         shape: BoxShape.circle,
                       ),
                       child: Center(

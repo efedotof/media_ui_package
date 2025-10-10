@@ -1,86 +1,51 @@
 import 'package:flutter/material.dart';
 
-class MediaPickerTheme {
-  final Color backgroundColor;
-  final Color appBarColor;
-  final Color primaryColor;
-  final Color accentColor;
-  final Color textColor;
-  final Color secondaryTextColor;
-  final Color borderColor;
-  final Color selectedColor;
-  final double borderRadius;
+class MediaPickerConfig {
   final double gridSpacing;
+  final double borderRadius;
+  final Color selectedColor;
+  final Color borderColor;
 
-  const MediaPickerTheme({
-    this.backgroundColor = Colors.white,
-    this.appBarColor = Colors.white,
-    this.primaryColor = Colors.blue,
-    this.accentColor = Colors.blueAccent,
-    this.textColor = Colors.black,
-    this.secondaryTextColor = Colors.grey,
-    this.borderColor = Colors.grey,
-    this.selectedColor = Colors.blue,
-    this.borderRadius = 8.0,
+  const MediaPickerConfig({
     this.gridSpacing = 2.0,
+    this.borderRadius = 8.0,
+    this.selectedColor = Colors.blue,
+    this.borderColor = Colors.grey,
   });
 
-  MediaPickerTheme copyWith({
-    Color? backgroundColor,
-    Color? appBarColor,
-    Color? primaryColor,
-    Color? accentColor,
-    Color? textColor,
-    Color? secondaryTextColor,
-    Color? borderColor,
-    Color? selectedColor,
-    double? borderRadius,
+  MediaPickerConfig copyWith({
     double? gridSpacing,
+    double? borderRadius,
+    Color? selectedColor,
+    Color? borderColor,
   }) {
-    return MediaPickerTheme(
-      backgroundColor: backgroundColor ?? this.backgroundColor,
-      appBarColor: appBarColor ?? this.appBarColor,
-      primaryColor: primaryColor ?? this.primaryColor,
-      accentColor: accentColor ?? this.accentColor,
-      textColor: textColor ?? this.textColor,
-      secondaryTextColor: secondaryTextColor ?? this.secondaryTextColor,
-      borderColor: borderColor ?? this.borderColor,
-      selectedColor: selectedColor ?? this.selectedColor,
-      borderRadius: borderRadius ?? this.borderRadius,
+    return MediaPickerConfig(
       gridSpacing: gridSpacing ?? this.gridSpacing,
+      borderRadius: borderRadius ?? this.borderRadius,
+      selectedColor: selectedColor ?? this.selectedColor,
+      borderColor: borderColor ?? this.borderColor,
     );
   }
 
-  static MediaPickerTheme get lightTheme {
-    return const MediaPickerTheme(
-      backgroundColor: Colors.white,
-      appBarColor: Colors.white,
-      primaryColor: Colors.blue,
-      accentColor: Colors.blueAccent,
-      textColor: Colors.black,
-      secondaryTextColor: Colors.grey,
-    );
+  static MediaPickerConfig of(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<MediaPickerConfigScope>()
+            ?.config ??
+        const MediaPickerConfig();
   }
+}
 
-  static MediaPickerTheme get darkTheme {
-    return const MediaPickerTheme(
-      backgroundColor: Colors.black,
-      appBarColor: Colors.black,
-      primaryColor: Colors.blueAccent,
-      accentColor: Colors.lightBlueAccent,
-      textColor: Colors.white,
-      secondaryTextColor: Colors.grey,
-    );
-  }
+class MediaPickerConfigScope extends InheritedWidget {
+  final MediaPickerConfig config;
 
-  static MediaPickerTheme get customTheme {
-    return const MediaPickerTheme(
-      backgroundColor: Color(0xFFF5F5F5),
-      appBarColor: Colors.deepPurple,
-      primaryColor: Colors.deepPurple,
-      accentColor: Colors.purpleAccent,
-      textColor: Colors.black87,
-      secondaryTextColor: Colors.grey,
-    );
+  const MediaPickerConfigScope({
+    super.key,
+    required this.config,
+    required super.child,
+  });
+
+  @override
+  bool updateShouldNotify(MediaPickerConfigScope oldWidget) {
+    return config != oldWidget.config;
   }
 }

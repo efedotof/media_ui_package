@@ -9,7 +9,6 @@ class FullScreenMediaView extends StatefulWidget {
   final int initialIndex;
   final List<MediaItem> selectedItems;
   final Function(MediaItem, bool) onItemSelected;
-  final MediaPickerTheme theme;
 
   const FullScreenMediaView({
     super.key,
@@ -17,7 +16,6 @@ class FullScreenMediaView extends StatefulWidget {
     required this.initialIndex,
     required this.selectedItems,
     required this.onItemSelected,
-    required this.theme,
   });
 
   @override
@@ -35,15 +33,15 @@ class _FullScreenMediaViewState extends State<FullScreenMediaView> {
       initialIndex: widget.initialIndex,
       selectedItems: widget.selectedItems,
       onItemSelected: widget.onItemSelected,
-      theme: widget.theme,
       onUpdate: () => setState(() {}),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
           FullScreenMediaContent(controller: _controller),

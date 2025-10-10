@@ -8,7 +8,6 @@ import 'media_grid_item.dart';
 class MediaGrid extends StatefulWidget {
   final List<MediaItem> selectedItems;
   final Function(MediaItem, bool) onItemSelected;
-  final MediaPickerTheme theme;
   final bool showVideos;
   final ScrollController? scrollController;
   final Future<Uint8List?> Function(MediaItem)? thumbnailBuilder;
@@ -19,7 +18,6 @@ class MediaGrid extends StatefulWidget {
     super.key,
     required this.selectedItems,
     required this.onItemSelected,
-    required this.theme,
     this.showVideos = true,
     this.scrollController,
     this.thumbnailBuilder,
@@ -38,7 +36,6 @@ class _MediaGridState extends State<MediaGrid> {
   void initState() {
     super.initState();
     _controller = MediaGridController(
-      theme: widget.theme,
       mediaType: widget.mediaType,
       albumId: widget.albumId,
       thumbnailBuilder: widget.thumbnailBuilder,
@@ -53,27 +50,24 @@ class _MediaGridState extends State<MediaGrid> {
   @override
   Widget build(BuildContext context) {
     final state = _controller;
+    final config = MediaPickerConfig.of(context);
 
-    // Показываем индикатор запроса разрешения
     if (state.isRequestingPermission) {
-      return state.buildLoadingWidget();
+      return state.buildLoadingWidget(context);
     }
 
-    // Показываем ошибку, если нет разрешения и не загружается
     if (!state.hasPermission && !state.isLoading) {
-      return state.buildErrorWidget(() {
+      return state.buildErrorWidget(context, () {
         _controller.checkPermissionAndLoadMedia();
       });
     }
 
-    // Показываем загрузку при первой загрузке
     if (state.isLoading && state.mediaItems.isEmpty) {
-      return state.buildLoadingWidget();
+      return state.buildLoadingWidget(context);
     }
 
-    // Показываем пустой виджет, если медиа нет
     if (state.mediaItems.isEmpty) {
-      return state.buildEmptyWidget();
+      return state.buildEmptyWidget(context);
     }
 
     return NotificationListener<ScrollNotification>(
@@ -88,27 +82,28 @@ class _MediaGridState extends State<MediaGrid> {
       },
       child: GridView.builder(
         controller: widget.scrollController,
-        padding: EdgeInsets.all(widget.theme.gridSpacing),
+        padding: EdgeInsets.all(config.gridSpacing),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 4,
-          crossAxisSpacing: widget.theme.gridSpacing,
-          mainAxisSpacing: widget.theme.gridSpacing,
+          crossAxisSpacing: config.gridSpacing,
+          mainAxisSpacing: config.gridSpacing,
           childAspectRatio: 1,
         ),
         itemCount: state.mediaItems.length + (state.hasMoreItems ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == state.mediaItems.length) {
+            final theme = Theme.of(context);
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: state.isLoadingMore
                     ? CircularProgressIndicator(
-                        color: widget.theme.primaryColor,
+                        color: theme.colorScheme.primary,
                       )
                     : Text(
                         'No more items',
                         style: TextStyle(
-                          color: widget.theme.secondaryTextColor,
+                          color: theme.colorScheme.onSurface.withAlpha(5),
                         ),
                       ),
               ),
@@ -124,10 +119,10 @@ class _MediaGridState extends State<MediaGrid> {
               : 0;
 
           return MediaGridItem(
+            key: ValueKey(item.id),
             item: item,
             isSelected: isSelected,
             selectionIndex: selectionIndex,
-            theme: widget.theme,
             thumbnailFuture: state.getThumbnailFuture(item),
             onThumbnailTap: () =>
                 _controller.openFullScreenView(context, index),

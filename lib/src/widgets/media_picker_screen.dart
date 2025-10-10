@@ -2,7 +2,6 @@ import 'dart:typed_data' show Uint8List;
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'package:media_ui_package/src/models/media_type.dart';
-import 'media_grid/media_grid.dart';
 import 'selection_app_bar.dart';
 
 class MediaPickerScreen extends StatefulWidget {
@@ -10,12 +9,12 @@ class MediaPickerScreen extends StatefulWidget {
   final int maxSelection;
   final bool allowMultiple;
   final bool showVideos;
-  final MediaPickerTheme theme;
   final String title;
   final Function(List<MediaItem>)? onSelectionChanged;
   final Future<Uint8List?> Function(MediaItem)? thumbnailBuilder;
   final String? albumId;
   final MediaType mediaType;
+  final MediaPickerConfig? config;
 
   const MediaPickerScreen({
     super.key,
@@ -23,12 +22,12 @@ class MediaPickerScreen extends StatefulWidget {
     this.maxSelection = 10,
     this.allowMultiple = true,
     this.showVideos = true,
-    this.theme = const MediaPickerTheme(),
     this.title = 'Select Media',
     this.onSelectionChanged,
     this.thumbnailBuilder,
     this.albumId,
     this.mediaType = MediaType.all,
+    this.config,
   });
 
   @override
@@ -75,28 +74,21 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData(
-        scaffoldBackgroundColor: widget.theme.backgroundColor,
-        appBarTheme: AppBarTheme(
-          backgroundColor: widget.theme.appBarColor,
-          foregroundColor: widget.theme.textColor,
-          elevation: 0,
-        ),
-      ),
+    final config = widget.config ?? const MediaPickerConfig();
+    
+    return MediaPickerConfigScope(
+      config: config,
       child: Scaffold(
         appBar: SelectionAppBar(
           title: widget.title,
           selectedCount: _selectedItems.length,
           maxSelection: widget.maxSelection,
-          theme: widget.theme,
           onClear: _clearSelection,
           onDone: _confirmSelection,
         ),
         body: MediaGrid(
           selectedItems: _selectedItems,
           onItemSelected: _onItemSelected,
-          theme: widget.theme,
           showVideos: widget.showVideos,
           thumbnailBuilder: widget.thumbnailBuilder,
           albumId: widget.albumId,

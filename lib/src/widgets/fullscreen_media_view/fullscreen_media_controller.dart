@@ -7,7 +7,6 @@ class FullScreenMediaController {
   final List<MediaItem> mediaItems;
   final List<MediaItem> selectedItems;
   final Function(MediaItem, bool) onItemSelected;
-  final MediaPickerTheme theme;
   final VoidCallback onUpdate;
 
   final PageController pageController;
@@ -21,10 +20,9 @@ class FullScreenMediaController {
     required this.initialIndex,
     required this.selectedItems,
     required this.onItemSelected,
-    required this.theme,
     required this.onUpdate,
-  })  : currentIndex = initialIndex,
-        pageController = PageController(initialPage: initialIndex) {
+  }) : currentIndex = initialIndex,
+       pageController = PageController(initialPage: initialIndex) {
     _preloadImages();
   }
 

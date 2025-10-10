@@ -6,12 +6,12 @@ class MediaPickerBottomSheet extends StatefulWidget {
   final int maxSelection;
   final bool allowMultiple;
   final bool showVideos;
-  final MediaPickerTheme theme;
   final Function(List<MediaItem>)? onSelectionChanged;
   final Function(List<MediaItem>)? onConfirmed;
   final double initialChildSize;
   final double minChildSize;
   final double maxChildSize;
+  final MediaPickerConfig? config;
 
   const MediaPickerBottomSheet({
     super.key,
@@ -19,12 +19,12 @@ class MediaPickerBottomSheet extends StatefulWidget {
     this.maxSelection = 10,
     this.allowMultiple = true,
     this.showVideos = true,
-    this.theme = const MediaPickerTheme(),
     this.onSelectionChanged,
     this.onConfirmed,
     this.initialChildSize = 0.7,
     this.minChildSize = 0.4,
     this.maxChildSize = 0.9,
+    this.config,
   });
 
   @override
@@ -70,141 +70,118 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: widget.initialChildSize,
-      minChildSize: widget.minChildSize,
-      maxChildSize: widget.maxChildSize,
-      expand: false,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: widget.theme.backgroundColor,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final config = widget.config ?? const MediaPickerConfig();
+
+    return MediaPickerConfigScope(
+      config: config,
+      child: DraggableScrollableSheet(
+        initialChildSize: widget.initialChildSize,
+        minChildSize: widget.minChildSize,
+        maxChildSize: widget.maxChildSize,
+        expand: false,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(2),
-                blurRadius: 20,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: widget.theme.secondaryTextColor.withAlpha(4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: widget.theme.borderColor.withAlpha(3),
-                    ),
+            child: Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 8, bottom: 4),
+                  width: 32,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: colorScheme.onSurface.withAlpha(3),
+                    borderRadius: BorderRadius.circular(1.5),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Select Media',
-                            style: TextStyle(
-                              color: widget.theme.textColor,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.allowMultiple
-                                ? 'Select up to ${widget.maxSelection} items'
-                                : 'Select one item',
-                            style: TextStyle(
-                              color: widget.theme.secondaryTextColor,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (_selectedItems.isNotEmpty)
-                      Row(
-                        children: [
-                          Text(
-                            '${_selectedItems.length}/${widget.maxSelection}',
-                            style: TextStyle(
-                              color: widget.theme.primaryColor,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          GestureDetector(
-                            onTap: _clearSelection,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: widget.theme.primaryColor.withAlpha(1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'Clear',
-                                style: TextStyle(
-                                  color: widget.theme.primaryColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Media',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.allowMultiple
+                                  ? 'Choose up to ${widget.maxSelection}'
+                                  : 'Choose one',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurface.withAlpha(6),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: MediaGrid(
-                  selectedItems: _selectedItems,
-                  onItemSelected: _onItemSelected,
-                  theme: widget.theme,
-                  showVideos: widget.showVideos,
-                  scrollController: scrollController,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: widget.theme.appBarColor,
-                  border: Border(
-                    top: BorderSide(
-                      color: widget.theme.borderColor.withAlpha(3),
-                    ),
+                      if (_selectedItems.isNotEmpty) ...[
+                        Text(
+                          '${_selectedItems.length}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        TextButton(
+                          onPressed: _clearSelection,
+                          style: TextButton.styleFrom(
+                            foregroundColor: colorScheme.primary,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          child: Text(
+                            'Clear',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                child: SafeArea(
-                  top: false,
+
+                const Divider(height: 1),
+
+                Expanded(
+                  child: MediaGrid(
+                    selectedItems: _selectedItems,
+                    onItemSelected: _onItemSelected,
+                    showVideos: widget.showVideos,
+                    scrollController: scrollController,
+                  ),
+                ),
+
+                Container(
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () => Navigator.of(context).pop(),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: widget.theme.textColor,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: BorderSide(color: widget.theme.borderColor),
+                            foregroundColor: colorScheme.onSurface,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            side: BorderSide(
+                              color: colorScheme.outline.withAlpha(3),
+                            ),
                           ),
                           child: const Text('Cancel'),
                         ),
@@ -217,32 +194,35 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                               : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _selectedItems.isNotEmpty
-                                ? widget.theme.primaryColor
-                                : widget.theme.primaryColor.withAlpha(4),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            elevation: 2,
+                                ? colorScheme.primary
+                                : colorScheme.primary.withAlpha(4),
+                            foregroundColor: colorScheme.onPrimary,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              if (_selectedItems.isNotEmpty)
+                              if (_selectedItems.isNotEmpty) ...[
                                 Container(
-                                  margin: const EdgeInsets.only(right: 8),
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
+                                  margin: const EdgeInsets.only(right: 6),
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.onPrimary,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Text(
                                     '${_selectedItems.length}',
                                     style: TextStyle(
-                                      color: widget.theme.primaryColor,
+                                      color: colorScheme.primary,
                                       fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
+                              ],
                               Text(widget.allowMultiple ? 'Confirm' : 'Select'),
                             ],
                           ),
@@ -251,11 +231,11 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

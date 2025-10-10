@@ -8,6 +8,8 @@ class FullScreenMediaContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return PageView.builder(
       controller: controller.pageController,
       itemCount: controller.mediaItems.length,
@@ -35,9 +37,12 @@ class FullScreenMediaContent extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(color: controller.theme.primaryColor),
+              CircularProgressIndicator(color: theme.colorScheme.primary),
               const SizedBox(height: 16),
-              const Text('Loading...', style: TextStyle(color: Colors.white)),
+              Text(
+                'Loading...',
+                style: TextStyle(color: theme.colorScheme.onSurface),
+              ),
             ],
           ),
         );

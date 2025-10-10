@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 
-import 'media_grid/media_grid.dart';
-
 class MediaPickerDialog extends StatefulWidget {
   final List<MediaItem> initialSelection;
   final int maxSelection;
   final bool allowMultiple;
   final bool showVideos;
-  final MediaPickerTheme theme;
   final Function(List<MediaItem>)? onSelectionChanged;
   final Function(List<MediaItem>)? onConfirmed;
+  final MediaPickerConfig? config;
 
   const MediaPickerDialog({
     super.key,
@@ -18,9 +16,9 @@ class MediaPickerDialog extends StatefulWidget {
     this.maxSelection = 10,
     this.allowMultiple = true,
     this.showVideos = true,
-    this.theme = const MediaPickerTheme(),
     this.onSelectionChanged,
     this.onConfirmed,
+    this.config,
   });
 
   @override
@@ -63,104 +61,155 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: widget.theme.backgroundColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(widget.theme.borderRadius),
-      ),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: widget.theme.appBarColor,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(widget.theme.borderRadius),
-                  topRight: Radius.circular(widget.theme.borderRadius),
-                ),
-                border: Border(
-                  bottom: BorderSide(color: widget.theme.borderColor),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    'Select Media',
-                    style: TextStyle(
-                      color: widget.theme.textColor,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final config = widget.config ?? const MediaPickerConfig();
+
+    return MediaPickerConfigScope(
+      config: config,
+      child: Dialog(
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        insetPadding: const EdgeInsets.all(20),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Choose media',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.allowMultiple
+                                ? 'Up to ${widget.maxSelection} items'
+                                : 'Select one item',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurface.withAlpha(6),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  if (widget.allowMultiple)
-                    Text(
-                      '${_selectedItems.length}/${widget.maxSelection}',
-                      style: TextStyle(color: widget.theme.secondaryTextColor),
-                    ),
-                  const SizedBox(width: 16),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: _cancelSelection,
-                    color: widget.theme.textColor,
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: MediaGrid(
-                selectedItems: _selectedItems,
-                onItemSelected: _onItemSelected,
-                theme: widget.theme,
-                showVideos: widget.showVideos,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: widget.theme.appBarColor,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(widget.theme.borderRadius),
-                  bottomRight: Radius.circular(widget.theme.borderRadius),
-                ),
-                border: Border(
-                  top: BorderSide(color: widget.theme.borderColor),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
+                    if (widget.allowMultiple && _selectedItems.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withAlpha(1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${_selectedItems.length}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: Icon(Icons.close, size: 20),
                       onPressed: _cancelSelection,
-                      style: TextButton.styleFrom(
-                        foregroundColor: widget.theme.textColor,
-                      ),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _selectedItems.isNotEmpty
-                          ? _confirmSelection
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: widget.theme.primaryColor,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: Text(
-                        widget.allowMultiple
-                            ? 'Select (${_selectedItems.length})'
-                            : 'Select',
+                      style: IconButton.styleFrom(
+                        padding: const EdgeInsets.all(4),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+
+              const Divider(height: 1),
+
+              // Media grid
+              Expanded(
+                child: MediaGrid(
+                  selectedItems: _selectedItems,
+                  onItemSelected: _onItemSelected,
+                  showVideos: widget.showVideos,
+                ),
+              ),
+
+              // Actions
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _cancelSelection,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: colorScheme.onSurface,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: BorderSide(
+                            color: colorScheme.outline.withAlpha(3),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _selectedItems.isNotEmpty
+                            ? _confirmSelection
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _selectedItems.isNotEmpty
+                              ? colorScheme.primary
+                              : colorScheme.onSurface.withAlpha(12),
+                          foregroundColor: _selectedItems.isNotEmpty
+                              ? colorScheme.onPrimary
+                              : colorScheme.onSurface.withAlpha(38),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (_selectedItems.isNotEmpty &&
+                                widget.allowMultiple)
+                              Container(
+                                margin: const EdgeInsets.only(right: 6),
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.onPrimary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  '${_selectedItems.length}',
+                                  style: TextStyle(
+                                    color: colorScheme.primary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            Text(widget.allowMultiple ? 'Confirm' : 'Select'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
