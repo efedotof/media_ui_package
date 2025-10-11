@@ -10,7 +10,6 @@ class MediaGridItem extends StatefulWidget {
   final Future<Uint8List?> Function() thumbnailFutureBuilder;
   final VoidCallback onThumbnailTap;
   final VoidCallback onSelectionTap;
-  final bool enableSelectionOnTap;
 
   const MediaGridItem({
     super.key,
@@ -20,7 +19,6 @@ class MediaGridItem extends StatefulWidget {
     required this.thumbnailFutureBuilder,
     required this.onThumbnailTap,
     required this.onSelectionTap,
-    this.enableSelectionOnTap = false,
   });
 
   @override
@@ -46,14 +44,6 @@ class _MediaGridItemState extends State<MediaGridItem> {
     }
   }
 
-  void _handleThumbnailTap() {
-    if (widget.enableSelectionOnTap) {
-      widget.onSelectionTap();
-    } else {
-      widget.onThumbnailTap();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -62,23 +52,17 @@ class _MediaGridItemState extends State<MediaGridItem> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          if (!widget.isSelected)
-            BoxShadow(
-              color: colorScheme.shadow.withAlpha(1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-        ],
+        borderRadius: BorderRadius.circular(8),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         child: Stack(
           fit: StackFit.expand,
           children: [
             _buildThumbnail(colorScheme),
-            _buildSelectionOverlay(config, colorScheme),
+            
+            _buildSelectionIndicator(config, colorScheme),
+            
             _buildVideoInfo(colorScheme),
           ],
         ),
@@ -88,7 +72,7 @@ class _MediaGridItemState extends State<MediaGridItem> {
 
   Widget _buildThumbnail(ColorScheme colorScheme) {
     return GestureDetector(
-      onTap: _handleThumbnailTap,
+      onTap: widget.onThumbnailTap, 
       child: Container(
         color: colorScheme.surface.withAlpha(1),
         child: FutureBuilder<Uint8List?>(
@@ -141,41 +125,34 @@ class _MediaGridItemState extends State<MediaGridItem> {
     );
   }
 
-  Widget _buildSelectionOverlay(
-    MediaPickerConfig config,
-    ColorScheme colorScheme,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        border: widget.isSelected
-            ? Border.all(color: config.selectedColor, width: 3)
-            : null,
-      ),
-      child: _buildSelectionIndicator(config, colorScheme),
-    );
-  }
-
   Widget _buildSelectionIndicator(
     MediaPickerConfig config,
     ColorScheme colorScheme,
   ) {
     return Positioned(
-      top: 8,
-      right: 8,
+      top: 6,
+      right: 6,
       child: GestureDetector(
-        onTap: widget.onSelectionTap,
+        onTap: widget.onSelectionTap, 
         behavior: HitTestBehavior.opaque,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           width: 24,
           height: 24,
           decoration: BoxDecoration(
             color: widget.isSelected
                 ? config.selectedColor
-                : colorScheme.surface.withAlpha(9),
+                : Colors.white.withAlpha(9),
             shape: BoxShape.circle,
+            border: Border.all(
+              color: widget.isSelected
+                  ? config.selectedColor
+                  : Colors.white,
+              width: 2,
+            ),
             boxShadow: [
               BoxShadow(
-                color: colorScheme.shadow.withAlpha(3),
+                color: Colors.black.withAlpha(3),
                 blurRadius: 2,
                 offset: const Offset(0, 1),
               ),
@@ -186,7 +163,7 @@ class _MediaGridItemState extends State<MediaGridItem> {
                   child: Text(
                     '${widget.selectionIndex}',
                     style: TextStyle(
-                      color: colorScheme.onPrimary,
+                      color: Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -195,7 +172,7 @@ class _MediaGridItemState extends State<MediaGridItem> {
               : Icon(
                   Icons.circle_outlined,
                   size: 20,
-                  color: colorScheme.onSurface.withAlpha(6),
+                  color: Colors.black.withAlpha(6),
                 ),
         ),
       ),
@@ -206,23 +183,23 @@ class _MediaGridItemState extends State<MediaGridItem> {
     if (widget.item.type != 'video') return const SizedBox();
 
     return Positioned(
-      bottom: 8,
-      left: 8,
+      bottom: 6,
+      left: 6,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
-          color: colorScheme.surface.withAlpha(8),
-          borderRadius: BorderRadius.circular(6),
+          color: Colors.black.withAlpha(7),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.play_arrow, color: colorScheme.onSurface, size: 12),
+            Icon(Icons.play_arrow, color: Colors.white, size: 12),
             const SizedBox(width: 2),
             Text(
               formatDuration(widget.item.duration ?? 0),
               style: TextStyle(
-                color: colorScheme.onSurface,
+                color: Colors.white,
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
               ),

@@ -12,7 +12,6 @@ class MediaPickerBottomSheet extends StatefulWidget {
   final double minChildSize;
   final double maxChildSize;
   final MediaPickerConfig? config;
-  final bool enableSelectionOnTap;
 
   const MediaPickerBottomSheet({
     super.key,
@@ -26,7 +25,6 @@ class MediaPickerBottomSheet extends StatefulWidget {
     this.minChildSize = 0.4,
     this.maxChildSize = 0.9,
     this.config,
-    this.enableSelectionOnTap = true,
   });
 
   @override
@@ -88,26 +86,26 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
             decoration: BoxDecoration(
               color: colorScheme.surface,
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
               ),
             ),
             child: Column(
               children: [
                 Container(
-                  margin: const EdgeInsets.only(top: 8, bottom: 4),
-                  width: 32,
-                  height: 3,
+                  margin: const EdgeInsets.only(top: 8, bottom: 8),
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
                     color: colorScheme.onSurface.withAlpha(3),
-                    borderRadius: BorderRadius.circular(1.5),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
 
-                Container(
+                Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 12,
+                    vertical: 8,
                   ),
                   child: Row(
                     children: [
@@ -116,17 +114,17 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Media',
-                              style: theme.textTheme.titleMedium?.copyWith(
+                              'Select Media',
+                              style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 4),
                             Text(
                               widget.allowMultiple
-                                  ? 'Choose up to ${widget.maxSelection}'
-                                  : 'Choose one',
-                              style: theme.textTheme.bodySmall?.copyWith(
+                                  ? 'Select up to ${widget.maxSelection} items'
+                                  : 'Select one item',
+                              style: theme.textTheme.bodyMedium?.copyWith(
                                 color: colorScheme.onSurface.withAlpha(6),
                               ),
                             ),
@@ -134,11 +132,21 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                         ),
                       ),
                       if (_selectedItems.isNotEmpty) ...[
-                        Text(
-                          '${_selectedItems.length}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.primary,
-                            fontWeight: FontWeight.w600,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary.withAlpha(1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${_selectedItems.length}',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -168,13 +176,21 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                     onItemSelected: _onItemSelected,
                     showVideos: widget.showVideos,
                     scrollController: scrollController,
-                    enableSelectionOnTap:
-                        widget.enableSelectionOnTap,
                   ),
                 ),
 
                 Container(
                   padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(1),
+                        blurRadius: 8,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
                   child: Row(
                     children: [
                       Expanded(
@@ -182,9 +198,12 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                           onPressed: () => Navigator.of(context).pop(),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: colorScheme.onSurface,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             side: BorderSide(
                               color: colorScheme.outline.withAlpha(3),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           child: const Text('Cancel'),
@@ -201,18 +220,19 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                                 ? colorScheme.primary
                                 : colorScheme.primary.withAlpha(4),
                             foregroundColor: colorScheme.onPrimary,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              if (_selectedItems.isNotEmpty) ...[
+                              if (_selectedItems.isNotEmpty &&
+                                  widget.allowMultiple) ...[
                                 Container(
-                                  margin: const EdgeInsets.only(right: 6),
-                                  padding: const EdgeInsets.all(2),
+                                  margin: const EdgeInsets.only(right: 8),
+                                  padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
                                     color: colorScheme.onPrimary,
                                     shape: BoxShape.circle,
@@ -227,7 +247,12 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                                   ),
                                 ),
                               ],
-                              Text(widget.allowMultiple ? 'Confirm' : 'Select'),
+                              Text(
+                                widget.allowMultiple ? 'Confirm' : 'Select',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ],
                           ),
                         ),
