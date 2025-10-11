@@ -8,45 +8,43 @@ class FullScreenMediaContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    return Container(
+      color: Colors.black,
+      child: PageView.builder(
+        controller: controller.pageController,
+        itemCount: controller.mediaItems.length,
+        onPageChanged: controller.onPageChanged,
+        itemBuilder: (context, index) {
+          final item = controller.mediaItems[index];
+          final data = controller.imageCache[item.id];
 
-    return PageView.builder(
-      controller: controller.pageController,
-      itemCount: controller.mediaItems.length,
-      onPageChanged: controller.onPageChanged,
-      itemBuilder: (context, index) {
-        final item = controller.mediaItems[index];
-        final data = controller.imageCache[item.id];
-
-        if (data != null) {
-          return InteractiveViewer(
-            panEnabled: true,
-            minScale: 1.0,
-            maxScale: 3.0,
-            child: Center(
-              child: Image.memory(
-                data,
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.high,
+          if (data != null) {
+            return InteractiveViewer(
+              panEnabled: true,
+              minScale: 1.0,
+              maxScale: 3.0,
+              child: Center(
+                child: Image.memory(
+                  data,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                ),
               ),
+            );
+          }
+
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(color: Colors.white),
+                const SizedBox(height: 16),
+                Text('Loading...', style: TextStyle(color: Colors.white)),
+              ],
             ),
           );
-        }
-
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(color: theme.colorScheme.primary),
-              const SizedBox(height: 16),
-              Text(
-                'Loading...',
-                style: TextStyle(color: theme.colorScheme.onSurface),
-              ),
-            ],
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 }

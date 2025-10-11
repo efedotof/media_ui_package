@@ -11,80 +11,99 @@ class FullScreenMediaOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentItem = controller.mediaItems[controller.currentIndex];
     final selected = controller.isSelected(currentItem);
-    final theme = Theme.of(context);
-    return Stack(
-      children: [
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 16,
-          left: 16,
-          child: RoundButton(
-            icon: Icons.arrow_back,
-            onTap: () => Navigator.of(context).pop(),
-          ),
-        ),
 
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 16,
-          right: 16,
-          child: GestureDetector(
-            onTap: controller.toggleSelection,
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+    return Container(
+      color: Colors.transparent,
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withAlpha(6),
+                  Colors.transparent,
+                  Colors.transparent,
+                  Colors.black.withAlpha(6),
+                ],
+                stops: [0.0, 0.1, 0.9, 1.0],
               ),
-              child: selected
-                  ? Container(
-                      margin: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: theme.primaryColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${controller.getSelectionIndex(currentItem)}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            child: RoundButton(
+              icon: Icons.arrow_back,
+              onTap: () => Navigator.of(context).pop(),
+            ),
+          ),
+
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            right: 16,
+            child: GestureDetector(
+              onTap: controller.toggleSelection,
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: selected
+                    ? Container(
+                        margin: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${controller.getSelectionIndex(currentItem)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                    )
-                  : null,
+                      )
+                    : null,
+              ),
             ),
           ),
-        ),
 
-        if (controller.mediaItems.length > 1)
-          Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 16,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+          if (controller.mediaItems.length > 1)
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 16,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${controller.currentIndex + 1}/${controller.mediaItems.length}',
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${controller.currentIndex + 1}/${controller.mediaItems.length}',
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

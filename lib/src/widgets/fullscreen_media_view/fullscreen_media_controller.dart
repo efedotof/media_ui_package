@@ -14,6 +14,7 @@ class FullScreenMediaController {
   final DeviceMediaLibrary _mediaLibrary = DeviceMediaLibrary();
 
   int currentIndex;
+  bool _isDisposed = false;
 
   FullScreenMediaController({
     required this.mediaItems,
@@ -29,6 +30,8 @@ class FullScreenMediaController {
   final int initialIndex;
 
   void _preloadImages() {
+    if (_isDisposed) return;
+
     final indices = [
       currentIndex,
       currentIndex - 1,
@@ -40,12 +43,16 @@ class FullScreenMediaController {
         mediaLibrary: _mediaLibrary,
         item: mediaItems[i],
         cache: imageCache,
-        onLoaded: onUpdate,
+        onLoaded: () {
+          if (!_isDisposed) onUpdate();
+        },
       );
     }
   }
 
   void onPageChanged(int index) {
+    if (_isDisposed) return;
+
     currentIndex = index;
     _preloadImages();
     onUpdate();
@@ -58,6 +65,8 @@ class FullScreenMediaController {
       selectedItems.indexWhere((selected) => selected.id == item.id) + 1;
 
   void toggleSelection() {
+    if (_isDisposed) return;
+
     final currentItem = mediaItems[currentIndex];
     final selected = isSelected(currentItem);
     onItemSelected(currentItem, !selected);
@@ -65,6 +74,7 @@ class FullScreenMediaController {
   }
 
   void dispose() {
+    _isDisposed = true;
     pageController.dispose();
   }
 }

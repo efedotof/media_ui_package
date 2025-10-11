@@ -24,6 +24,7 @@ class FullScreenMediaView extends StatefulWidget {
 
 class _FullScreenMediaViewState extends State<FullScreenMediaView> {
   late final FullScreenMediaController _controller;
+  bool _showOverlay = false;
 
   @override
   void initState() {
@@ -37,16 +38,26 @@ class _FullScreenMediaViewState extends State<FullScreenMediaView> {
     );
   }
 
+  void _toggleOverlay() {
+    setState(() {
+      _showOverlay = !_showOverlay;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          FullScreenMediaContent(controller: _controller),
-          FullScreenMediaOverlay(controller: _controller),
-        ],
+      backgroundColor: Colors.black,
+      body: GestureDetector(
+        onTap: _toggleOverlay,
+        child: Stack(
+          children: [
+            FullScreenMediaContent(controller: _controller),
+
+            if (_showOverlay) FullScreenMediaOverlay(controller: _controller),
+          ],
+        ),
       ),
     );
   }
