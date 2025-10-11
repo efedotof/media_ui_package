@@ -9,6 +9,7 @@ class FullScreenMediaView extends StatefulWidget {
   final int initialIndex;
   final List<MediaItem> selectedItems;
   final Function(MediaItem, bool) onItemSelected;
+  final bool showSelectionIndicators;
 
   const FullScreenMediaView({
     super.key,
@@ -16,6 +17,7 @@ class FullScreenMediaView extends StatefulWidget {
     required this.initialIndex,
     required this.selectedItems,
     required this.onItemSelected,
+    this.showSelectionIndicators = true,
   });
 
   @override
@@ -35,6 +37,7 @@ class _FullScreenMediaViewState extends State<FullScreenMediaView> {
       selectedItems: widget.selectedItems,
       onItemSelected: widget.onItemSelected,
       onUpdate: () => setState(() {}),
+      showSelectionIndicators: widget.showSelectionIndicators,
     );
   }
 
@@ -46,7 +49,6 @@ class _FullScreenMediaViewState extends State<FullScreenMediaView> {
 
   @override
   Widget build(BuildContext context) {
-    Theme.of(context);
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(

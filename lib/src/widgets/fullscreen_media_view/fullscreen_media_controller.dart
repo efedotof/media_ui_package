@@ -15,6 +15,7 @@ class FullScreenMediaController {
 
   int currentIndex;
   bool _isDisposed = false;
+  bool showSelectionIndicators = true;
 
   FullScreenMediaController({
     required this.mediaItems,
@@ -22,6 +23,7 @@ class FullScreenMediaController {
     required this.selectedItems,
     required this.onItemSelected,
     required this.onUpdate,
+    this.showSelectionIndicators = true,
   }) : currentIndex = initialIndex,
        pageController = PageController(initialPage: initialIndex) {
     _preloadImages();
@@ -70,6 +72,13 @@ class FullScreenMediaController {
     final currentItem = mediaItems[currentIndex];
     final selected = isSelected(currentItem);
     onItemSelected(currentItem, !selected);
+    onUpdate();
+  }
+
+  void toggleSelectionIndicators() {
+    if (_isDisposed) return;
+
+    showSelectionIndicators = !showSelectionIndicators;
     onUpdate();
   }
 

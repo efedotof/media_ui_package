@@ -27,7 +27,7 @@ class FullScreenMediaOverlay extends StatelessWidget {
                   Colors.transparent,
                   Colors.black.withAlpha(6),
                 ],
-                stops: [0.0, 0.1, 0.9, 1.0],
+                stops: const [0.0, 0.1, 0.9, 1.0],
               ),
             ),
           ),
@@ -44,38 +44,57 @@ class FullScreenMediaOverlay extends StatelessWidget {
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             right: 16,
-            child: GestureDetector(
-              onTap: controller.toggleSelection,
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: selected
-                    ? Container(
-                        margin: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${controller.getSelectionIndex(currentItem)}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      )
-                    : null,
-              ),
+            child: RoundButton(
+              icon: controller.showSelectionIndicators
+                  ? Icons.visibility_off
+                  : Icons.visibility,
+              onTap: controller.toggleSelectionIndicators,
             ),
           ),
+
+          if (controller.showSelectionIndicators)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 80,
+              right: 16,
+              child: GestureDetector(
+                onTap: controller.toggleSelection,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: selected
+                      ? Container(
+                          margin: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${controller.getSelectionIndex(currentItem)}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          margin: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 1),
+                          ),
+                        ),
+                ),
+              ),
+            ),
 
           if (controller.mediaItems.length > 1)
             Positioned(
@@ -100,6 +119,31 @@ class FullScreenMediaOverlay extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+
+          if (!controller.showSelectionIndicators)
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 80,
+              left: 0,
+              right: 0,
+              child: AnimatedOpacity(
+                opacity: controller.showSelectionIndicators ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 300),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Индикаторы выключены',
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                ),
               ),
             ),
         ],
