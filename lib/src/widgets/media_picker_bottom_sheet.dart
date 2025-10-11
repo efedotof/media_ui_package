@@ -12,6 +12,7 @@ class MediaPickerBottomSheet extends StatefulWidget {
   final double minChildSize;
   final double maxChildSize;
   final MediaPickerConfig? config;
+  final bool enableSelectionOnTap;
 
   const MediaPickerBottomSheet({
     super.key,
@@ -25,6 +26,7 @@ class MediaPickerBottomSheet extends StatefulWidget {
     this.minChildSize = 0.4,
     this.maxChildSize = 0.9,
     this.config,
+    this.enableSelectionOnTap = true,
   });
 
   @override
@@ -166,6 +168,8 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                     onItemSelected: _onItemSelected,
                     showVideos: widget.showVideos,
                     scrollController: scrollController,
+                    enableSelectionOnTap:
+                        widget.enableSelectionOnTap,
                   ),
                 ),
 

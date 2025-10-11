@@ -13,6 +13,7 @@ class MediaGrid extends StatefulWidget {
   final Future<Uint8List?> Function(MediaItem)? thumbnailBuilder;
   final String? albumId;
   final MediaType mediaType;
+  final bool enableSelectionOnTap; 
 
   const MediaGrid({
     super.key,
@@ -23,6 +24,7 @@ class MediaGrid extends StatefulWidget {
     this.thumbnailBuilder,
     this.albumId,
     this.mediaType = MediaType.all,
+    this.enableSelectionOnTap = true, 
   });
 
   @override
@@ -123,10 +125,10 @@ class _MediaGridState extends State<MediaGrid> {
             item: item,
             isSelected: isSelected,
             selectionIndex: selectionIndex,
-            thumbnailFuture: state.getThumbnailFuture(item),
-            onThumbnailTap: () =>
-                _controller.openFullScreenView(context, index),
+            thumbnailFutureBuilder: () => state.getThumbnailFuture(item), 
+            onThumbnailTap: () => _controller.openFullScreenView(context, index),
             onSelectionTap: () => widget.onItemSelected(item, !isSelected),
+            enableSelectionOnTap: widget.enableSelectionOnTap,
           );
         },
       ),

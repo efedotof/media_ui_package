@@ -7,18 +7,20 @@ class MediaGridItem extends StatefulWidget {
   final MediaItem item;
   final bool isSelected;
   final int selectionIndex;
-  final Future<Uint8List?> thumbnailFuture;
+  final Future<Uint8List?> Function() thumbnailFutureBuilder;
   final VoidCallback onThumbnailTap;
   final VoidCallback onSelectionTap;
+  final bool enableSelectionOnTap;
 
   const MediaGridItem({
     super.key,
     required this.item,
     required this.isSelected,
     required this.selectionIndex,
-    required this.thumbnailFuture,
+    required this.thumbnailFutureBuilder,
     required this.onThumbnailTap,
     required this.onSelectionTap,
+    this.enableSelectionOnTap = false,
   });
 
   @override
@@ -26,19 +28,29 @@ class MediaGridItem extends StatefulWidget {
 }
 
 class _MediaGridItemState extends State<MediaGridItem> {
-  late final Future<Uint8List?> _thumbnailFuture;
+  late Future<Uint8List?> _thumbnailFuture;
 
   @override
   void initState() {
     super.initState();
-    _thumbnailFuture = widget.thumbnailFuture;
+    _thumbnailFuture = widget.thumbnailFutureBuilder();
   }
 
   @override
   void didUpdateWidget(MediaGridItem oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.thumbnailFuture != widget.thumbnailFuture) {
-      _thumbnailFuture = widget.thumbnailFuture;
+
+    if (oldWidget.item.id != widget.item.id ||
+        oldWidget.thumbnailFutureBuilder != widget.thumbnailFutureBuilder) {
+      _thumbnailFuture = widget.thumbnailFutureBuilder();
+    }
+  }
+
+  void _handleThumbnailTap() {
+    if (widget.enableSelectionOnTap) {
+      widget.onSelectionTap();
+    } else {
+      widget.onThumbnailTap();
     }
   }
 
@@ -76,7 +88,7 @@ class _MediaGridItemState extends State<MediaGridItem> {
 
   Widget _buildThumbnail(ColorScheme colorScheme) {
     return GestureDetector(
-      onTap: widget.onThumbnailTap,
+      onTap: _handleThumbnailTap,
       child: Container(
         color: colorScheme.surface.withAlpha(1),
         child: FutureBuilder<Uint8List?>(
@@ -133,18 +145,13 @@ class _MediaGridItemState extends State<MediaGridItem> {
     MediaPickerConfig config,
     ColorScheme colorScheme,
   ) {
-    if (!widget.isSelected) return const SizedBox();
-
     return Container(
       decoration: BoxDecoration(
-        color: config.selectedColor.withAlpha(2),
-        border: Border.all(color: config.selectedColor, width: 3),
+        border: widget.isSelected
+            ? Border.all(color: config.selectedColor, width: 3)
+            : null,
       ),
-      child: Positioned(
-        top: 8,
-        right: 8,
-        child: _buildSelectionIndicator(config, colorScheme),
-      ),
+      child: _buildSelectionIndicator(config, colorScheme),
     );
   }
 

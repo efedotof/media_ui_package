@@ -85,7 +85,6 @@ class MediaGridController {
 
       if (hasPermission) {
         debugPrint('Loading media with permission...');
-        // Загружаем первую страницу сразу
         await loadMedia(reset: true);
       } else {
         debugPrint('No permission granted');
@@ -106,7 +105,6 @@ class MediaGridController {
     if (reset) {
       currentOffset = 0;
       mediaItems.clear();
-      // Не очищаем полностью кэш, только устаревшие элементы
       _cleanupThumbnailCache();
       hasMoreItems = true;
       setState(() {
@@ -145,7 +143,6 @@ class MediaGridController {
           hasMoreItems = newItems.length == pageSize;
         });
 
-        // Оптимизация: предзагрузка миниатюр в фоне с приоритетом для видимых элементов
         _preloadThumbnailsSmart(newItems);
       } else {
         debugPrint('No media data received or empty');
