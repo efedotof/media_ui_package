@@ -25,6 +25,7 @@ class MediaGridController {
   bool hasPermission = false;
   bool isRequestingPermission = false;
   int currentOffset = 0;
+  bool _isDisposed = false; // Добавляем флаг disposed
 
   static const int pageSize = 50;
   static const int preloadThreshold = 100;
@@ -47,6 +48,8 @@ class MediaGridController {
 
   void _setupScrollListener() {
     scrollController?.addListener(() {
+      if (_isDisposed) return; // Проверяем disposed
+
       final maxScroll = scrollController!.position.maxScrollExtent;
       final currentScroll = scrollController!.position.pixels;
 
@@ -102,6 +105,8 @@ class MediaGridController {
   }
 
   Future<void> loadMedia({bool reset = false}) async {
+    if (_isDisposed) return; // Проверяем disposed
+
     if (reset) {
       currentOffset = 0;
       mediaItems.clear();
@@ -161,7 +166,7 @@ class MediaGridController {
   }
 
   void _preloadThumbnailsSmart(List<MediaItem> newItems) {
-    if (newItems.isEmpty) return;
+    if (_isDisposed || newItems.isEmpty) return;
 
     final firstBatch = newItems.take(12).toList();
     MediaGridLoader.preloadThumbnails(this, firstBatch);
@@ -169,7 +174,9 @@ class MediaGridController {
     if (newItems.length > 12) {
       final remainingBatch = newItems.skip(12).toList();
       Future.delayed(const Duration(milliseconds: 300), () {
-        MediaGridLoader.preloadThumbnails(this, remainingBatch);
+        if (!_isDisposed) {
+          MediaGridLoader.preloadThumbnails(this, remainingBatch);
+        }
       });
     }
   }
@@ -181,16 +188,20 @@ class MediaGridController {
   }
 
   Future<void> loadMoreMedia() async {
+    if (_isDisposed) return;
     if (hasMoreItems && !isLoadingMore && !isLoading) {
       await loadMedia(reset: false);
     }
   }
 
   Future<Uint8List?> getThumbnailFuture(MediaItem item) async {
+    if (_isDisposed) return null;
     return await MediaGridLoader.getThumbnailFuture(this, item);
   }
 
   void openFullScreenView(BuildContext context, int index) {
+    if (_isDisposed) return;
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => FullScreenMediaView(
@@ -218,7 +229,7 @@ class MediaGridController {
           Icon(
             Icons.error_outline,
             size: 64,
-            color: colorScheme.onSurface.withAlpha(5),
+            color: colorScheme.onSurface.withAlpha(3),
           ),
           const SizedBox(height: 16),
           Text(
@@ -233,7 +244,7 @@ class MediaGridController {
           Text(
             'This app needs access to your photos.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: colorScheme.onSurface.withAlpha(7)),
+            style: TextStyle(color: colorScheme.onSurface.withAlpha(6)),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -264,7 +275,7 @@ class MediaGridController {
           const SizedBox(height: 16),
           Text(
             'Loading media...',
-            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(7)),
+            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(6)),
           ),
         ],
       ),
@@ -282,7 +293,7 @@ class MediaGridController {
           Icon(
             Icons.photo_library,
             size: 64,
-            color: colorScheme.onSurface.withAlpha(5),
+            color: colorScheme.onSurface.withAlpha(3),
           ),
           const SizedBox(height: 16),
           Text(
@@ -312,11 +323,19 @@ class MediaGridController {
   }
 
   void setState(VoidCallback fn) {
+    if (_isDisposed) return;
     fn();
     onUpdate();
   }
 
   void dispose() {
-    scrollController?.dispose();
+    _isDisposed = true;
   }
+}
+
+String formatDuration(int milliseconds) {
+  final d = Duration(milliseconds: milliseconds);
+  final minutes = d.inMinutes;
+  final seconds = d.inSeconds.remainder(60);
+  return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
 }

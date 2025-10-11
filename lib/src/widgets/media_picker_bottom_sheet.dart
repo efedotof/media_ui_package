@@ -169,7 +169,6 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                 ),
 
                 const Divider(height: 1),
-
                 Expanded(
                   child: MediaGrid(
                     selectedItems: _selectedItems,

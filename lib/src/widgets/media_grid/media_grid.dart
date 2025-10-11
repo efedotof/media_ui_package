@@ -31,6 +31,7 @@ class MediaGrid extends StatefulWidget {
 
 class _MediaGridState extends State<MediaGrid> {
   late final MediaGridController _controller;
+  bool _isDisposed = false;
 
   @override
   void initState() {
@@ -42,7 +43,11 @@ class _MediaGridState extends State<MediaGrid> {
       scrollController: widget.scrollController,
       selectedItems: widget.selectedItems,
       onItemSelected: widget.onItemSelected,
-      onUpdate: () => setState(() {}),
+      onUpdate: () {
+        if (!_isDisposed && mounted) {
+          setState(() {});
+        }
+      },
     );
     _controller.init();
   }
@@ -58,7 +63,9 @@ class _MediaGridState extends State<MediaGrid> {
 
     if (!state.hasPermission && !state.isLoading) {
       return state.buildErrorWidget(context, () {
-        _controller.checkPermissionAndLoadMedia();
+        if (!_isDisposed && mounted) {
+          _controller.checkPermissionAndLoadMedia();
+        }
       });
     }
 
@@ -124,8 +131,7 @@ class _MediaGridState extends State<MediaGrid> {
             isSelected: isSelected,
             selectionIndex: selectionIndex,
             thumbnailFutureBuilder: () => state.getThumbnailFuture(item),
-            onThumbnailTap: () =>
-                _controller.openFullScreenView(context, index),
+            onThumbnailTap: () => _controller.openFullScreenView(context, index),
             onSelectionTap: () => widget.onItemSelected(item, !isSelected),
           );
         },
@@ -135,6 +141,7 @@ class _MediaGridState extends State<MediaGrid> {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _controller.dispose();
     super.dispose();
   }
