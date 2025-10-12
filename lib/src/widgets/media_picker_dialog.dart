@@ -134,7 +134,6 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
 
               const Divider(height: 1),
 
-              // Media grid
               Expanded(
                 child: MediaGrid(
                   selectedItems: _selectedItems,
@@ -143,7 +142,6 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                 ),
               ),
 
-              // Actions
               Container(
                 padding: const EdgeInsets.all(16),
                 child: Row(

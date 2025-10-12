@@ -41,16 +41,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
             ),
           ),
 
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            right: 16,
-            child: RoundButton(
-              icon: controller.showSelectionIndicators
-                  ? Icons.visibility_off
-                  : Icons.visibility,
-              onTap: controller.toggleSelectionIndicators,
-            ),
-          ),
 
           if (controller.showSelectionIndicators)
             Positioned(

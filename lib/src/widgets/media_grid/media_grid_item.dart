@@ -1,9 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
-import 'media_grid_helpers.dart';
+import 'package:media_ui_package/src/widgets/media_grid/selection_indicator_widget.dart';
+import 'package:media_ui_package/src/widgets/media_grid/video_info_widget.dart';
+import 'thumbnail_widget.dart';
 
-class MediaGridItem extends StatefulWidget {
+class MediaGridItem extends StatelessWidget {
   final MediaItem item;
   final bool isSelected;
   final int selectionIndex;
@@ -26,186 +28,33 @@ class MediaGridItem extends StatefulWidget {
   });
 
   @override
-  State<MediaGridItem> createState() => _MediaGridItemState();
-}
-
-class _MediaGridItemState extends State<MediaGridItem> {
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final config = MediaPickerConfig.of(context);
 
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Stack(
           fit: StackFit.expand,
           children: [
-            _buildThumbnail(colorScheme),
-            _buildSelectionIndicator(config, colorScheme),
-            _buildVideoInfo(colorScheme),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildThumbnail(ColorScheme colorScheme) {
-    return GestureDetector(
-      onTap: widget.onThumbnailTap,
-      child: Container(
-        color: colorScheme.surface.withAlpha(1),
-        child: _buildThumbnailContent(colorScheme),
-      ),
-    );
-  }
-
-  Widget _buildThumbnailContent(ColorScheme colorScheme) {
-    if (widget.thumbnail != null) {
-      return Image.memory(
-        widget.thumbnail!,
-        fit: BoxFit.cover,
-        filterQuality: FilterQuality.medium,
-        cacheWidth: 200,
-        cacheHeight: 200,
-      );
-    }
-
-    if (widget.isLoading) {
-      return _buildPlaceholder(colorScheme);
-    }
-
-    return _buildErrorState(colorScheme);
-  }
-
-  Widget _buildPlaceholder(ColorScheme colorScheme) {
-    return Container(
-      color: colorScheme.surface.withAlpha(2),
-      child: Center(
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: colorScheme.primary,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorState(ColorScheme colorScheme) {
-    return GestureDetector(
-      onTap: widget.onRetryLoad,
-      child: Container(
-        color: colorScheme.surface.withAlpha(2),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                widget.item.type == 'video' ? Icons.videocam : Icons.photo,
-                color: colorScheme.onSurface.withAlpha(3),
-                size: 28,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Retry',
-                style: TextStyle(
-                  color: colorScheme.onSurface.withAlpha(3),
-                  fontSize: 10,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSelectionIndicator(
-    MediaPickerConfig config,
-    ColorScheme colorScheme,
-  ) {
-    return Positioned(
-      top: 6,
-      right: 6,
-      child: GestureDetector(
-        onTap: widget.onSelectionTap,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: widget.isSelected
-                ? config.selectedColor
-                : Colors.white.withAlpha(9),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: widget.isSelected
-                  ? config.selectedColor
-                  : Colors.white,
-              width: 2,
+            ThumbnailWidget(
+              onThumbnailTap: onThumbnailTap,
+              colorScheme: colorScheme,
+              isLoading: isLoading,
+              item: item,
+              onRetryLoad: onRetryLoad,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(3),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: widget.isSelected
-              ? Center(
-                  child: Text(
-                    '${widget.selectionIndex}',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
-              : Icon(
-                  Icons.circle_outlined,
-                  size: 20,
-                  color: Colors.black.withAlpha(6),
-                ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVideoInfo(ColorScheme colorScheme) {
-    if (widget.item.type != 'video') return const SizedBox();
-
-    return Positioned(
-      bottom: 6,
-      left: 6,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        decoration: BoxDecoration(
-          color: Colors.black.withAlpha(7),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.play_arrow, color: Colors.white, size: 12),
-            const SizedBox(width: 2),
-            Text(
-              formatDuration(widget.item.duration ?? 0),
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-              ),
+            SelectionIndicatorWidget(
+              config: config,
+              colorScheme: colorScheme,
+              onSelectionTap: onSelectionTap,
+              isSelected: isSelected,
+              selectionIndex: selectionIndex,
             ),
+            VideoInfoWidget(item: item, colorScheme: colorScheme),
           ],
         ),
       ),

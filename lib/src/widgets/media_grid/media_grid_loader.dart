@@ -1,8 +1,6 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'package:media_ui_package/src/models/media_type.dart';
-import 'media_grid_controller.dart';
 
 class MediaGridLoader {
   static Future<List<Map<String, dynamic>>?> loadMedia({

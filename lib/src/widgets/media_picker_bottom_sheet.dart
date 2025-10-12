@@ -11,10 +11,12 @@ class MediaPickerBottomSheet extends StatefulWidget {
   final double initialChildSize;
   final double minChildSize;
   final double maxChildSize;
+  final bool showSelectionIndicators;
   final MediaPickerConfig? config;
 
   const MediaPickerBottomSheet({
     super.key,
+    this.showSelectionIndicators = true,
     this.initialSelection = const [],
     this.maxSelection = 10,
     this.allowMultiple = true,
@@ -171,6 +173,7 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                 const Divider(height: 1),
                 Expanded(
                   child: MediaGrid(
+                    showSelectionIndicators: widget.showSelectionIndicators,
                     selectedItems: _selectedItems,
                     onItemSelected: _onItemSelected,
                     showVideos: widget.showVideos,

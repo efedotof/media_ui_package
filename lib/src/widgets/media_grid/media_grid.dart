@@ -4,6 +4,9 @@ import 'package:media_ui_package/media_ui_package.dart';
 import 'package:media_ui_package/src/models/media_type.dart';
 import 'media_grid_controller.dart';
 import 'media_grid_item.dart';
+import 'media_grid_error_widget.dart';
+import 'media_grid_loading_widget.dart';
+import 'media_grid_empty_widget.dart';
 
 class MediaGrid extends StatefulWidget {
   final List<MediaItem> selectedItems;
@@ -13,12 +16,14 @@ class MediaGrid extends StatefulWidget {
   final Uint8List? Function(MediaItem)? thumbnailBuilder;
   final String? albumId;
   final MediaType mediaType;
+  final bool showSelectionIndicators;
 
   const MediaGrid({
     super.key,
     required this.selectedItems,
     required this.onItemSelected,
     this.showVideos = true,
+    this.showSelectionIndicators = true,
     this.scrollController,
     this.thumbnailBuilder,
     this.albumId,
@@ -58,23 +63,26 @@ class _MediaGridState extends State<MediaGrid> {
     final config = MediaPickerConfig.of(context);
 
     if (state.isRequestingPermission) {
-      return state.buildLoadingWidget(context);
+      return MediaGridLoadingWidget(isRequestingPermission: true);
     }
 
     if (!state.hasPermission && !state.isLoading) {
-      return state.buildErrorWidget(context, () {
-        if (!_isDisposed && mounted) {
-          _controller.checkPermissionAndLoadMedia();
-        }
-      });
+      return MediaGridErrorWidget(
+        onRetry: () {
+          if (!_isDisposed && mounted) {
+            _controller.checkPermissionAndLoadMedia();
+          }
+        },
+        isRequestingPermission: state.isRequestingPermission,
+      );
     }
 
     if (state.isLoading && state.mediaItems.isEmpty) {
-      return state.buildLoadingWidget(context);
+      return MediaGridLoadingWidget(isRequestingPermission: false);
     }
 
     if (state.mediaItems.isEmpty) {
-      return state.buildEmptyWidget(context);
+      return const MediaGridEmptyWidget();
     }
 
     return NotificationListener<ScrollNotification>(

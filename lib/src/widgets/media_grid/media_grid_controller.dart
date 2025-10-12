@@ -13,7 +13,7 @@ class MediaGridController {
   final List<MediaItem> selectedItems;
   final Uint8List? Function(MediaItem)? thumbnailBuilder;
   final VoidCallback onUpdate;
-
+  final bool showSelectionIndicators;
   final List<MediaItem> mediaItems = [];
   final Map<String, Uint8List?> thumbnailCache = {};
   final Map<String, bool> thumbnailLoading = {};
@@ -38,6 +38,7 @@ class MediaGridController {
     required this.onItemSelected,
     required this.selectedItems,
     required this.onUpdate,
+    this.showSelectionIndicators = true,
   });
 
   Future<void> init() async {
@@ -252,115 +253,8 @@ class MediaGridController {
           initialIndex: index,
           selectedItems: selectedItems,
           onItemSelected: onItemSelected,
+          showSelectionIndicators:showSelectionIndicators,
         ),
-      ),
-    );
-  }
-
-  Widget buildErrorWidget(BuildContext context, VoidCallback retry) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    if (isRequestingPermission) {
-      return _buildRequestingPermissionWidget(context);
-    }
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: colorScheme.onSurface.withAlpha(3),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Permission Required',
-            style: TextStyle(
-              color: colorScheme.onSurface,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'This app needs access to your photos.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: colorScheme.onSurface.withAlpha(6)),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: retry,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
-            ),
-            child: const Text('Grant Permission'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildLoadingWidget(BuildContext context) {
-    final theme = Theme.of(context);
-
-    if (isRequestingPermission) {
-      return _buildRequestingPermissionWidget(context);
-    }
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(color: theme.colorScheme.primary),
-          const SizedBox(height: 16),
-          Text(
-            'Loading media...',
-            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(6)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildEmptyWidget(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.photo_library,
-            size: 64,
-            color: colorScheme.onSurface.withAlpha(3),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No media found',
-            style: TextStyle(color: colorScheme.onSurface),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRequestingPermissionWidget(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(color: theme.colorScheme.primary),
-          const SizedBox(height: 16),
-          Text(
-            'Requesting permission...',
-            style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 16),
-          ),
-        ],
       ),
     );
   }
@@ -374,11 +268,4 @@ class MediaGridController {
   void dispose() {
     _isDisposed = true;
   }
-}
-
-String formatDuration(int milliseconds) {
-  final d = Duration(milliseconds: milliseconds);
-  final minutes = d.inMinutes;
-  final seconds = d.inSeconds.remainder(60);
-  return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
 }
