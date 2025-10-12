@@ -31,7 +31,7 @@ class FullScreenMediaContent extends StatelessWidget {
                 boundaryMargin: EdgeInsets.all(double.infinity),
                 child: Image.memory(
                   data,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.none,
                   filterQuality: FilterQuality.high,
                   width: screenSize.width,
                   height: screenSize.height,
