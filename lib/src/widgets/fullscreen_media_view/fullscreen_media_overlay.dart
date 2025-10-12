@@ -44,7 +44,7 @@ class FullScreenMediaOverlay extends StatelessWidget {
 
           if (controller.showSelectionIndicators)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 80,
+              top: MediaQuery.of(context).padding.top + 16,
               right: 16,
               child: GestureDetector(
                 onTap: controller.toggleSelection,

@@ -182,7 +182,8 @@ class MediaGridController {
 
   void _loadThumbnailsBatch(List<MediaItem> items) {
     for (final item in items) {
-      if (!thumbnailCache.containsKey(item.id) && !thumbnailLoading.containsKey(item.id)) {
+      if (!thumbnailCache.containsKey(item.id) &&
+          !thumbnailLoading.containsKey(item.id)) {
         loadThumbnail(item);
       }
     }
@@ -191,7 +192,10 @@ class MediaGridController {
   void loadThumbnail(MediaItem item) {
     if (_isDisposed || thumbnailLoading[item.id] == true) return;
 
-    thumbnailLoading[item.id] = true;
+    setState(() {
+      thumbnailLoading[item.id] = true;
+    });
+
     Future.microtask(() async {
       try {
         Uint8List? thumbnail;
@@ -207,16 +211,20 @@ class MediaGridController {
           );
         }
 
-        if (!_isDisposed && thumbnail != null) {
+        if (!_isDisposed) {
           setState(() {
-            thumbnailCache[item.id] = thumbnail;
+            if (thumbnail != null) {
+              thumbnailCache[item.id] = thumbnail;
+            }
+            thumbnailLoading.remove(item.id);
           });
         }
       } catch (e) {
         debugPrint('Error loading thumbnail for ${item.id}: $e');
-      } finally {
         if (!_isDisposed) {
-          thumbnailLoading.remove(item.id);
+          setState(() {
+            thumbnailLoading.remove(item.id);
+          });
         }
       }
     });
@@ -253,7 +261,7 @@ class MediaGridController {
           initialIndex: index,
           selectedItems: selectedItems,
           onItemSelected: onItemSelected,
-          showSelectionIndicators:showSelectionIndicators,
+          showSelectionIndicators: showSelectionIndicators,
         ),
       ),
     );
