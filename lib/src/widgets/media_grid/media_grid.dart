@@ -10,7 +10,7 @@ class MediaGrid extends StatefulWidget {
   final Function(MediaItem, bool) onItemSelected;
   final bool showVideos;
   final ScrollController? scrollController;
-  final Future<Uint8List?> Function(MediaItem)? thumbnailBuilder;
+  final Uint8List? Function(MediaItem)? thumbnailBuilder;
   final String? albumId;
   final MediaType mediaType;
 
@@ -130,9 +130,12 @@ class _MediaGridState extends State<MediaGrid> {
             item: item,
             isSelected: isSelected,
             selectionIndex: selectionIndex,
-            thumbnailFutureBuilder: () => state.getThumbnailFuture(item),
-            onThumbnailTap: () => _controller.openFullScreenView(context, index),
+            thumbnail: state.getThumbnail(item),
+            isLoading: state.isThumbnailLoading(item),
+            onThumbnailTap: () =>
+                _controller.openFullScreenView(context, index),
             onSelectionTap: () => widget.onItemSelected(item, !isSelected),
+            onRetryLoad: () => _controller.loadThumbnail(item),
           );
         },
       ),

@@ -8,6 +8,8 @@ class FullScreenMediaContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+
     return Container(
       color: Colors.black,
       child: PageView.builder(
@@ -19,28 +21,37 @@ class FullScreenMediaContent extends StatelessWidget {
           final data = controller.imageCache[item.id];
 
           if (data != null) {
-            return InteractiveViewer(
-              panEnabled: true,
-              minScale: 1.0,
-              maxScale: 3.0,
-              child: Center(
+            return SizedBox(
+              width: screenSize.width,
+              height: screenSize.height,
+              child: InteractiveViewer(
+                panEnabled: true,
+                minScale: 1.0,
+                maxScale: 3.0,
+                boundaryMargin: EdgeInsets.all(double.infinity),
                 child: Image.memory(
                   data,
-                  fit: BoxFit.contain,
+                  fit: BoxFit.cover,
                   filterQuality: FilterQuality.high,
+                  width: screenSize.width,
+                  height: screenSize.height,
                 ),
               ),
             );
           }
 
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(color: Colors.white),
-                const SizedBox(height: 16),
-                Text('Loading...', style: TextStyle(color: Colors.white)),
-              ],
+          return SizedBox(
+            width: screenSize.width,
+            height: screenSize.height,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: Colors.white),
+                  const SizedBox(height: 16),
+                  Text('Loading...', style: TextStyle(color: Colors.white)),
+                ],
+              ),
             ),
           );
         },

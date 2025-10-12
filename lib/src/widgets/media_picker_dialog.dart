@@ -122,7 +122,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                       ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: Icon(Icons.close, size: 20),
+                      icon: const Icon(Icons.close, size: 20),
                       onPressed: _cancelSelection,
                       style: IconButton.styleFrom(
                         padding: const EdgeInsets.all(4),

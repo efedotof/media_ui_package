@@ -7,18 +7,22 @@ class MediaGridItem extends StatefulWidget {
   final MediaItem item;
   final bool isSelected;
   final int selectionIndex;
-  final Future<Uint8List?> Function() thumbnailFutureBuilder;
+  final Uint8List? thumbnail;
+  final bool isLoading;
   final VoidCallback onThumbnailTap;
   final VoidCallback onSelectionTap;
+  final VoidCallback onRetryLoad;
 
   const MediaGridItem({
     super.key,
     required this.item,
     required this.isSelected,
     required this.selectionIndex,
-    required this.thumbnailFutureBuilder,
+    required this.thumbnail,
+    required this.isLoading,
     required this.onThumbnailTap,
     required this.onSelectionTap,
+    required this.onRetryLoad,
   });
 
   @override
@@ -26,24 +30,6 @@ class MediaGridItem extends StatefulWidget {
 }
 
 class _MediaGridItemState extends State<MediaGridItem> {
-  late Future<Uint8List?> _thumbnailFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _thumbnailFuture = widget.thumbnailFutureBuilder();
-  }
-
-  @override
-  void didUpdateWidget(MediaGridItem oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.item.id != widget.item.id ||
-        oldWidget.thumbnailFutureBuilder != widget.thumbnailFutureBuilder) {
-      _thumbnailFuture = widget.thumbnailFutureBuilder();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -60,9 +46,7 @@ class _MediaGridItemState extends State<MediaGridItem> {
           fit: StackFit.expand,
           children: [
             _buildThumbnail(colorScheme),
-            
             _buildSelectionIndicator(config, colorScheme),
-            
             _buildVideoInfo(colorScheme),
           ],
         ),
@@ -72,31 +56,30 @@ class _MediaGridItemState extends State<MediaGridItem> {
 
   Widget _buildThumbnail(ColorScheme colorScheme) {
     return GestureDetector(
-      onTap: widget.onThumbnailTap, 
+      onTap: widget.onThumbnailTap,
       child: Container(
         color: colorScheme.surface.withAlpha(1),
-        child: FutureBuilder<Uint8List?>(
-          future: _thumbnailFuture,
-          builder: (context, snapshot) {
-            if (snapshot.hasData && snapshot.data != null) {
-              return Image.memory(
-                snapshot.data!,
-                fit: BoxFit.cover,
-                filterQuality: FilterQuality.medium,
-                cacheWidth: 200,
-                cacheHeight: 200,
-              );
-            }
-
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return _buildPlaceholder(colorScheme);
-            }
-
-            return _buildErrorState(colorScheme);
-          },
-        ),
+        child: _buildThumbnailContent(colorScheme),
       ),
     );
+  }
+
+  Widget _buildThumbnailContent(ColorScheme colorScheme) {
+    if (widget.thumbnail != null) {
+      return Image.memory(
+        widget.thumbnail!,
+        fit: BoxFit.cover,
+        filterQuality: FilterQuality.medium,
+        cacheWidth: 200,
+        cacheHeight: 200,
+      );
+    }
+
+    if (widget.isLoading) {
+      return _buildPlaceholder(colorScheme);
+    }
+
+    return _buildErrorState(colorScheme);
   }
 
   Widget _buildPlaceholder(ColorScheme colorScheme) {
@@ -116,11 +99,30 @@ class _MediaGridItemState extends State<MediaGridItem> {
   }
 
   Widget _buildErrorState(ColorScheme colorScheme) {
-    return Center(
-      child: Icon(
-        widget.item.type == 'video' ? Icons.videocam : Icons.photo,
-        color: colorScheme.onSurface.withAlpha(3),
-        size: 28,
+    return GestureDetector(
+      onTap: widget.onRetryLoad,
+      child: Container(
+        color: colorScheme.surface.withAlpha(2),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                widget.item.type == 'video' ? Icons.videocam : Icons.photo,
+                color: colorScheme.onSurface.withAlpha(3),
+                size: 28,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Retry',
+                style: TextStyle(
+                  color: colorScheme.onSurface.withAlpha(3),
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -133,7 +135,7 @@ class _MediaGridItemState extends State<MediaGridItem> {
       top: 6,
       right: 6,
       child: GestureDetector(
-        onTap: widget.onSelectionTap, 
+        onTap: widget.onSelectionTap,
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),

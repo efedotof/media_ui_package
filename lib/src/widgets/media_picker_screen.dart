@@ -11,7 +11,7 @@ class MediaPickerScreen extends StatefulWidget {
   final bool showVideos;
   final String title;
   final Function(List<MediaItem>)? onSelectionChanged;
-  final Future<Uint8List?> Function(MediaItem)? thumbnailBuilder;
+  final Uint8List? Function(MediaItem)? thumbnailBuilder;
   final String? albumId;
   final MediaType mediaType;
   final MediaPickerConfig? config;
@@ -75,7 +75,7 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
   @override
   Widget build(BuildContext context) {
     final config = widget.config ?? const MediaPickerConfig();
-    
+
     return MediaPickerConfigScope(
       config: config,
       child: Scaffold(

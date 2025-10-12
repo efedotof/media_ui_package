@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
@@ -12,12 +11,12 @@ class MediaGridController {
   final String? albumId;
   final Function(MediaItem, bool) onItemSelected;
   final List<MediaItem> selectedItems;
-  final Future<Uint8List?> Function(MediaItem)? thumbnailBuilder;
+  final Uint8List? Function(MediaItem)? thumbnailBuilder;
   final VoidCallback onUpdate;
 
   final List<MediaItem> mediaItems = [];
   final Map<String, Uint8List?> thumbnailCache = {};
-  final Map<String, Completer<Uint8List?>> thumbnailCompleters = {};
+  final Map<String, bool> thumbnailLoading = {};
 
   bool isLoading = true;
   bool isLoadingMore = false;
@@ -25,7 +24,7 @@ class MediaGridController {
   bool hasPermission = false;
   bool isRequestingPermission = false;
   int currentOffset = 0;
-  bool _isDisposed = false; // Добавляем флаг disposed
+  bool _isDisposed = false;
 
   static const int pageSize = 50;
   static const int preloadThreshold = 100;
@@ -48,7 +47,7 @@ class MediaGridController {
 
   void _setupScrollListener() {
     scrollController?.addListener(() {
-      if (_isDisposed) return; // Проверяем disposed
+      if (_isDisposed) return;
 
       final maxScroll = scrollController!.position.maxScrollExtent;
       final currentScroll = scrollController!.position.pixels;
@@ -105,7 +104,7 @@ class MediaGridController {
   }
 
   Future<void> loadMedia({bool reset = false}) async {
-    if (_isDisposed) return; // Проверяем disposed
+    if (_isDisposed) return;
 
     if (reset) {
       currentOffset = 0;
@@ -169,22 +168,63 @@ class MediaGridController {
     if (_isDisposed || newItems.isEmpty) return;
 
     final firstBatch = newItems.take(12).toList();
-    MediaGridLoader.preloadThumbnails(this, firstBatch);
-
+    _loadThumbnailsBatch(firstBatch);
     if (newItems.length > 12) {
       final remainingBatch = newItems.skip(12).toList();
-      Future.delayed(const Duration(milliseconds: 300), () {
+      Future.microtask(() {
         if (!_isDisposed) {
-          MediaGridLoader.preloadThumbnails(this, remainingBatch);
+          _loadThumbnailsBatch(remainingBatch);
         }
       });
     }
   }
 
+  void _loadThumbnailsBatch(List<MediaItem> items) {
+    for (final item in items) {
+      if (!thumbnailCache.containsKey(item.id) && !thumbnailLoading.containsKey(item.id)) {
+        loadThumbnail(item);
+      }
+    }
+  }
+
+  void loadThumbnail(MediaItem item) {
+    if (_isDisposed || thumbnailLoading[item.id] == true) return;
+
+    thumbnailLoading[item.id] = true;
+    Future.microtask(() async {
+      try {
+        Uint8List? thumbnail;
+
+        if (thumbnailBuilder != null) {
+          thumbnail = thumbnailBuilder!(item);
+        } else {
+          thumbnail = await mediaLibrary.getThumbnail(
+            mediaId: item.id,
+            mediaType: item.type,
+            width: 200,
+            height: 200,
+          );
+        }
+
+        if (!_isDisposed && thumbnail != null) {
+          setState(() {
+            thumbnailCache[item.id] = thumbnail;
+          });
+        }
+      } catch (e) {
+        debugPrint('Error loading thumbnail for ${item.id}: $e');
+      } finally {
+        if (!_isDisposed) {
+          thumbnailLoading.remove(item.id);
+        }
+      }
+    });
+  }
+
   void _cleanupThumbnailCache() {
     final currentIds = mediaItems.map((item) => item.id).toSet();
     thumbnailCache.removeWhere((key, value) => !currentIds.contains(key));
-    thumbnailCompleters.removeWhere((key, value) => !currentIds.contains(key));
+    thumbnailLoading.removeWhere((key, value) => !currentIds.contains(key));
   }
 
   Future<void> loadMoreMedia() async {
@@ -194,9 +234,12 @@ class MediaGridController {
     }
   }
 
-  Future<Uint8List?> getThumbnailFuture(MediaItem item) async {
-    if (_isDisposed) return null;
-    return await MediaGridLoader.getThumbnailFuture(this, item);
+  Uint8List? getThumbnail(MediaItem item) {
+    return thumbnailCache[item.id];
+  }
+
+  bool isThumbnailLoading(MediaItem item) {
+    return thumbnailLoading[item.id] == true;
   }
 
   void openFullScreenView(BuildContext context, int index) {
