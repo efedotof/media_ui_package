@@ -3,7 +3,7 @@ import 'dart:typed_data';
 class MediaItem {
   final String id;
   final String name;
-  final String path;
+  final String uri;
   final int dateAdded;
   final int size;
   final int width;
@@ -17,7 +17,7 @@ class MediaItem {
   MediaItem({
     required this.id,
     required this.name,
-    required this.path,
+    required this.uri,
     required this.dateAdded,
     required this.size,
     required this.width,
@@ -33,7 +33,7 @@ class MediaItem {
     return MediaItem(
       id: map['id']?.toString() ?? '',
       name: map['name']?.toString() ?? '',
-      path: map['path']?.toString() ?? '',
+      uri: map['uri']?.toString() ?? map['path']?.toString() ?? '',
       dateAdded: _parseInt(map['dateAdded']),
       size: _parseInt(map['size']),
       width: _parseInt(map['width']),
@@ -51,24 +51,5 @@ class MediaItem {
     if (value is double) return value.toInt();
     if (value is String) return int.tryParse(value) ?? 0;
     return 0;
-  }
-
-  MediaItem copyWith({
-    Uint8List? thumbnail,
-  }) {
-    return MediaItem(
-      id: id,
-      name: name,
-      path: path,
-      dateAdded: dateAdded,
-      size: size,
-      width: width,
-      height: height,
-      albumId: albumId,
-      albumName: albumName,
-      type: type,
-      duration: duration,
-      thumbnail: thumbnail ?? this.thumbnail,
-    );
   }
 }
