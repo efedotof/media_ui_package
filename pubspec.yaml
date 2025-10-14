@@ -14,7 +14,7 @@ dependencies:
     git:
       url: https://github.com/efedotof/attach_file_photo_plugin.git
       path: .
-      ref: a574824da5c50f037035b691550080a8da9e9cb0
+      ref: a579ef0effc186783cacbe9142c11d2d358c0cbe
 
 dev_dependencies:
   flutter_test:
