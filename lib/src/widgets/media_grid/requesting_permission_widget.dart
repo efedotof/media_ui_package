@@ -13,7 +13,7 @@ class RequestingPermissionWidget extends StatelessWidget {
           CircularProgressIndicator(color: theme.colorScheme.primary),
           const SizedBox(height: 16),
           Text(
-            'Requesting permission...',
+            'Запрос разрешения',
             style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 16),
           ),
         ],

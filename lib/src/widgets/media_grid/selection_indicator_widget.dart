@@ -10,11 +10,13 @@ class SelectionIndicatorWidget extends StatelessWidget {
     required this.isSelected,
     required this.selectionIndex,
   });
+
   final MediaPickerConfig config;
   final ColorScheme colorScheme;
   final VoidCallback onSelectionTap;
   final bool isSelected;
   final int selectionIndex;
+
   @override
   Widget build(BuildContext context) {
     return Positioned(
@@ -22,44 +24,48 @@ class SelectionIndicatorWidget extends StatelessWidget {
       right: 6,
       child: GestureDetector(
         onTap: onSelectionTap,
-        behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 24,
-          height: 24,
+          duration: const Duration(milliseconds: 180),
+          width: 26,
+          height: 26,
           decoration: BoxDecoration(
+            shape: BoxShape.circle,
             color: isSelected
                 ? config.selectedColor
-                : Colors.white.withAlpha(9),
-            shape: BoxShape.circle,
+                : colorScheme.surface.withAlpha(4),
             border: Border.all(
               color: isSelected ? config.selectedColor : Colors.white,
               width: 2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withAlpha(3),
+                color: Colors.black.withAlpha(2),
                 blurRadius: 2,
                 offset: const Offset(0, 1),
               ),
             ],
           ),
-          child: isSelected
-              ? Center(
-                  child: Text(
-                    '$selectionIndex',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 150),
+            child: isSelected
+                ? Center(
+                    key: const ValueKey(true),
+                    child: Text(
+                      '$selectionIndex',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                  )
+                : const Icon(
+                    Icons.circle_outlined,
+                    key: ValueKey(false),
+                    size: 18,
+                    color: Colors.white,
                   ),
-                )
-              : Icon(
-                  Icons.circle_outlined,
-                  size: 20,
-                  color: Colors.black.withAlpha(6),
-                ),
+          ),
         ),
       ),
     );

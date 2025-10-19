@@ -15,11 +15,18 @@ dependencies:
       url: https://github.com/efedotof/attach_file_photo_plugin.git
       path: .
       ref: a579ef0effc186783cacbe9142c11d2d358c0cbe
+  bloc: ^9.1.0
+  flutter_bloc: ^9.1.1
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  build_runner: ^2.9.0
+  freezed: ^3.2.3
+  json_serializable: ^6.11.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

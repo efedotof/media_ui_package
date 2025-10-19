@@ -1,61 +1,65 @@
 import 'package:flutter/material.dart';
-import 'fullscreen_media_controller.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:media_ui_package/src/widgets/fullscreen_media_view/cubit/full_screen_media_cubit.dart';
+import 'loading_widget.dart';
+
+import 'errors_widget.dart';
 
 class FullScreenMediaContent extends StatelessWidget {
-  final FullScreenMediaController controller;
-
+  final PageController controller;
   const FullScreenMediaContent({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
+    return BlocBuilder<FullScreenMediaCubit, FullScreenMediaState>(
+      builder: (context, state) {
+        final cubit = context.read<FullScreenMediaCubit>();
+        final screenSize = MediaQuery.of(context).size;
 
-    return Container(
-      color: Colors.black,
-      child: PageView.builder(
-        controller: controller.pageController,
-        itemCount: controller.mediaItems.length,
-        onPageChanged: controller.onPageChanged,
-        itemBuilder: (context, index) {
-          final item = controller.mediaItems[index];
-          final data = controller.imageCache[item.id];
+        return state.when(
+          initial: () => LoadingWidget(screenSize: screenSize),
+          loading: () => LoadingWidget(screenSize: screenSize),
+          error: (message) =>
+              ErrorsWidget(screenSize: screenSize, message: message),
+          loaded:
+              (mediaItems, currentIndex, imageCache, showSelectionIndicators) {
+                return Container(
+                  color: Colors.black,
+                  child: PageView.builder(
+                    controller: controller,
+                    itemCount: mediaItems.length,
+                    onPageChanged: cubit.onPageChanged,
+                    itemBuilder: (context, index) {
+                      final item = mediaItems[index];
+                      final data = imageCache[item.id];
 
-          if (data != null) {
-            return SizedBox(
-              width: screenSize.width,
-              height: screenSize.height,
-              child: InteractiveViewer(
-                panEnabled: true,
-                minScale: 1.0,
-                maxScale: 3.0,
-                boundaryMargin: EdgeInsets.all(double.infinity),
-                child: Image.memory(
-                  data,
-                  fit: BoxFit.none,
-                  filterQuality: FilterQuality.high,
-                  width: screenSize.width,
-                  height: screenSize.height,
-                ),
-              ),
-            );
-          }
+                      if (data != null) {
+                        return SizedBox(
+                          width: screenSize.width,
+                          height: screenSize.height,
+                          child: InteractiveViewer(
+                            panEnabled: true,
+                            minScale: 1.0,
+                            maxScale: 3.0,
+                            boundaryMargin: EdgeInsets.all(double.infinity),
+                            child: Image.memory(
+                              data,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                              width: screenSize.width,
+                              height: screenSize.height,
+                            ),
+                          ),
+                        );
+                      }
 
-          return SizedBox(
-            width: screenSize.width,
-            height: screenSize.height,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: Colors.white),
-                  const SizedBox(height: 16),
-                  Text('Loading...', style: TextStyle(color: Colors.white)),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+                      return LoadingWidget(screenSize: screenSize);
+                    },
+                  ),
+                );
+              },
+        );
+      },
     );
   }
 }

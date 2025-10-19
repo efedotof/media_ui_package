@@ -1,159 +1,139 @@
-import 'dart:typed_data';
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/media_ui_package.dart';
-import 'package:media_ui_package/src/models/media_type.dart';
-import 'media_grid_controller.dart';
 import 'media_grid_item.dart';
 import 'media_grid_error_widget.dart';
 import 'media_grid_loading_widget.dart';
-import 'media_grid_empty_widget.dart';
 
 class MediaGrid extends StatefulWidget {
-  final List<MediaItem> selectedItems;
-  final Function(MediaItem, bool) onItemSelected;
-  final bool showVideos;
-  final ScrollController? scrollController;
-  final Uint8List? Function(MediaItem)? thumbnailBuilder;
-  final String? albumId;
-  final MediaType mediaType;
-  final bool showSelectionIndicators;
-
-  const MediaGrid({
-    super.key,
-    required this.selectedItems,
-    required this.onItemSelected,
-    this.showVideos = true,
-    this.showSelectionIndicators = true,
-    this.scrollController,
-    this.thumbnailBuilder,
-    this.albumId,
-    this.mediaType = MediaType.all,
-  });
+  const MediaGrid({super.key});
 
   @override
   State<MediaGrid> createState() => _MediaGridState();
 }
 
 class _MediaGridState extends State<MediaGrid> {
-  late final MediaGridController _controller;
-  bool _isDisposed = false;
+  final ScrollController _scrollController = ScrollController();
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    _controller = MediaGridController(
-      mediaType: widget.mediaType,
-      albumId: widget.albumId,
-      thumbnailBuilder: widget.thumbnailBuilder,
-      scrollController: widget.scrollController,
-      selectedItems: widget.selectedItems,
-      onItemSelected: widget.onItemSelected,
-      onUpdate: () {
-        if (!_isDisposed && mounted) {
-          setState(() {});
-        }
-      },
-    );
-    _controller.init();
+    _scrollController.addListener(_onScroll);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final state = _controller;
-    final config = MediaPickerConfig.of(context);
+  void _onScroll() {
+    if (_debounce?.isActive ?? false) return;
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      final position = _scrollController.position;
+      final isNearBottom = position.pixels >= position.maxScrollExtent * 0.8;
+      if (isNearBottom) {
+        context.read<MediaGridCubit>().loadMedia();
+      }
+    });
+  }
 
-    if (state.isRequestingPermission) {
-      return MediaGridLoadingWidget(isRequestingPermission: true);
-    }
-
-    if (!state.hasPermission && !state.isLoading) {
-      return MediaGridErrorWidget(
-        onRetry: () {
-          if (!_isDisposed && mounted) {
-            _controller.checkPermissionAndLoadMedia();
-          }
-        },
-        isRequestingPermission: state.isRequestingPermission,
-      );
-    }
-
-    if (state.isLoading && state.mediaItems.isEmpty) {
-      return MediaGridLoadingWidget(isRequestingPermission: false);
-    }
-
-    if (state.mediaItems.isEmpty) {
-      return const MediaGridEmptyWidget();
-    }
-
-    return NotificationListener<ScrollNotification>(
-      onNotification: (scroll) {
-        if (scroll is ScrollEndNotification) {
-          final metrics = scroll.metrics;
-          if (metrics.atEdge && metrics.pixels != 0) {
-            _controller.loadMoreMedia();
-          }
-        }
-        return false;
-      },
-      child: GridView.builder(
-        controller: widget.scrollController,
-        padding: EdgeInsets.all(config.gridSpacing),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          crossAxisSpacing: config.gridSpacing,
-          mainAxisSpacing: config.gridSpacing,
-          childAspectRatio: 1,
+  void _openFullScreen(BuildContext context, int index, List<MediaItem> mediaItems, List<MediaItem> selectedItems) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => FullscreenMediaView(
+          mediaItems: mediaItems,
+          initialIndex: index,
+          selectedItems: selectedItems,
+          onItemSelected: (item, selected) {
+            BlocProvider.of<MediaGridCubit>(context).toggleSelection(item);
+          },
         ),
-        itemCount: state.mediaItems.length + (state.hasMoreItems ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == state.mediaItems.length) {
-            final theme = Theme.of(context);
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: state.isLoadingMore
-                    ? CircularProgressIndicator(
-                        color: theme.colorScheme.primary,
-                      )
-                    : Text(
-                        'No more items',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withAlpha(5),
-                        ),
-                      ),
-              ),
-            );
-          }
-
-          final item = state.mediaItems[index];
-          final isSelected = widget.selectedItems.any(
-            (selected) => selected.id == item.id,
-          );
-          final selectionIndex = isSelected
-              ? widget.selectedItems.indexWhere((s) => s.id == item.id) + 1
-              : 0;
-
-          return MediaGridItem(
-            key: ValueKey(item.id),
-            item: item,
-            isSelected: isSelected,
-            selectionIndex: selectionIndex,
-            thumbnail: state.getThumbnail(item),
-            isLoading: state.isThumbnailLoading(item),
-            onThumbnailTap: () =>
-                _controller.openFullScreenView(context, index),
-            onSelectionTap: () => widget.onItemSelected(item, !isSelected),
-            onRetryLoad: () => _controller.loadThumbnail(item),
-          );
-        },
       ),
     );
   }
 
   @override
   void dispose() {
-    _isDisposed = true;
-    _controller.dispose();
+    _scrollController.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<MediaGridCubit, MediaGridState>(
+      buildWhen: (previous, current) => previous != current,
+      builder: (context, state) {
+        return state.when(
+          initial: () =>
+              const MediaGridLoadingWidget(isRequestingPermission: false),
+          loading: () =>
+              const MediaGridLoadingWidget(isRequestingPermission: false),
+          permissionRequesting: () =>
+              const MediaGridLoadingWidget(isRequestingPermission: true),
+          permissionDenied: () => MediaGridErrorWidget(
+            onRetry: () =>
+                context.read<MediaGridCubit>().checkPermissionAndLoadMedia(),
+            isRequestingPermission: false,
+          ),
+          loaded:
+              (
+                mediaItems,
+                thumbnailCache,
+                hasMoreItems,
+                currentOffset,
+                isLoadingMore,
+                showSelectionIndicators,
+                selectedMediaItems,
+              ) {
+                if (mediaItems.isEmpty) {
+                  return const Center(child: Text('No media files'));
+                }
+
+                return GridView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(8),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: mediaItems.length + (isLoadingMore ? 1 : 0),
+                  itemBuilder: (_, index) {
+                    if (index >= mediaItems.length) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final mediaItem = mediaItems[index];
+                    final isSelected = selectedMediaItems.contains(mediaItem);
+                    final selectionIndex = isSelected
+                        ? selectedMediaItems.indexOf(mediaItem) + 1
+                        : 0;
+
+                    return MediaGridItem(
+                      item: mediaItem,
+                      colorScheme: Theme.of(context).colorScheme,
+                      isSelected: isSelected,
+                      selectionIndex: selectionIndex,
+                      onSelect: () {
+                        context.read<MediaGridCubit>().toggleSelection(
+                          mediaItem,
+                        );
+                      },
+                      onThumbnailTap: () => _openFullScreen(
+                        context, 
+                        index, 
+                        mediaItems, 
+                        selectedMediaItems
+                      ),
+                    );
+                  },
+                );
+              },
+          error: (message) => MediaGridErrorWidget(
+            onRetry: () =>
+                context.read<MediaGridCubit>().checkPermissionAndLoadMedia(),
+            isRequestingPermission: false,
+          ),
+        );
+      },
+    );
   }
 }

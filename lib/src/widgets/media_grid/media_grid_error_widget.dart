@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:media_ui_package/src/widgets/media_grid/requesting_permission_widget.dart';
+import 'requesting_permission_widget.dart';
 
 class MediaGridErrorWidget extends StatelessWidget {
   final VoidCallback onRetry;
@@ -13,47 +13,48 @@ class MediaGridErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    if (isRequestingPermission) return const RequestingPermissionWidget();
 
-    if (isRequestingPermission) {
-      return RequestingPermissionWidget();
-    }
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: colorScheme.onSurface.withAlpha(3),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Permission Required',
-            style: TextStyle(
-              color: colorScheme.onSurface,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: colorScheme.error.withAlpha(5),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'This app needs access to your photos.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: colorScheme.onSurface.withAlpha(6)),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: onRetry,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
+            const SizedBox(height: 16),
+            Text(
+              'Нет доступа к медиафайлам',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
             ),
-            child: const Text('Grant Permission'),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              'Пожалуйста, предоставьте разрешение, чтобы продолжить.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.lock_open),
+              label: const Text('Разрешить доступ'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

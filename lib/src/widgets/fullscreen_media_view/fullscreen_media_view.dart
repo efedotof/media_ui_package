@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:media_ui_package/media_ui_package.dart';
-import 'fullscreen_media_controller.dart';
-import 'fullscreen_media_content.dart';
-import 'fullscreen_media_overlay.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:media_ui_package/src/models/media_item.dart';
+import 'package:media_ui_package/src/widgets/fullscreen_media_view/cubit/full_screen_media_cubit.dart';
+import 'package:media_ui_package/src/widgets/fullscreen_media_view/fullscreen_media_content.dart';
+import 'package:media_ui_package/src/widgets/fullscreen_media_view/fullscreen_media_overlay.dart';
 
-class FullScreenMediaView extends StatefulWidget {
+class FullscreenMediaView extends StatefulWidget {
   final List<MediaItem> mediaItems;
   final int initialIndex;
   final List<MediaItem> selectedItems;
   final Function(MediaItem, bool) onItemSelected;
   final bool showSelectionIndicators;
 
-  const FullScreenMediaView({
+  const FullscreenMediaView({
     super.key,
     required this.mediaItems,
     required this.initialIndex,
@@ -21,24 +22,17 @@ class FullScreenMediaView extends StatefulWidget {
   });
 
   @override
-  State<FullScreenMediaView> createState() => _FullScreenMediaViewState();
+  State<FullscreenMediaView> createState() => _FullscreenMediaViewState();
 }
 
-class _FullScreenMediaViewState extends State<FullScreenMediaView> {
-  late final FullScreenMediaController _controller;
-  bool _showOverlay = false;
+class _FullscreenMediaViewState extends State<FullscreenMediaView> {
+  late final PageController _pageController;
+  bool _showOverlay = true;
 
   @override
   void initState() {
     super.initState();
-    _controller = FullScreenMediaController(
-      mediaItems: widget.mediaItems,
-      initialIndex: widget.initialIndex,
-      selectedItems: widget.selectedItems,
-      onItemSelected: widget.onItemSelected,
-      onUpdate: () => setState(() {}),
-      showSelectionIndicators: widget.showSelectionIndicators,
-    );
+    _pageController = PageController(initialPage: widget.initialIndex);
   }
 
   void _toggleOverlay() {
@@ -49,16 +43,24 @@ class _FullScreenMediaViewState extends State<FullScreenMediaView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: GestureDetector(
-        onTap: _toggleOverlay,
-        child: Stack(
-          children: [
-            FullScreenMediaContent(controller: _controller),
+    return BlocProvider(
+      create: (context) => FullScreenMediaCubit(
+        mediaItems: widget.mediaItems,
+        initialIndex: widget.initialIndex,
+        selectedItems: widget.selectedItems,
+        onItemSelected: widget.onItemSelected,
+        showSelectionIndicators: widget.showSelectionIndicators,
+      ),
+      child: Scaffold(
+        body: GestureDetector(
+          onTap: _toggleOverlay,
+          child: Stack(
+            children: [
+              FullScreenMediaContent(controller: _pageController),
 
-            if (_showOverlay) FullScreenMediaOverlay(controller: _controller),
-          ],
+              if (_showOverlay) const FullScreenMediaOverlay(),
+            ],
+          ),
         ),
       ),
     );
@@ -66,7 +68,7 @@ class _FullScreenMediaViewState extends State<FullScreenMediaView> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 }

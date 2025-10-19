@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'requesting_permission_widget.dart';
 
 class MediaGridLoadingWidget extends StatelessWidget {
@@ -12,21 +11,18 @@ class MediaGridLoadingWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    if (isRequestingPermission) return const RequestingPermissionWidget();
 
-    if (isRequestingPermission) {
-      return RequestingPermissionWidget();
-    }
-
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: theme.colorScheme.primary),
+          CircularProgressIndicator(color: colorScheme.primary),
           const SizedBox(height: 16),
           Text(
-            'Loading media...',
-            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(6)),
+            'Загрузка медиа...',
+            style: TextStyle(color: colorScheme.onSurfaceVariant),
           ),
         ],
       ),
