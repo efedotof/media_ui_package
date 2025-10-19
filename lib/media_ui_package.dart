@@ -8,6 +8,7 @@ export 'src/widgets/media_picker_bottom_sheet.dart';
 export 'src/widgets/fullscreen_media_view/fullscreen_media_view.dart';
 export 'src/widgets/media_grid/media_grid.dart';
 export 'src/themes/media_picker_theme.dart';
+export 'src/utils/utils_media.dart';
 
 export 'src/widgets/fullscreen_media_view/cubit/full_screen_media_cubit.dart';
 export 'src/widgets/media_grid/cubit/media_grid_cubit.dart';
