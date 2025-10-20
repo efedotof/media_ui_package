@@ -13,157 +13,135 @@ class FullScreenMediaOverlay extends StatelessWidget {
         final cubit = context.read<FullScreenMediaCubit>();
 
         return state.maybeWhen(
-          loaded: (mediaItems, currentIndex, imageCache, showSelectionIndicators) {
-            final currentItem = mediaItems[currentIndex];
-            final selected = cubit.isSelected(currentItem);
+          loaded:
+              (
+                mediaItems,
+                currentIndex,
+                imageCache,
+                showSelectionIndicators,
+                selectedMediaItems,
+              ) {
+                final currentItem = mediaItems[currentIndex];
+                final selected = cubit.isSelected(currentItem);
+                final selectionIndex = cubit.getSelectionIndex(currentItem);
 
-            return Container(
-              color: Colors.transparent,
-              child: Stack(
-                children: [
-                  // Gradient overlay
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withAlpha(150),
-                          Colors.transparent,
-                          Colors.transparent,
-                          Colors.black.withAlpha(150),
-                        ],
-                        stops: const [0.0, 0.1, 0.9, 1.0],
+                return Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withAlpha(150),
+                            Colors.transparent,
+                            Colors.transparent,
+                            Colors.black.withAlpha(150),
+                          ],
+                          stops: const [0.0, 0.1, 0.9, 1.0],
+                        ),
                       ),
                     ),
-                  ),
 
-                  // Back button
-                  Positioned(
-                    top: MediaQuery.of(context).padding.top + 16,
-                    left: 16,
-                    child: RoundButton(
-                      icon: Icons.arrow_back,
-                      onTap: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-
-                  // Selection indicator
-                  if (showSelectionIndicators)
                     Positioned(
                       top: MediaQuery.of(context).padding.top + 16,
-                      right: 16,
-                      child: GestureDetector(
-                        onTap: cubit.toggleSelection,
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: selected
-                              ? Container(
-                                  margin: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).primaryColor,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Center(
+                      left: 16,
+                      child: RoundButton(
+                        icon: Icons.arrow_back,
+                        onTap: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+
+                    if (showSelectionIndicators)
+                      Positioned(
+                        top: MediaQuery.of(context).padding.top + 16,
+                        right: 16,
+                        child: GestureDetector(
+                          onTap: () => cubit.toggleSelection(),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Colors.black54,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: selected
+                                ? Center(
                                     child: Text(
-                                      '${cubit.getSelectionIndex(currentItem)}',
+                                      '$selectionIndex',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
+                                  )
+                                : const Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                    size: 16,
                                   ),
-                                )
-                              : Container(
-                                  margin: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.transparent,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 1,
-                                    ),
-                                  ),
-                                ),
+                          ),
                         ),
                       ),
-                    ),
 
-                  // Page indicator
-                  if (mediaItems.length > 1)
                     Positioned(
                       bottom: MediaQuery.of(context).padding.bottom + 16,
                       left: 0,
                       right: 0,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${currentIndex + 1}/${mediaItems.length}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    if (selectedMediaItems.isNotEmpty)
+                      Positioned(
+                        top: MediaQuery.of(context).padding.top + 16,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
+                              horizontal: 12,
+                              vertical: 6,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.black54,
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              '${currentIndex + 1}/${mediaItems.length}',
+                              'Selected: ${selectedMediaItems.length}',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-
-                  // Selection indicators disabled message
-                  if (!showSelectionIndicators)
-                    Positioned(
-                      bottom: MediaQuery.of(context).padding.bottom + 80,
-                      left: 0,
-                      right: 0,
-                      child: AnimatedOpacity(
-                        opacity: showSelectionIndicators ? 0.0 : 1.0,
-                        duration: const Duration(milliseconds: 300),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                'Индикаторы выключены',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ),
-                    ),
-                ],
-              ),
-            );
-          },
-          orElse: () => const SizedBox(), // Пустой виджет для других состояний
+                  ],
+                );
+              },
+          orElse: () => const SizedBox(),
         );
       },
     );

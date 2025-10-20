@@ -2,23 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/src/models/media_item.dart';
 import 'package:media_ui_package/src/widgets/fullscreen_media_view/cubit/full_screen_media_cubit.dart';
-import 'package:media_ui_package/src/widgets/fullscreen_media_view/fullscreen_media_content.dart';
-import 'package:media_ui_package/src/widgets/fullscreen_media_view/fullscreen_media_overlay.dart';
+import 'fullscreen_media_content.dart';
+import 'fullscreen_media_overlay.dart';
+import 'url_media_content.dart';
 
 class FullscreenMediaView extends StatefulWidget {
-  final List<MediaItem> mediaItems;
-  final int initialIndex;
-  final List<MediaItem> selectedItems;
-  final Function(MediaItem, bool) onItemSelected;
-  final bool showSelectionIndicators;
+  final List<MediaItem>? mediaItems;
+  final int? initialIndex;
+  final List<MediaItem>? selectedItems;
+  final Function(MediaItem, bool)? onItemSelected;
+
+  final bool urlMedia; // показывать медиа из интернета
+  final String? urlMedial; // один URL
+  final List<String>? urlMedias; // несколько URL
+
+  final bool showSelectionIndicator; // показывать индикатор выбора или нет
 
   const FullscreenMediaView({
     super.key,
-    required this.mediaItems,
-    required this.initialIndex,
-    required this.selectedItems,
-    required this.onItemSelected,
-    this.showSelectionIndicators = true,
+    this.mediaItems,
+    this.initialIndex,
+    this.selectedItems,
+    this.onItemSelected,
+    this.urlMedia = false,
+    this.urlMedial,
+    this.urlMedias,
+    this.showSelectionIndicator = true,
   });
 
   @override
@@ -32,7 +41,7 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: widget.initialIndex);
+    _pageController = PageController(initialPage: widget.initialIndex ?? 0);
   }
 
   void _toggleOverlay() {
@@ -43,24 +52,41 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => FullScreenMediaCubit(
-        mediaItems: widget.mediaItems,
-        initialIndex: widget.initialIndex,
-        selectedItems: widget.selectedItems,
-        onItemSelected: widget.onItemSelected,
-        showSelectionIndicators: widget.showSelectionIndicators,
-      ),
-      child: Scaffold(
-        body: GestureDetector(
-          onTap: _toggleOverlay,
-          child: Stack(
-            children: [
-              FullScreenMediaContent(controller: _pageController),
+    final isUrlMode =
+        widget.urlMedia &&
+        ((widget.urlMedial != null && widget.urlMedial!.isNotEmpty) ||
+            (widget.urlMedias != null && widget.urlMedias!.isNotEmpty));
 
-              if (_showOverlay) const FullScreenMediaOverlay(),
-            ],
-          ),
+    final urls = <String>[];
+    if (widget.urlMedial != null && widget.urlMedial!.isNotEmpty) {
+      urls.add(widget.urlMedial!);
+    }
+    if (widget.urlMedias != null && widget.urlMedias!.isNotEmpty) {
+      urls.addAll(widget.urlMedias!);
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: GestureDetector(
+        onTap: _toggleOverlay,
+        child: Stack(
+          children: [
+            if (isUrlMode)
+              UrlMediaContent(urls: urls, controller: _pageController)
+            else
+              BlocProvider(
+                create: (_) => FullScreenMediaCubit(
+                  mediaItems: widget.mediaItems ?? [],
+                  initialIndex: widget.initialIndex ?? 0,
+                  selectedItems: widget.selectedItems ?? [],
+                  onItemSelected: widget.onItemSelected ?? (_, __) {},
+                  showSelectionIndicators: widget.showSelectionIndicator,
+                ),
+                child: FullScreenMediaContent(controller: _pageController),
+              ),
+            if (_showOverlay && widget.showSelectionIndicator)
+              if (!isUrlMode) const FullScreenMediaOverlay(),
+          ],
         ),
       ),
     );

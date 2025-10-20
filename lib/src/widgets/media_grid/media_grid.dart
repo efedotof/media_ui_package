@@ -34,18 +34,38 @@ class _MediaGridState extends State<MediaGrid> {
     });
   }
 
-  void _openFullScreen(BuildContext context, int index, List<MediaItem> mediaItems, List<MediaItem> selectedItems) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => FullscreenMediaView(
-          mediaItems: mediaItems,
-          initialIndex: index,
-          selectedItems: selectedItems,
-          onItemSelected: (item, selected) {
-            BlocProvider.of<MediaGridCubit>(context).toggleSelection(item);
+  void _openFullScreen(
+    BuildContext context,
+    int index,
+    List<MediaItem> mediaItems,
+  ) {
+    final cubit = context.read<MediaGridCubit>();
+    final state = cubit.state;
+
+    state.whenOrNull(
+      loaded:
+          (
+            mediaItems,
+            thumbnailCache,
+            hasMoreItems,
+            currentOffset,
+            isLoadingMore,
+            showSelectionIndicators,
+            selectedMediaItems,
+          ) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => FullscreenMediaView(
+                  mediaItems: mediaItems,
+                  initialIndex: index,
+                  selectedItems: selectedMediaItems,
+                  onItemSelected: (item, selected) {
+                    cubit.toggleSelection(item);
+                  },
+                ),
+              ),
+            );
           },
-        ),
-      ),
     );
   }
 
@@ -117,12 +137,8 @@ class _MediaGridState extends State<MediaGrid> {
                           mediaItem,
                         );
                       },
-                      onThumbnailTap: () => _openFullScreen(
-                        context, 
-                        index, 
-                        mediaItems, 
-                        selectedMediaItems
-                      ),
+                      onThumbnailTap: () =>
+                          _openFullScreen(context, index, mediaItems),
                     );
                   },
                 );

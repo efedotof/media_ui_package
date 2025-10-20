@@ -10,21 +10,22 @@ part 'full_screen_media_cubit.freezed.dart';
 class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
   final DeviceMediaLibrary _mediaLibrary = DeviceMediaLibrary();
   final List<MediaItem> mediaItems;
-  final List<MediaItem> selectedItems;
   final Function(MediaItem, bool) onItemSelected;
 
   final Map<String, Uint8List?> imageCache = {};
   int _currentIndex;
   bool _showSelectionIndicators;
+  List<MediaItem> _selectedItems;
 
   FullScreenMediaCubit({
     required this.mediaItems,
     required int initialIndex,
-    required this.selectedItems,
+    required List<MediaItem> selectedItems,
     required this.onItemSelected,
     bool showSelectionIndicators = true,
   }) : _currentIndex = initialIndex,
        _showSelectionIndicators = showSelectionIndicators,
+       _selectedItems = List.from(selectedItems),
        super(const FullScreenMediaState.initial()) {
     _preloadImages();
   }
@@ -36,7 +37,7 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
       _currentIndex,
       _currentIndex - 1,
       _currentIndex + 1,
-    ].where((index) => index >= 0 && index < mediaItems.length).toList();
+    ].where((i) => i >= 0 && i < mediaItems.length).toList();
 
     for (final index in indices) {
       await _loadImage(mediaItems[index]);
@@ -48,6 +49,7 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
         currentIndex: _currentIndex,
         imageCache: Map.from(imageCache),
         showSelectionIndicators: _showSelectionIndicators,
+        selectedMediaItems: List.from(_selectedItems),
       ),
     );
   }
@@ -56,76 +58,51 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
     if (imageCache.containsKey(item.id)) return;
 
     try {
-      final imageData = await _mediaLibrary.getThumbnail(
+      final data = await _mediaLibrary.getThumbnail(
         mediaId: item.id,
         mediaType: item.type,
         width: 1080,
         height: 1080,
       );
+      imageCache[item.id] = data;
 
-      if (imageData != null) {
-        imageCache[item.id] = imageData;
-
-        state.maybeMap(
-          loaded: (state) {
-            emit(state.copyWith(imageCache: Map.from(imageCache)));
-          },
-          orElse: () {},
-        );
-      }
-    } catch (e) {
-      // Handle error silently
-    }
+      state.maybeMap(
+        loaded: (s) => emit(s.copyWith(imageCache: Map.from(imageCache))),
+        orElse: () {},
+      );
+    } catch (_) {}
   }
 
   void onPageChanged(int index) {
     _currentIndex = index;
-
     state.maybeMap(
-      loaded: (state) {
-        emit(state.copyWith(currentIndex: index));
-      },
+      loaded: (s) => emit(s.copyWith(currentIndex: index)),
       orElse: () {},
     );
-
     _preloadImages();
   }
 
   void toggleSelection() {
-    final currentItem = mediaItems[_currentIndex];
-    final selected = selectedItems.any(
-      (selected) => selected.id == currentItem.id,
-    );
-    onItemSelected(currentItem, !selected);
+    final current = mediaItems[_currentIndex];
+    final isSelected = _selectedItems.any((e) => e.id == current.id);
+
+    if (isSelected) {
+      _selectedItems.removeWhere((e) => e.id == current.id);
+    } else {
+      _selectedItems.add(current);
+    }
+
+    onItemSelected(current, !isSelected);
 
     state.maybeMap(
-      loaded: (state) {
-        emit(state);
-      },
+      loaded: (s) =>
+          emit(s.copyWith(selectedMediaItems: List.from(_selectedItems))),
       orElse: () {},
     );
   }
 
-  void toggleSelectionIndicators() {
-    _showSelectionIndicators = !_showSelectionIndicators;
-
-    state.maybeMap(
-      loaded: (state) {
-        emit(state.copyWith(showSelectionIndicators: _showSelectionIndicators));
-      },
-      orElse: () {},
-    );
-  }
-
-  bool isSelected(MediaItem item) =>
-      selectedItems.any((selected) => selected.id == item.id);
+  bool isSelected(MediaItem item) => _selectedItems.any((e) => e.id == item.id);
 
   int getSelectionIndex(MediaItem item) =>
-      selectedItems.indexWhere((selected) => selected.id == item.id) + 1;
-
-  Uint8List? getImage(MediaItem item) => imageCache[item.id];
-
-  // Геттеры для доступа к приватным полям
-  int get currentIndex => _currentIndex;
-  bool get showSelectionIndicators => _showSelectionIndicators;
+      _selectedItems.indexWhere((e) => e.id == item.id) + 1;
 }
