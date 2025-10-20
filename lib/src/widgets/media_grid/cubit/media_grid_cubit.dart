@@ -51,8 +51,9 @@ class MediaGridCubit extends Cubit<MediaGridState> {
     emit(const MediaGridState.permissionRequesting());
 
     try {
-      _hasPermission = await _mediaLibrary.checkPermission() || 
-                      await _mediaLibrary.requestPermission();
+      _hasPermission =
+          await _mediaLibrary.checkPermission() ||
+          await _mediaLibrary.requestPermission();
 
       if (_hasPermission) {
         await loadMedia(reset: true);
@@ -202,13 +203,19 @@ class MediaGridCubit extends Cubit<MediaGridState> {
   }
 
   Future<void> _loadThumbnail(MediaItem item) async {
-    if (_thumbnailCache.containsKey(item.id) || _thumbnailLoading[item.id] == true) {
+    if (_thumbnailCache.containsKey(item.id) ||
+        _thumbnailLoading[item.id] == true) {
+      debugPrint('Thumbnail for ${item.id} already loaded or loading');
       return;
     }
+
     _thumbnailLoading[item.id] = true;
+    debugPrint('Loading thumbnail for ${item.id}');
 
     try {
       final thumbnail = await _getThumbnailFor(item);
+      debugPrint('Thumbnail for ${item.id} loaded: ${thumbnail != null}');
+
       if (thumbnail != null) {
         _thumbnailCache[item.id] = thumbnail;
         if (state is _Loaded) {
@@ -220,7 +227,8 @@ class MediaGridCubit extends Cubit<MediaGridState> {
         }
       }
     } catch (e, st) {
-      debugPrintStack(label: 'Thumbnail error', stackTrace: st);
+      debugPrint('Error loading thumbnail for ${item.id}: $e');
+      debugPrintStack(stackTrace: st);
     } finally {
       _thumbnailLoading.remove(item.id);
     }
@@ -247,7 +255,10 @@ class MediaGridCubit extends Cubit<MediaGridState> {
 
   // Public methods
   Uint8List? getThumbnail(MediaItem item) => _thumbnailCache[item.id];
-  bool isThumbnailLoading(MediaItem item) => _thumbnailLoading[item.id] ?? false;
+  bool isThumbnailLoading(MediaItem item) =>
+      _thumbnailLoading[item.id] ?? false;
   bool isSelected(MediaItem item) => _selectedItems.contains(item);
   int getSelectionIndex(MediaItem item) => _selectedItems.indexOf(item) + 1;
+  Future<void> loadTumbunail(MediaItem item) async =>
+      await _loadThumbnail(item);
 }
