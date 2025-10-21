@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'elastic_item.dart';
+
 class CustomLoading extends StatefulWidget {
   const CustomLoading({super.key});
 
@@ -25,8 +27,6 @@ class _CustomLoadingState extends State<CustomLoading>
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
-
     return AnimatedBuilder(
       animation: _controller,
       builder: (_, __) {
@@ -40,35 +40,11 @@ class _CustomLoadingState extends State<CustomLoading>
           itemCount: _itemCount,
           itemBuilder: (_, index) {
             final delay = (index % _columns) * 0.1;
-            final value = (_controller.value - delay).clamp(0.0, 1.0);
-            return _LoadingBlock(progress: value, color: color);
+            (_controller.value - delay).clamp(0.0, 1.0);
+            return ElasticItem(index: index, totalLoadingItems: _itemCount);
           },
         );
       },
-    );
-  }
-}
-
-class _LoadingBlock extends StatelessWidget {
-  final double progress;
-  final Color color;
-  const _LoadingBlock({required this.progress, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    final baseColor = Colors.grey[300]!;
-
-    final fillColor = color.withAlpha((progress * 255).toInt());
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        gradient: LinearGradient(
-          colors: [baseColor, fillColor],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
     );
   }
 }

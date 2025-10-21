@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/media_ui_package.dart';
+import 'elastic_item.dart';
 import 'media_grid_item.dart';
 import 'media_grid_error_widget.dart';
 import 'media_grid_loading_widget.dart';
@@ -55,13 +56,16 @@ class _MediaGridState extends State<MediaGrid> {
           ) {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => FullscreenMediaView(
-                  mediaItems: mediaItems,
-                  initialIndex: index,
-                  selectedItems: selectedMediaItems,
-                  onItemSelected: (item, selected) {
-                    cubit.toggleSelection(item);
-                  },
+                builder: (context) => BlocProvider.value(
+                  value: cubit,
+                  child: FullscreenMediaView(
+                    mediaItems: mediaItems,
+                    initialIndex: index,
+                    selectedItems: selectedMediaItems,
+                    onItemSelected: (item, selected) {
+                      cubit.toggleSelection(item);
+                    },
+                  ),
                 ),
               ),
             );
@@ -118,7 +122,10 @@ class _MediaGridState extends State<MediaGrid> {
                   itemCount: mediaItems.length + (isLoadingMore ? 1 : 0),
                   itemBuilder: (_, index) {
                     if (index >= mediaItems.length) {
-                      return const Center(child: CircularProgressIndicator());
+                      return ElasticItem(
+                        index: index - mediaItems.length,
+                        totalLoadingItems: 1,
+                      );
                     }
 
                     final mediaItem = mediaItems[index];

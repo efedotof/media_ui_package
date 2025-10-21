@@ -1,11 +1,18 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/src/widgets/fullscreen_media_view/cubit/full_screen_media_cubit.dart';
 import 'round_button.dart';
 
 class FullScreenMediaOverlay extends StatelessWidget {
-  const FullScreenMediaOverlay({super.key});
-
+  const FullScreenMediaOverlay({
+    super.key,
+    this.mediaLoaded,
+    this.mediasLoaded,
+  });
+  final Uint8List? mediaLoaded;
+  final List<Uint8List>? mediasLoaded;
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<FullScreenMediaCubit, FullScreenMediaState>(
@@ -112,6 +119,31 @@ class FullScreenMediaOverlay extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (mediasLoaded != null && mediasLoaded!.length > 1)
+                      Positioned(
+                        bottom: MediaQuery.of(context).padding.bottom + 16,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${currentIndex + 1}/${mediasLoaded!.length}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
 
                     if (selectedMediaItems.isNotEmpty)
                       Positioned(
