@@ -43,12 +43,6 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
     final config = widget.config ?? const MediaPickerConfig();
     final mediaType = widget.showVideos ? MediaType.all : MediaType.images;
 
-    void confirmSelection() {
-      final selectedItems = context.read<MediaGridCubit>().selectedItems;
-      Navigator.of(context).pop(selectedItems);
-      widget.onConfirmed?.call(selectedItems);
-    }
-
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -66,6 +60,14 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
         config: config,
         child: Builder(
           builder: (context) {
+            void confirmSelection() {
+              final selectedItems = context
+                  .read<MediaGridCubit>()
+                  .selectedItems;
+              Navigator.of(context).pop(selectedItems);
+              widget.onConfirmed?.call(selectedItems);
+            }
+
             return DraggableScrollableSheet(
               initialChildSize: widget.initialChildSize,
               minChildSize: widget.minChildSize,

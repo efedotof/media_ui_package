@@ -13,22 +13,26 @@ class UrlMediaContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (urls.length == 1) {
-      return Center(
-        child: InteractiveViewer(
-          panEnabled: true,
-          minScale: 1.0,
-          maxScale: 3.0,
-          child: Image.network(
-            urls.first,
-            fit: BoxFit.contain,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) => const Center(
-              child: Icon(Icons.error, color: Colors.white, size: 40),
+      String url = urls.first;
+      return Container(
+        color: Colors.black,
+        child: Center(
+          child: InteractiveViewer(
+            panEnabled: true,
+            minScale: 1.0,
+            maxScale: 3.0,
+            child: Image.network(
+              url,
+              fit: BoxFit.contain,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) => const Center(
+                child: Icon(Icons.error, color: Colors.white, size: 40),
+              ),
             ),
           ),
         ),
@@ -36,20 +40,18 @@ class UrlMediaContent extends StatelessWidget {
     }
 
     return PageView.builder(
-      controller: PageController(initialPage: 0, viewportFraction: 0.92),
+      controller: PageController(initialPage: 0, viewportFraction: 1.0),
       itemCount: urls.length,
       itemBuilder: (context, index) {
-        final url = urls[index];
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+        return Container(
+          color: Colors.black,
+          child: Center(
             child: InteractiveViewer(
               panEnabled: true,
               minScale: 1.0,
               maxScale: 3.0,
               child: Image.network(
-                url,
+                urls[index],
                 fit: BoxFit.contain,
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;

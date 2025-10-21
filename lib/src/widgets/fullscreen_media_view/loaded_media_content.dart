@@ -15,59 +15,65 @@ class LoadedMediaContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Одно загруженное изображение
     if (mediaLoaded != null) {
-      return _buildSingleImage(mediaLoaded!);
+      return Container(
+        color: Colors.black,
+        child: Center(
+          child: InteractiveViewer(
+            panEnabled: true,
+            minScale: 1.0,
+            maxScale: 3.0,
+            child: Image.memory(
+              mediaLoaded!,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+            ),
+          ),
+        ),
+      );
     }
 
-    // Несколько загруженных изображений
     if (mediasLoaded != null && mediasLoaded!.isNotEmpty) {
-      return _buildMultipleImages(mediasLoaded!);
-    }
-
-    // Fallback - пустой контейнер
-    return Container();
-  }
-
-  Widget _buildSingleImage(Uint8List imageBytes) {
-    return InteractiveViewer(
-      panEnabled: true,
-      minScale: 1.0,
-      maxScale: 3.0,
-      child: Image.memory(
-        imageBytes,
-        fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
-      ),
-    );
-  }
-
-  Widget _buildMultipleImages(List<Uint8List> images) {
-    if (images.length == 1) {
-      return _buildSingleImage(images.first);
-    }
-
-    return PageView.builder(
-      controller: PageController(initialPage: 0, viewportFraction: 0.92),
-      itemCount: images.length,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+      if (mediasLoaded!.length == 1) {
+        return Container(
+          color: Colors.black,
+          child: Center(
             child: InteractiveViewer(
               panEnabled: true,
               minScale: 1.0,
               maxScale: 3.0,
               child: Image.memory(
-                images[index],
+                mediasLoaded!.first,
                 fit: BoxFit.contain,
                 filterQuality: FilterQuality.high,
               ),
             ),
           ),
         );
-      },
-    );
+      }
+      return PageView.builder(
+        controller: PageController(initialPage: 0, viewportFraction: 1.0),
+        itemCount: mediasLoaded!.length,
+        itemBuilder: (context, index) {
+          return Container(
+            color: Colors.black,
+            child: Center(
+              child: InteractiveViewer(
+                panEnabled: true,
+                minScale: 1.0,
+                maxScale: 3.0,
+                child: Image.memory(
+                  mediasLoaded![index],
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    return Container(color: Colors.black);
   }
 }
