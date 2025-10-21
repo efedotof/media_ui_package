@@ -13,21 +13,23 @@ class UrlMediaContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (urls.length == 1) {
-      return InteractiveViewer(
-        panEnabled: true,
-        minScale: 1.0,
-        maxScale: 3.0,
-        child: Image.network(
-          urls.first,
-          fit: BoxFit.contain,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) => const Center(
-            child: Icon(Icons.error, color: Colors.white, size: 40),
+      return Center(
+        child: InteractiveViewer(
+          panEnabled: true,
+          minScale: 1.0,
+          maxScale: 3.0,
+          child: Image.network(
+            urls.first,
+            fit: BoxFit.contain,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) => const Center(
+              child: Icon(Icons.error, color: Colors.white, size: 40),
+            ),
           ),
         ),
       );

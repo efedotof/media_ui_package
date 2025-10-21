@@ -25,7 +25,6 @@ class ThumbnailContent extends StatelessWidget {
     if (isLoading) {
       return LoadingPlaceholder(colorScheme: colorScheme);
     }
-
     if (thumbnail != null) {
       return Image.memory(
         thumbnail!,
