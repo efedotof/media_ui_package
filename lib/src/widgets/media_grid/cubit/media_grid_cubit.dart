@@ -239,8 +239,8 @@ class MediaGridCubit extends Cubit<MediaGridState> {
     return _mediaLibrary.getThumbnail(
       mediaId: item.id,
       mediaType: item.type,
-      width: 200,
-      height: 200,
+      width: 120,
+      height: 120,
     );
   }
 

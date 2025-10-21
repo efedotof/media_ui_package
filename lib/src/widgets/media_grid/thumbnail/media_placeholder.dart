@@ -13,11 +13,22 @@ class MediaPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: colorScheme.surfaceContainerHighest,
-      child: Icon(
-        isVideo ? Icons.videocam : Icons.photo,
-        color: colorScheme.onSurface.withAlpha(150),
-        size: 28,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.surfaceContainerHighest,
+            colorScheme.surface.withAlpha(9),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          isVideo ? Icons.videocam_rounded : Icons.photo_rounded,
+          color: colorScheme.onSurface.withAlpha(5),
+          size: 36,
+        ),
       ),
     );
   }

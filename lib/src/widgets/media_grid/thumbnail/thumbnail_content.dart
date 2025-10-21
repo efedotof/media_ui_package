@@ -1,8 +1,6 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
-
 import 'loading_placeholder.dart';
 import 'media_placeholder.dart';
 
@@ -25,16 +23,20 @@ class ThumbnailContent extends StatelessWidget {
     if (isLoading) {
       return LoadingPlaceholder(colorScheme: colorScheme);
     }
+
     if (thumbnail != null) {
-      return Image.memory(
-        thumbnail!,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return MediaPlaceholder(
+      return AnimatedOpacity(
+        opacity: 1,
+        duration: const Duration(milliseconds: 300),
+        child: Image.memory(
+          thumbnail!,
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+          errorBuilder: (context, error, stackTrace) => MediaPlaceholder(
             colorScheme: colorScheme,
             isVideo: item.type == 'video',
-          );
-        },
+          ),
+        ),
       );
     }
 

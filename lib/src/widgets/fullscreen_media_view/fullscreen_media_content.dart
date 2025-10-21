@@ -61,15 +61,18 @@ class FullScreenMediaContent extends StatelessWidget {
                           color: Colors.black,
                           child: Stack(
                             children: [
-                              Center(
-                                child: InteractiveViewer(
-                                  panEnabled: true,
-                                  minScale: 1.0,
-                                  maxScale: 3.0,
-                                  child: Image.memory(
-                                    data,
-                                    fit: BoxFit.contain,
-                                    filterQuality: FilterQuality.high,
+                              InteractiveViewer(
+                                panEnabled: true,
+                                minScale: 0.5,
+                                maxScale: 5.0,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.vertical,
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: Image.memory(
+                                      data,
+                                      filterQuality: FilterQuality.high,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -140,15 +143,18 @@ class FullScreenMediaContent extends StatelessWidget {
                     if (data != null) {
                       return Container(
                         color: Colors.black,
-                        child: Center(
-                          child: InteractiveViewer(
-                            panEnabled: true,
-                            minScale: 1.0,
-                            maxScale: 3.0,
-                            child: Image.memory(
-                              data,
-                              fit: BoxFit.contain,
-                              filterQuality: FilterQuality.high,
+                        child: InteractiveViewer(
+                          panEnabled: true,
+                          minScale: 0.5,
+                          maxScale: 5.0,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.vertical,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Image.memory(
+                                data,
+                                filterQuality: FilterQuality.high,
+                              ),
                             ),
                           ),
                         ),
@@ -172,15 +178,18 @@ class FullScreenMediaContent extends StatelessWidget {
                       if (data != null) {
                         return Container(
                           color: Colors.black,
-                          child: Center(
-                            child: InteractiveViewer(
-                              panEnabled: true,
-                              minScale: 1.0,
-                              maxScale: 3.0,
-                              child: Image.memory(
-                                data,
-                                fit: BoxFit.contain,
-                                filterQuality: FilterQuality.high,
+                          child: InteractiveViewer(
+                            panEnabled: true,
+                            minScale: 0.5,
+                            maxScale: 5.0,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Image.memory(
+                                  data,
+                                  filterQuality: FilterQuality.high,
+                                ),
                               ),
                             ),
                           ),
