@@ -14,3 +14,8 @@ export 'src/widgets/fullscreen_media_view/cubit/full_screen_media_cubit.dart';
 export 'src/widgets/media_grid/cubit/media_grid_cubit.dart';
 
 export 'package:device_media_library/device_media_library.dart';
+
+
+//исправить отображение изображения в fullscreen 
+//добавить проигрыватель видео.
+//добавить skeleton анимацию 
