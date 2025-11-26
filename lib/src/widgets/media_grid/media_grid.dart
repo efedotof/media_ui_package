@@ -1,11 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/media_ui_package.dart';
-import 'elastic_item.dart';
 import 'media_grid_item.dart';
 import 'media_grid_error_widget.dart';
 import 'media_grid_loading_widget.dart';
+import 'elastic_item.dart';
 
 class MediaGrid extends StatefulWidget {
   const MediaGrid({super.key});
@@ -25,51 +26,44 @@ class _MediaGridState extends State<MediaGrid> {
   }
 
   void _onScroll() {
-    if (_debounce?.isActive ?? false) return;
-    _debounce = Timer(const Duration(milliseconds: 250), () {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    _debounce = Timer(const Duration(milliseconds: 100), () {
       final position = _scrollController.position;
-      final isNearBottom = position.pixels >= position.maxScrollExtent * 0.8;
+      final maxScrollExtent = position.maxScrollExtent;
+      final isNearBottom = position.pixels >= maxScrollExtent * 0.8;
+
       if (isNearBottom) {
         context.read<MediaGridCubit>().loadMedia();
       }
     });
   }
 
-  void _openFullScreen(
-    BuildContext context,
-    int index,
-    List<MediaItem> mediaItems,
-  ) {
+  void _openFullScreen(int index, List<MediaItem> mediaItems) {
     final cubit = context.read<MediaGridCubit>();
-    final state = cubit.state;
 
-    state.whenOrNull(
-      loaded:
-          (
-            mediaItems,
-            thumbnailCache,
-            hasMoreItems,
-            currentOffset,
-            isLoadingMore,
-            showSelectionIndicators,
-            selectedMediaItems,
-          ) {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => BlocProvider.value(
-                  value: cubit,
-                  child: FullscreenMediaView(
-                    mediaItems: mediaItems,
-                    initialIndex: index,
-                    selectedItems: selectedMediaItems,
-                    onItemSelected: (item, selected) {
-                      cubit.toggleSelection(item);
-                    },
-                  ),
-                ),
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            BlocProvider.value(
+              value: cubit,
+              child: FullscreenMediaView(
+                mediaItems: mediaItems,
+                initialIndex: index,
+                selectedItems: cubit.selectedItems,
+                onItemSelected: (item, selected) {
+                  cubit.toggleSelection(item);
+                },
               ),
-            );
-          },
+            ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 200),
+      ),
     );
   }
 
@@ -83,7 +77,6 @@ class _MediaGridState extends State<MediaGrid> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<MediaGridCubit, MediaGridState>(
-      buildWhen: (previous, current) => previous != current,
       builder: (context, state) {
         return state.when(
           initial: () =>
@@ -108,24 +101,27 @@ class _MediaGridState extends State<MediaGrid> {
                 selectedMediaItems,
               ) {
                 if (mediaItems.isEmpty) {
-                  return const Center(child: Text('No media files'));
+                  return const Center(
+                    child: Text(
+                      'No media files',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  );
                 }
 
                 return GridView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(3),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 6,
+                    mainAxisSpacing: 6,
+                    childAspectRatio: 1,
                   ),
                   itemCount: mediaItems.length + (isLoadingMore ? 1 : 0),
-                  itemBuilder: (_, index) {
+                  itemBuilder: (context, index) {
                     if (index >= mediaItems.length) {
-                      return ElasticItem(
-                        index: index - mediaItems.length,
-                        totalLoadingItems: 1,
-                      );
+                      return const ElasticItem(index: 0, totalLoadingItems: 1);
                     }
 
                     final mediaItem = mediaItems[index];
@@ -135,17 +131,15 @@ class _MediaGridState extends State<MediaGrid> {
                         : 0;
 
                     return MediaGridItem(
+                      key: ValueKey(mediaItem.id),
                       item: mediaItem,
                       colorScheme: Theme.of(context).colorScheme,
                       isSelected: isSelected,
                       selectionIndex: selectionIndex,
-                      onSelect: () {
-                        context.read<MediaGridCubit>().toggleSelection(
-                          mediaItem,
-                        );
-                      },
-                      onThumbnailTap: () =>
-                          _openFullScreen(context, index, mediaItems),
+                      onSelect: () => context
+                          .read<MediaGridCubit>()
+                          .toggleSelection(mediaItem),
+                      onThumbnailTap: () => _openFullScreen(index, mediaItems),
                     );
                   },
                 );

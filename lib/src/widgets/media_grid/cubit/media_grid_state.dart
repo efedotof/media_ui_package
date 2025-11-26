@@ -15,7 +15,5 @@ abstract class MediaGridState with _$MediaGridState {
     required bool showSelectionIndicators,
     required List<MediaItem> selectedMediaItems,
   }) = _Loaded;
-  const factory MediaGridState.error({
-    required String message,
-  }) = _Error;
+  const factory MediaGridState.error({required String message}) = _Error;
 }

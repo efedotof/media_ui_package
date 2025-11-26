@@ -1,5 +1,6 @@
-import 'package:bloc/bloc.dart';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:bloc/bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'package:media_ui_package/src/models/media_type.dart';
@@ -16,23 +17,23 @@ class MediaGridCubit extends Cubit<MediaGridState> {
   final int maxSelection;
   final List<MediaItem> initialSelection;
 
-  static const int _pageSize = 50;
-  static const int _thumbnailPreloadCount = 12;
+  static const int _pageSize = 100;
+  static const int _thumbnailPreloadCount = 20;
 
   bool _hasPermission = false;
-  bool _isRequestingPermission = false;
   bool _isLoadingMedia = false;
   int _currentOffset = 0;
 
   final List<MediaItem> _mediaItems = [];
-  final Map<String, Uint8List?> _thumbnailCache = {};
-  final Map<String, bool> _thumbnailLoading = {};
+  final Map<String, Uint8List?> _thumbnailsCache = {};
   final List<MediaItem> _selectedItems = [];
+  final Map<String, Completer<Uint8List?>> _thumbnailCompleters = {};
+  final Map<String, bool> _thumbnailErrors = {};
 
   MediaGridCubit({
     required this.mediaType,
     required this.albumId,
-    required this.thumbnailBuilder,
+    this.thumbnailBuilder,
     this.allowMultiple = true,
     this.maxSelection = 10,
     this.initialSelection = const [],
@@ -44,16 +45,25 @@ class MediaGridCubit extends Cubit<MediaGridState> {
 
   Future<void> init() async => checkPermissionAndLoadMedia();
 
-  Future<void> checkPermissionAndLoadMedia() async {
-    if (_isRequestingPermission) return;
-    _isRequestingPermission = true;
+  void clearSelection() {
+    if (_selectedItems.isEmpty) return;
+    _selectedItems.clear();
+    if (state is _Loaded) {
+      _emitLoaded(hasMore: (state as _Loaded).hasMoreItems);
+    }
+  }
 
+  Future<void> checkPermissionAndLoadMedia() async {
     emit(const MediaGridState.permissionRequesting());
 
     try {
-      _hasPermission =
-          await _mediaLibrary.checkPermission() ||
-          await _mediaLibrary.requestPermission();
+      final hasPermission = await _mediaLibrary.checkPermission();
+
+      if (!hasPermission) {
+        _hasPermission = await _mediaLibrary.requestPermission();
+      } else {
+        _hasPermission = true;
+      }
 
       if (_hasPermission) {
         await loadMedia(reset: true);
@@ -61,41 +71,25 @@ class MediaGridCubit extends Cubit<MediaGridState> {
         emit(const MediaGridState.permissionDenied());
       }
     } catch (e, st) {
-      debugPrintStack(label: 'Permission error', stackTrace: st);
+      debugPrint('Permission error: $e');
+      debugPrintStack(stackTrace: st);
       emit(MediaGridState.error(message: 'Permission error: $e'));
-    } finally {
-      _isRequestingPermission = false;
     }
   }
 
   void toggleSelection(MediaItem mediaItem) {
-    final isCurrentlySelected = _selectedItems.contains(mediaItem);
-
-    if (isCurrentlySelected) {
+    if (_selectedItems.contains(mediaItem)) {
       _selectedItems.remove(mediaItem);
     } else {
-      if (allowMultiple) {
-        if (_selectedItems.length < maxSelection) {
-          _selectedItems.add(mediaItem);
-        }
-        // Если достигнут лимит, можно показать уведомление
-      } else {
-        _selectedItems.clear();
+      if (allowMultiple && _selectedItems.length < maxSelection) {
         _selectedItems.add(mediaItem);
+      } else if (!allowMultiple) {
+        _selectedItems
+          ..clear()
+          ..add(mediaItem);
       }
     }
-
-    // Обновляем состояние
-    if (state is _Loaded) {
-      _emitLoaded(hasMore: (state as _Loaded).hasMoreItems);
-    }
-  }
-
-  void clearSelection() {
-    _selectedItems.clear();
-    if (state is _Loaded) {
-      _emitLoaded(hasMore: (state as _Loaded).hasMoreItems);
-    }
+    _emitLoaded();
   }
 
   Future<void> loadMedia({bool reset = false}) async {
@@ -106,11 +100,10 @@ class MediaGridCubit extends Cubit<MediaGridState> {
       if (reset) {
         _currentOffset = 0;
         _mediaItems.clear();
-        _thumbnailCache.clear();
-        _thumbnailLoading.clear();
+        _thumbnailsCache.clear();
+        _thumbnailCompleters.clear();
+        _thumbnailErrors.clear();
         emit(const MediaGridState.loading());
-      } else if (state is _Loaded) {
-        emit((state as _Loaded).copyWith(isLoadingMore: true));
       }
 
       final mediaData = await _fetchMedia(
@@ -131,7 +124,8 @@ class MediaGridCubit extends Cubit<MediaGridState> {
       _emitLoaded(hasMore: newItems.length == _pageSize);
       _preloadThumbnails(newItems);
     } catch (e, st) {
-      debugPrintStack(label: 'Load media error', stackTrace: st);
+      debugPrint('Load media error: $e');
+      debugPrintStack(stackTrace: st);
       emit(MediaGridState.error(message: 'Load error: $e'));
     } finally {
       _isLoadingMedia = false;
@@ -141,7 +135,7 @@ class MediaGridCubit extends Cubit<MediaGridState> {
   Future<List<Map<String, dynamic>>?> _fetchMedia({
     required int limit,
     required int offset,
-    required String? albumId,
+    String? albumId,
   }) async {
     try {
       switch (mediaType) {
@@ -164,18 +158,17 @@ class MediaGridCubit extends Cubit<MediaGridState> {
             albumId: albumId,
           );
       }
-    } catch (e, st) {
+    } catch (e) {
       debugPrint('Error fetching media: $e');
-      debugPrintStack(stackTrace: st);
       return null;
     }
   }
 
-  void _emitLoaded({required bool hasMore}) {
+  void _emitLoaded({bool hasMore = true}) {
     emit(
       MediaGridState.loaded(
         mediaItems: List.unmodifiable(_mediaItems),
-        thumbnailCache: Map.unmodifiable(_thumbnailCache),
+        thumbnailCache: Map.unmodifiable(_thumbnailsCache),
         hasMoreItems: hasMore,
         currentOffset: _currentOffset,
         isLoadingMore: false,
@@ -188,77 +181,113 @@ class MediaGridCubit extends Cubit<MediaGridState> {
   void _preloadThumbnails(List<MediaItem> newItems) {
     if (newItems.isEmpty) return;
 
-    final firstBatch = newItems.take(_thumbnailPreloadCount).toList();
-    for (final item in firstBatch) {
-      _loadThumbnail(item);
-    }
+    final itemsToPreload = newItems
+        .where(
+          (item) =>
+              !_thumbnailsCache.containsKey(item.id) &&
+              !_thumbnailCompleters.containsKey(item.id) &&
+              !_thumbnailErrors.containsKey(item.id),
+        )
+        .take(_thumbnailPreloadCount)
+        .toList();
 
-    if (newItems.length > _thumbnailPreloadCount) {
-      Future.microtask(() {
-        for (final item in newItems.skip(_thumbnailPreloadCount)) {
-          _loadThumbnail(item);
-        }
-      });
+    for (final item in itemsToPreload) {
+      _loadThumbnail(item);
     }
   }
 
-  Future<void> _loadThumbnail(MediaItem item) async {
-    if (_thumbnailCache.containsKey(item.id) ||
-        _thumbnailLoading[item.id] == true) {
-      debugPrint('Thumbnail for ${item.id} already loaded or loading');
+  void _loadThumbnail(MediaItem item) {
+    if (_thumbnailsCache.containsKey(item.id) ||
+        _thumbnailCompleters.containsKey(item.id) ||
+        _thumbnailErrors.containsKey(item.id)) {
       return;
     }
 
-    _thumbnailLoading[item.id] = true;
-    debugPrint('Loading thumbnail for ${item.id}');
+    final completer = Completer<Uint8List?>();
+    _thumbnailCompleters[item.id] = completer;
 
-    try {
-      final thumbnail = await _getThumbnailFor(item);
-      debugPrint('Thumbnail for ${item.id} loaded: ${thumbnail != null}');
+    Future<Uint8List?> thumbnailFuture;
+    if (thumbnailBuilder != null) {
+      thumbnailFuture = Future(() => thumbnailBuilder!(item));
+    } else {
+      thumbnailFuture = _mediaLibrary.getThumbnail(
+        mediaId: item.id,
+        mediaType: item.type,
+        width: 200,
+        height: 200,
+      );
+    }
 
-      if (thumbnail != null) {
-        _thumbnailCache[item.id] = thumbnail;
-        if (state is _Loaded) {
-          emit(
-            (state as _Loaded).copyWith(
-              thumbnailCache: Map.unmodifiable(_thumbnailCache),
-            ),
-          );
-        }
+    thumbnailFuture
+        .then((thumbnail) {
+          if (thumbnail != null) {
+            _thumbnailsCache[item.id] = thumbnail;
+            _thumbnailErrors.remove(item.id);
+          } else {
+            _thumbnailErrors[item.id] = true;
+          }
+          completer.complete(thumbnail);
+          _thumbnailCompleters.remove(item.id);
+
+          if (thumbnail != null && state is _Loaded && !isClosed) {
+            final current = state as _Loaded;
+            emit(
+              current.copyWith(
+                thumbnailCache: Map.unmodifiable(_thumbnailsCache),
+              ),
+            );
+          }
+        })
+        .catchError((error, stackTrace) {
+          debugPrint('Error loading thumbnail for ${item.id}: $error');
+          _thumbnailErrors[item.id] = true;
+          completer.complete(null);
+          _thumbnailCompleters.remove(item.id);
+        });
+  }
+
+  Future<Uint8List?> getThumbnailFuture(MediaItem item) async {
+    if (_thumbnailsCache.containsKey(item.id)) {
+      return _thumbnailsCache[item.id];
+    }
+
+    if (_thumbnailCompleters.containsKey(item.id)) {
+      return await _thumbnailCompleters[item.id]!.future;
+    }
+
+    if (_thumbnailErrors.containsKey(item.id)) {
+      return null;
+    }
+
+    _loadThumbnail(item);
+    return await _thumbnailCompleters[item.id]?.future;
+  }
+
+  Future<void> loadVisibleThumbnails(List<MediaItem> visibleItems) async {
+    for (final item in visibleItems) {
+      if (!_thumbnailsCache.containsKey(item.id) &&
+          !_thumbnailCompleters.containsKey(item.id) &&
+          !_thumbnailErrors.containsKey(item.id)) {
+        _loadThumbnail(item);
       }
-    } catch (e, st) {
-      debugPrint('Error loading thumbnail for ${item.id}: $e');
-      debugPrintStack(stackTrace: st);
-    } finally {
-      _thumbnailLoading.remove(item.id);
     }
   }
 
-  Future<Uint8List?> _getThumbnailFor(MediaItem item) async {
-    if (thumbnailBuilder != null) return thumbnailBuilder!(item);
-    return _mediaLibrary.getThumbnail(
-      mediaId: item.id,
-      mediaType: item.type,
-      width: 120,
-      height: 120,
-    );
-  }
-
-  String formatDuration(int seconds) {
-    final d = Duration(seconds: seconds);
-    final h = d.inHours;
-    final m = d.inMinutes.remainder(60);
-    final s = d.inSeconds.remainder(60);
-    String two(int n) => n.toString().padLeft(2, '0');
-    return h > 0 ? '${two(h)}:${two(m)}:${two(s)}' : '${two(m)}:${two(s)}';
-  }
-
-  // Public methods
-  Uint8List? getThumbnail(MediaItem item) => _thumbnailCache[item.id];
+  Uint8List? getThumbnail(MediaItem item) => _thumbnailsCache[item.id];
   bool isThumbnailLoading(MediaItem item) =>
-      _thumbnailLoading[item.id] ?? false;
+      _thumbnailCompleters.containsKey(item.id);
   bool isSelected(MediaItem item) => _selectedItems.contains(item);
   int getSelectionIndex(MediaItem item) => _selectedItems.indexOf(item) + 1;
-  Future<void> loadTumbunail(MediaItem item) async =>
-      await _loadThumbnail(item);
+
+  Future<void> loadTumbunail(MediaItem item) async {
+    _thumbnailErrors.remove(item.id);
+    _thumbnailsCache.remove(item.id);
+    _thumbnailCompleters.remove(item.id);
+    _loadThumbnail(item);
+  }
+
+  bool hasThumbnailError(MediaItem item) =>
+      _thumbnailErrors.containsKey(item.id);
+  bool isThumbnailLoaded(MediaItem item) =>
+      _thumbnailsCache.containsKey(item.id);
 }

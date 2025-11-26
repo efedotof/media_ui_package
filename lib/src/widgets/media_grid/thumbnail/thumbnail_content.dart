@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 
@@ -11,6 +10,7 @@ class ThumbnailContent extends StatelessWidget {
   final Uint8List? thumbnail;
   final ColorScheme colorScheme;
   final MediaItem item;
+  final bool hasError;
 
   const ThumbnailContent({
     super.key,
@@ -18,12 +18,21 @@ class ThumbnailContent extends StatelessWidget {
     required this.thumbnail,
     required this.colorScheme,
     required this.item,
+    this.hasError = false,
   });
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return LoadingPlaceholder(colorScheme: colorScheme);
+    }
+
+    if (hasError) {
+      return MediaPlaceholder(
+        colorScheme: colorScheme,
+        isVideo: item.type == 'video',
+        showError: true,
+      );
     }
 
     if (thumbnail != null) {
@@ -34,6 +43,7 @@ class ThumbnailContent extends StatelessWidget {
           return MediaPlaceholder(
             colorScheme: colorScheme,
             isVideo: item.type == 'video',
+            showError: true,
           );
         },
       );

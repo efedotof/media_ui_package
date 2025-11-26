@@ -12,6 +12,7 @@ class ThumbnailWidget extends StatelessWidget {
   final MediaItem item;
   final VoidCallback onRetryLoad;
   final Uint8List? thumbnail;
+  final bool hasError;
 
   const ThumbnailWidget({
     super.key,
@@ -21,6 +22,7 @@ class ThumbnailWidget extends StatelessWidget {
     required this.item,
     required this.onRetryLoad,
     required this.thumbnail,
+    this.hasError = false,
   });
 
   @override
@@ -35,8 +37,9 @@ class ThumbnailWidget extends StatelessWidget {
             thumbnail: thumbnail,
             colorScheme: colorScheme,
             item: item,
+            hasError: hasError,
           ),
-          if (!isLoading && thumbnail == null)
+          if ((!isLoading && thumbnail == null) || hasError)
             RetryButton(colorScheme: colorScheme, onRetryLoad: onRetryLoad),
         ],
       ),

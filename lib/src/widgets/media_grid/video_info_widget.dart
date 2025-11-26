@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class VideoInfoWidget extends StatelessWidget {
   final MediaItem item;
@@ -12,20 +11,27 @@ class VideoInfoWidget extends StatelessWidget {
     required this.colorScheme,
   });
 
+  String formatDuration(int milliseconds) {
+    final d = Duration(milliseconds: milliseconds);
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60);
+    final s = d.inSeconds.remainder(60);
+    String two(int n) => n.toString().padLeft(2, '0');
+    return h > 0 ? '${two(h)}:${two(m)}:${two(s)}' : '${two(m)}:${two(s)}';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (item.type != 'video') return const SizedBox();
 
-    final duration = context.read<MediaGridCubit>().formatDuration(
-      item.duration ?? 0,
-    );
+    final duration = formatDuration(item.duration ?? 0);
 
     return Positioned(
       bottom: 6,
       left: 6,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: Colors.black.withAlpha(6),
+          color: Colors.black.withAlpha(180),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Padding(

@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 
 class LoadedMediaContent extends StatefulWidget {
   final Uint8List? mediaLoaded;
@@ -28,14 +27,16 @@ class _LoadedMediaContentState extends State<LoadedMediaContent> {
         color: Colors.black,
         child: Center(
           child: InteractiveViewer(
+            alignment: Alignment.center,
             panEnabled: true,
             minScale: 1.0,
             maxScale: 3.0,
-            child: Image.memory(
-              alignment: Alignment.center,
-              widget.mediaLoaded!,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.high,
+            child: Center(
+              child: Image.memory(
+                widget.mediaLoaded!,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+              ),
             ),
           ),
         ),
@@ -48,14 +49,16 @@ class _LoadedMediaContentState extends State<LoadedMediaContent> {
           color: Colors.black,
           child: Center(
             child: InteractiveViewer(
+              alignment: Alignment.center,
               panEnabled: true,
               minScale: 1.0,
               maxScale: 3.0,
-              child: Image.memory(
-                alignment: Alignment.center,
-                widget.mediasLoaded!.first,
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.high,
+              child: Center(
+                child: Image.memory(
+                  widget.mediaLoaded!,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                ),
               ),
             ),
           ),
@@ -83,7 +86,6 @@ class _LoadedMediaContentState extends State<LoadedMediaContent> {
       );
     }
 
-    // Todo: обработка видео
     return Container(color: Colors.black);
   }
 }
