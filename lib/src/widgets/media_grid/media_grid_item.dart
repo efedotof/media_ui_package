@@ -2,8 +2,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/media_ui_package.dart';
-import 'selection_indicator_widget.dart';
-import 'video_info_widget.dart';
 
 class MediaGridItem extends StatefulWidget {
   final MediaItem item;
@@ -33,12 +31,7 @@ class _MediaGridItemState extends State<MediaGridItem> {
   @override
   void initState() {
     super.initState();
-    _loadThumbnail();
-  }
-
-  void _loadThumbnail() {
     final cubit = context.read<MediaGridCubit>();
-
     if (!cubit.isThumbnailLoaded(widget.item) &&
         !cubit.hasThumbnailError(widget.item)) {
       _thumbnailFuture = cubit.getThumbnailFuture(widget.item);
@@ -47,140 +40,138 @@ class _MediaGridItemState extends State<MediaGridItem> {
     }
   }
 
-  void _retryLoadThumbnail() {
-    final cubit = context.read<MediaGridCubit>();
-    setState(() {
-      _thumbnailFuture = cubit.getThumbnailFuture(widget.item);
-      cubit.loadTumbunail(widget.item);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<MediaGridCubit>();
     final isLoaded = cubit.isThumbnailLoaded(widget.item);
     final isLoading = cubit.isThumbnailLoading(widget.item);
-    final hasError = cubit.hasThumbnailError(widget.item);
+    cubit.hasThumbnailError(widget.item);
 
     return GestureDetector(
       onTap: widget.onThumbnailTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeInOut,
+      child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           border: widget.isSelected
-              ? Border.all(color: widget.colorScheme.primary, width: 3)
-              : null,
-          boxShadow: widget.isSelected
-              ? [
-                  BoxShadow(
-                    color: widget.colorScheme.primary.withAlpha(50),
-                    blurRadius: 5,
-                    spreadRadius: 1,
-                  ),
-                ]
+              ? Border.all(color: widget.colorScheme.primary, width: 2)
               : null,
         ),
         child: Stack(
           fit: StackFit.expand,
           children: [
-            _buildThumbnailContent(isLoaded, isLoading, hasError),
-            SelectionIndicatorWidget(
-              config: const MediaPickerConfig(),
-              colorScheme: widget.colorScheme,
-              onSelectionTap: widget.onSelect,
-              isSelected: widget.isSelected,
-              selectionIndex: widget.selectionIndex,
-            ),
-            if (widget.item.type == 'video')
-              VideoInfoWidget(
-                item: widget.item,
-                colorScheme: widget.colorScheme,
+            if (isLoaded && cubit.getThumbnail(widget.item) != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.memory(
+                  cubit.getThumbnail(widget.item)!,
+                  fit: BoxFit.cover,
+                ),
+              )
+            else
+              FutureBuilder<Uint8List?>(
+                future: _thumbnailFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting ||
+                      isLoading) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        color: widget.colorScheme.surfaceContainerHighest,
+                      ),
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: widget.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    );
+                  } else if (snapshot.hasData && snapshot.data != null) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.memory(snapshot.data!, fit: BoxFit.cover),
+                    );
+                  } else {
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _thumbnailFuture = cubit.getThumbnailFuture(
+                            widget.item,
+                          );
+                          cubit.loadTumbunail(widget.item);
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          color: widget.colorScheme.surfaceContainerHighest,
+                        ),
+                        child: Center(
+                          child: Icon(
+                            widget.item.type == 'video'
+                                ? Icons.videocam
+                                : Icons.photo,
+                            size: 24,
+                            color: widget.colorScheme.error,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                },
               ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildThumbnailContent(bool isLoaded, bool isLoading, bool hasError) {
-    if (isLoaded) {
-      final cubit = context.read<MediaGridCubit>();
-      final thumbnail = cubit.getThumbnail(widget.item);
-
-      if (thumbnail != null) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: Image.memory(
-            thumbnail,
-            fit: BoxFit.cover,
-            filterQuality: FilterQuality.medium,
-          ),
-        );
-      }
-    }
-
-    if (hasError) {
-      return _buildErrorPlaceholder();
-    }
-
-    return FutureBuilder<Uint8List?>(
-      future: _thumbnailFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting || isLoading) {
-          return _buildLoadingPlaceholder();
-        }
-
-        if (snapshot.hasData && snapshot.data != null) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: Image.memory(
-              snapshot.data!,
-              fit: BoxFit.cover,
-              filterQuality: FilterQuality.medium,
+            Positioned(
+              top: 4,
+              right: 4,
+              child: GestureDetector(
+                onTap: widget.onSelect,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: widget.isSelected
+                        ? widget.colorScheme.primary
+                        : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.2),
+                  ),
+                  child: widget.isSelected
+                      ? Center(
+                          child: Text(
+                            '${widget.selectionIndex}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        )
+                      : const Icon(Icons.add, color: Colors.white, size: 14),
+                ),
+              ),
             ),
-          );
-        }
 
-        return _buildErrorPlaceholder();
-      },
-    );
-  }
-
-  Widget _buildLoadingPlaceholder() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        color: widget.colorScheme.surfaceContainerHighest,
-      ),
-      child: Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(widget.colorScheme.primary),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorPlaceholder() {
-    return GestureDetector(
-      onTap: _retryLoadThumbnail,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6),
-          color: widget.colorScheme.surfaceContainerHighest,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              widget.item.type == 'video' ? Icons.videocam : Icons.photo,
-              color: widget.colorScheme.onSurface.withAlpha(150),
-              size: 32,
-            ),
-            const SizedBox(height: 6),
-            Icon(Icons.refresh, color: widget.colorScheme.primary, size: 20),
+            if (widget.item.type == 'video')
+              Positioned(
+                bottom: 4,
+                left: 4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
+                  color: Colors.black54,
+                  child: const Icon(
+                    Icons.videocam,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

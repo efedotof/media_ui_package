@@ -25,25 +25,16 @@ class SelectionIndicatorWidget extends StatelessWidget {
       child: GestureDetector(
         onTap: onSelectionTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          width: 26,
-          height: 26,
+          duration: const Duration(milliseconds: 150),
+          width: 22,
+          height: 22,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isSelected
-                ? config.selectedColor
-                : colorScheme.surface.withAlpha(4),
+            color: isSelected ? colorScheme.primary : Colors.transparent,
             border: Border.all(
-              color: isSelected ? config.selectedColor : Colors.white,
-              width: 2,
+              color: isSelected ? colorScheme.primary : colorScheme.onSurface,
+              width: 1.8,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(2),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              ),
-            ],
           ),
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 150),
@@ -52,19 +43,14 @@ class SelectionIndicatorWidget extends StatelessWidget {
                     key: const ValueKey(true),
                     child: Text(
                       '$selectionIndex',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
+                      style: TextStyle(
+                        color: colorScheme.onPrimary,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   )
-                : const Icon(
-                    Icons.circle_outlined,
-                    key: ValueKey(false),
-                    size: 18,
-                    color: Colors.white,
-                  ),
+                : const SizedBox(key: ValueKey(false)),
           ),
         ),
       ),

@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/media_ui_package.dart';
@@ -101,21 +100,39 @@ class _MediaGridState extends State<MediaGrid> {
                 selectedMediaItems,
               ) {
                 if (mediaItems.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No media files',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.photo_library,
+                          size: 64,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withAlpha(80),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No media files',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withAlpha(120),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }
 
                 return GridView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.all(3),
+                  padding: const EdgeInsets.all(4),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
-                    crossAxisSpacing: 6,
-                    mainAxisSpacing: 6,
+                    crossAxisSpacing: 4,
+                    mainAxisSpacing: 4,
                     childAspectRatio: 1,
                   ),
                   itemCount: mediaItems.length + (isLoadingMore ? 1 : 0),

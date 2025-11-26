@@ -30,25 +30,22 @@ class MediaPickerDialog extends StatefulWidget {
 class _MediaPickerDialogState extends State<MediaPickerDialog> {
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final config = widget.config ?? const MediaPickerConfig();
     final mediaType = widget.showVideos ? MediaType.all : MediaType.images;
 
     void confirmSelection() {
-      final selectedItems = context.read<MediaGridCubit>().selectedItems;
-      Navigator.of(context).pop(selectedItems);
-      widget.onConfirmed?.call(selectedItems);
+      final items = context.read<MediaGridCubit>().selectedItems;
+      Navigator.pop(context, items);
+      widget.onConfirmed?.call(items);
     }
 
-    void cancelSelection() {
-      Navigator.of(context).pop();
-    }
+    void cancel() => Navigator.pop(context);
 
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => MediaGridCubit(
+          create: (_) => MediaGridCubit(
             mediaType: mediaType,
             albumId: null,
             thumbnailBuilder: null,
@@ -62,225 +59,74 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
         config: config,
         child: Builder(
           builder: (context) {
-            return BlocListener<MediaGridCubit, MediaGridState>(
-              listener: (context, state) {
-                state.whenOrNull(
-                  loaded:
-                      (
-                        mediaItems,
-                        thumbnailCache,
-                        hasMoreItems,
-                        currentOffset,
-                        isLoadingMore,
-                        showSelectionIndicators,
-                        selectedMediaItems,
-                      ) {
-                        widget.onSelectionChanged?.call(selectedMediaItems);
-                      },
-                );
-              },
-              child: Dialog(
-                backgroundColor: colorScheme.surface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+            return Dialog(
+              insetPadding: const EdgeInsets.all(18),
+              backgroundColor: colorScheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: 600,
+                  maxWidth: 500,
                 ),
-                insetPadding: const EdgeInsets.all(20),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 500,
-                    maxHeight: 600,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      BlocBuilder<MediaGridCubit, MediaGridState>(
-                        builder: (context, state) {
-                          final selectedCount = state.when(
-                            initial: () => 0,
-                            loading: () => 0,
-                            permissionRequesting: () => 0,
-                            permissionDenied: () => 0,
-                            loaded:
-                                (
-                                  mediaItems,
-                                  thumbnailCache,
-                                  hasMoreItems,
-                                  currentOffset,
-                                  isLoadingMore,
-                                  showSelectionIndicators,
-                                  selectedMediaItems,
-                                ) => selectedMediaItems.length,
-                            error: (message) => 0,
-                          );
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
 
-                          return Container(
-                            padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Choose media',
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        widget.allowMultiple
-                                            ? 'Up to ${widget.maxSelection} items'
-                                            : 'Select one item',
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: colorScheme.onSurface
-                                                  .withAlpha(6),
-                                            ),
-                                      ),
-                                    ],
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: cancel,
+                          splashRadius: 22,
+                        ),
+                        const Spacer(),
+                      ],
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    const Expanded(child: MediaGrid()),
+
+                    BlocBuilder<MediaGridCubit, MediaGridState>(
+                      builder: (context, state) {
+                        final selected = state.maybeWhen(
+                          loaded: (_, __, ___, ____, _____, ______, s) => s,
+                          orElse: () => <MediaItem>[],
+                        );
+                        final hasSelection = selected.isNotEmpty;
+
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+                          child: Row(
+                            children: [
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: hasSelection ? confirmSelection : null,
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: hasSelection
+                                        ? colorScheme.primary
+                                        : colorScheme.surfaceContainerHighest,
+                                  ),
+                                  child: Icon(
+                                    Icons.check_rounded,
+                                    color: hasSelection
+                                        ? colorScheme.onPrimary
+                                        : colorScheme.onSurfaceVariant,
                                   ),
                                 ),
-                                if (widget.allowMultiple && selectedCount > 0)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.primary.withAlpha(1),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      '$selectedCount',
-                                      style: theme.textTheme.bodyMedium
-                                          ?.copyWith(
-                                            color: colorScheme.primary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                  ),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(Icons.close, size: 20),
-                                  onPressed: cancelSelection,
-                                  style: IconButton.styleFrom(
-                                    padding: const EdgeInsets.all(4),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-
-                      const Divider(height: 1),
-
-                      const Expanded(child: MediaGrid()),
-
-                      BlocBuilder<MediaGridCubit, MediaGridState>(
-                        builder: (context, state) {
-                          final selectedCount = state.when(
-                            initial: () => 0,
-                            loading: () => 0,
-                            permissionRequesting: () => 0,
-                            permissionDenied: () => 0,
-                            loaded:
-                                (
-                                  mediaItems,
-                                  thumbnailCache,
-                                  hasMoreItems,
-                                  currentOffset,
-                                  isLoadingMore,
-                                  showSelectionIndicators,
-                                  selectedMediaItems,
-                                ) => selectedMediaItems.length,
-                            error: (message) => 0,
-                          );
-
-                          final hasSelection = selectedCount > 0;
-
-                          return Container(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: cancelSelection,
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: colorScheme.onSurface,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ),
-                                      side: BorderSide(
-                                        color: colorScheme.outline.withAlpha(3),
-                                      ),
-                                    ),
-                                    child: const Text('Cancel'),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: hasSelection
-                                        ? confirmSelection
-                                        : null,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: hasSelection
-                                          ? colorScheme.primary
-                                          : colorScheme.onSurface.withAlpha(12),
-                                      foregroundColor: hasSelection
-                                          ? colorScheme.onPrimary
-                                          : colorScheme.onSurface.withAlpha(38),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        if (selectedCount > 0 &&
-                                            widget.allowMultiple)
-                                          Container(
-                                            margin: const EdgeInsets.only(
-                                              right: 6,
-                                            ),
-                                            padding: const EdgeInsets.all(2),
-                                            decoration: BoxDecoration(
-                                              color: colorScheme.onPrimary,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Text(
-                                              '$selectedCount',
-                                              style: TextStyle(
-                                                color: colorScheme.primary,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
-                                        Text(
-                                          widget.allowMultiple
-                                              ? 'Confirm'
-                                              : 'Select',
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
             );

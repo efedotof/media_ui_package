@@ -3,14 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'package:media_ui_package/src/models/media_type.dart';
-import 'selection_app_bar.dart';
 
 class MediaPickerScreen extends StatefulWidget {
   final List<MediaItem> initialSelection;
   final int maxSelection;
   final bool allowMultiple;
   final bool showVideos;
-  final String title;
   final Function(List<MediaItem>)? onSelectionChanged;
   final Uint8List? Function(MediaItem)? thumbnailBuilder;
   final String? albumId;
@@ -23,7 +21,6 @@ class MediaPickerScreen extends StatefulWidget {
     this.maxSelection = 10,
     this.allowMultiple = true,
     this.showVideos = true,
-    this.title = 'Select Media',
     this.onSelectionChanged,
     this.thumbnailBuilder,
     this.albumId,
@@ -64,48 +61,41 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
             return BlocConsumer<MediaGridCubit, MediaGridState>(
               listener: (context, state) {
                 state.whenOrNull(
-                  loaded:
-                      (
-                        mediaItems,
-                        thumbnailCache,
-                        hasMoreItems,
-                        currentOffset,
-                        isLoadingMore,
-                        showSelectionIndicators,
-                        selectedMediaItems,
-                      ) {
-                        widget.onSelectionChanged?.call(selectedMediaItems);
-                      },
+                  loaded: (_, __, ___, ____, _____, ______, selected) {
+                    widget.onSelectionChanged?.call(selected);
+                  },
                 );
               },
               builder: (context, state) {
-                final selectedCount = state.when(
-                  initial: () => 0,
-                  loading: () => 0,
-                  permissionRequesting: () => 0,
-                  permissionDenied: () => 0,
-                  loaded:
-                      (
-                        mediaItems,
-                        thumbnailCache,
-                        hasMoreItems,
-                        currentOffset,
-                        isLoadingMore,
-                        showSelectionIndicators,
-                        selectedMediaItems,
-                      ) => selectedMediaItems.length,
-                  error: (message) => 0,
+                final selected = state.maybeWhen(
+                  loaded: (_, __, ___, ____, _____, ______, s) => s,
+                  orElse: () => <MediaItem>[],
                 );
+                final hasSelection = selected.isNotEmpty;
 
                 return Scaffold(
-                  appBar: SelectionAppBar(
-                    title: widget.title,
-                    selectedCount: selectedCount,
-                    maxSelection: widget.maxSelection,
-                    onClear: () =>
-                        context.read<MediaGridCubit>().clearSelection(),
-                    onDone: () => _confirmSelection(context),
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+
+                  appBar: AppBar(
+                    elevation: 0,
+                    backgroundColor: Colors.transparent,
+                    leading: IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    actions: [
+                      IconButton(
+                        icon: const Icon(Icons.check_rounded),
+                        onPressed: hasSelection
+                            ? () => _confirmSelection(context)
+                            : null,
+                        color: hasSelection
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ],
                   ),
+
                   body: const MediaGrid(),
                 );
               },

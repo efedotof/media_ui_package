@@ -37,7 +37,6 @@ class _MyHomePageState extends State<MyHomePage> {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => MediaPickerScreen(
-          title: 'Select Media',
           allowMultiple: true,
           maxSelection: 5,
           showVideos: true,

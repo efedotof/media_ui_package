@@ -13,11 +13,9 @@ class VideoInfoWidget extends StatelessWidget {
 
   String formatDuration(int milliseconds) {
     final d = Duration(milliseconds: milliseconds);
-    final h = d.inHours;
     final m = d.inMinutes.remainder(60);
     final s = d.inSeconds.remainder(60);
-    String two(int n) => n.toString().padLeft(2, '0');
-    return h > 0 ? '${two(h)}:${two(m)}:${two(s)}' : '${two(m)}:${two(s)}';
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -27,29 +25,20 @@ class VideoInfoWidget extends StatelessWidget {
     final duration = formatDuration(item.duration ?? 0);
 
     return Positioned(
-      bottom: 6,
-      left: 6,
-      child: DecoratedBox(
+      bottom: 4,
+      right: 4,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.black.withAlpha(180),
+          color: colorScheme.scrim,
           borderRadius: BorderRadius.circular(4),
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.play_arrow, size: 12, color: Colors.white),
-              const SizedBox(width: 3),
-              Text(
-                duration,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+        child: Text(
+          duration,
+          style: TextStyle(
+            color: colorScheme.onPrimary,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),

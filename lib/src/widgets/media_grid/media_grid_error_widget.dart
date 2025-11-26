@@ -15,7 +15,7 @@ class MediaGridErrorWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isRequestingPermission) return const RequestingPermissionWidget();
 
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
 
     return Center(
       child: Padding(
@@ -23,35 +23,23 @@ class MediaGridErrorWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: colorScheme.error.withAlpha(5),
-            ),
+            Icon(Icons.error_outline, size: 48, color: cs.error),
             const SizedBox(height: 16),
-            Text(
-              'Нет доступа к медиафайлам',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Пожалуйста, предоставьте разрешение, чтобы продолжить.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
+            ElevatedButton(
               onPressed: onRetry,
-              icon: const Icon(Icons.lock_open),
-              label: const Text('Разрешить доступ'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
+                backgroundColor: cs.primary,
+                foregroundColor: cs.onPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
               ),
+              child: const Icon(Icons.refresh, size: 20),
             ),
           ],
         ),

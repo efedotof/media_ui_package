@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 
 class ImageViewerWidget extends StatelessWidget {
@@ -21,7 +20,6 @@ class ImageViewerWidget extends StatelessWidget {
       child: Stack(
         children: [
           InteractiveViewer(
-            alignment: Alignment.center,
             panEnabled: true,
             minScale: 1.0,
             maxScale: 5.0,
@@ -36,20 +34,23 @@ class ImageViewerWidget extends StatelessWidget {
 
           if (isSelected)
             Positioned(
-              top: 16,
-              right: 16,
+              top: 20,
+              right: 20,
               child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
                   color: Colors.blue,
                   shape: BoxShape.circle,
                 ),
-                child: Text(
-                  '$selectionIndex',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                child: Center(
+                  child: Text(
+                    '$selectionIndex',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ),

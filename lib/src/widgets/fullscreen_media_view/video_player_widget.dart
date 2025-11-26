@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'package:video_player/video_player.dart';
@@ -36,28 +35,18 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   Future<void> _initializeVideoPlayer() async {
-    try {
-      _controller = VideoPlayerController.file(File(widget.mediaItem.uri))
-        ..addListener(() {
-          if (mounted) {
-            setState(() {});
-          }
-        })
-        ..initialize().then((_) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-              _controller.setLooping(true);
-            });
-          }
-        });
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    _controller = VideoPlayerController.file(File(widget.mediaItem.uri))
+      ..addListener(() {
+        if (mounted) setState(() {});
+      })
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _controller.setLooping(true);
+          });
+        }
+      });
   }
 
   void _togglePlayPause() {
@@ -68,24 +57,16 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       } else {
         _controller.play();
         _isPlaying = true;
-        _showControls = true;
-
         Future.delayed(const Duration(seconds: 3), () {
           if (mounted && _controller.value.isPlaying) {
-            setState(() {
-              _showControls = false;
-            });
+            setState(() => _showControls = false);
           }
         });
       }
     });
   }
 
-  void _toggleControls() {
-    setState(() {
-      _showControls = !_showControls;
-    });
-  }
+  void _toggleControls() => setState(() => _showControls = !_showControls);
 
   @override
   void dispose() {
@@ -101,87 +82,101 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         color: Colors.black,
         child: Stack(
           children: [
-            if (_isLoading)
-              Center(
-                child: Image.memory(widget.thumbnailData, fit: BoxFit.contain),
-              )
-            else
-              Center(
-                child: AspectRatio(
-                  aspectRatio: _controller.value.aspectRatio,
-                  child: VideoPlayer(_controller),
-                ),
-              ),
+            Center(
+              child: _isLoading
+                  ? Image.memory(widget.thumbnailData, fit: BoxFit.contain)
+                  : AspectRatio(
+                      aspectRatio: _controller.value.aspectRatio,
+                      child: VideoPlayer(_controller),
+                    ),
+            ),
 
             if (_isLoading)
               const Center(
-                child: CircularProgressIndicator(color: Colors.white),
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                ),
               ),
 
             if (_showControls && !_isLoading)
               Positioned.fill(
-                child: Container(
-                  color: Colors.black38,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          _isPlaying ? Icons.pause : Icons.play_arrow,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      iconSize: 60,
+                      onPressed: _togglePlayPause,
+                      icon: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: const BoxDecoration(
                           color: Colors.white,
-                          size: 50,
+                          shape: BoxShape.circle,
                         ),
-                        onPressed: _togglePlayPause,
-                      ),
-                      const SizedBox(height: 20),
-                      VideoProgressIndicator(
-                        _controller,
-                        allowScrubbing: true,
-                        colors: const VideoProgressColors(
-                          playedColor: Colors.red,
-                          bufferedColor: Colors.grey,
-                          backgroundColor: Colors.white24,
+                        child: Icon(
+                          _isPlaying ? Icons.pause : Icons.play_arrow,
+                          color: Colors.black,
+                          size: 30,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 16),
+                    VideoProgressIndicator(
+                      _controller,
+                      allowScrubbing: true,
+                      colors: const VideoProgressColors(
+                        playedColor: Colors.white,
+                        bufferedColor: Colors.white38,
+                        backgroundColor: Colors.white24,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
             if (!_showControls && _isPlaying && !_isLoading)
               Positioned(
-                top: 16,
-                left: 16,
+                top: 20,
+                left: 20,
                 child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(20),
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    color: Colors.black,
+                    shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.play_arrow,
                     color: Colors.white,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
               ),
 
             if (widget.isSelected)
               Positioned(
-                top: 16,
-                right: 16,
+                top: 20,
+                right: 20,
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 28,
+                  height: 28,
                   decoration: const BoxDecoration(
                     color: Colors.blue,
                     shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    '${widget.selectionIndex}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                  child: Center(
+                    child: Text(
+                      '${widget.selectionIndex}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ),

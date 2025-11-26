@@ -65,206 +65,84 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
               minChildSize: widget.minChildSize,
               maxChildSize: widget.maxChildSize,
               expand: false,
-              builder: (context, scrollController) => Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: colorScheme.onSurface.withAlpha(30),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+              builder: (context, scrollController) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(18),
                     ),
-                    _buildHeader(context),
-                    const Divider(height: 1),
-                    Expanded(child: const MediaGrid()),
-                    _buildFooter(context),
-                  ],
-                ),
-              ),
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: colorScheme.outlineVariant,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Expanded(child: const MediaGrid()),
+
+                      BlocBuilder<MediaGridCubit, MediaGridState>(
+                        builder: (context, state) {
+                          final selected = state.maybeWhen(
+                            loaded:
+                                (_, __, ___, ____, _____, ______, selected) =>
+                                    selected,
+                            orElse: () => <MediaItem>[],
+                          );
+                          final hasSelection = selected.isNotEmpty;
+
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 20),
+                            child: Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  icon: const Icon(Icons.close_rounded),
+                                  color: colorScheme.onSurface,
+                                  tooltip: 'Cancel',
+                                ),
+                                const Spacer(),
+                                GestureDetector(
+                                  onTap: hasSelection
+                                      ? () =>
+                                            Navigator.of(context).pop(selected)
+                                      : null,
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: hasSelection
+                                          ? colorScheme.primary
+                                          : colorScheme.surfaceContainerHighest,
+                                    ),
+                                    child: Icon(
+                                      Icons.check_rounded,
+                                      color: hasSelection
+                                          ? colorScheme.onPrimary
+                                          : colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
             );
           },
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final cubit = context.read<MediaGridCubit>();
-    return BlocBuilder<MediaGridCubit, MediaGridState>(
-      builder: (context, state) {
-        final selectedCount = state.when(
-          initial: () => 0,
-          loading: () => 0,
-          permissionRequesting: () => 0,
-          permissionDenied: () => 0,
-          loaded: (_, __, ___, ____, _____, ______, selected) =>
-              selected.length,
-          error: (_) => 0,
-        );
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Select Media',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.allowMultiple
-                          ? 'Select up to ${widget.maxSelection} items'
-                          : 'Select one item',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withAlpha(60),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (selectedCount > 0) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary.withAlpha(10),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '$selectedCount',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                TextButton(
-                  onPressed: cubit.clearSelection,
-                  style: TextButton.styleFrom(
-                    foregroundColor: colorScheme.primary,
-                  ),
-                  child: const Text('Clear'),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFooter(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final cubit = context.read<MediaGridCubit>();
-
-    return BlocBuilder<MediaGridCubit, MediaGridState>(
-      builder: (context, state) {
-        final selectedCount = state.when(
-          initial: () => 0,
-          loading: () => 0,
-          permissionRequesting: () => 0,
-          permissionDenied: () => 0,
-          loaded: (_, __, ___, ____, _____, ______, selected) =>
-              selected.length,
-          error: (_) => 0,
-        );
-        final hasSelection = selectedCount > 0;
-
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(10),
-                blurRadius: 8,
-                offset: const Offset(0, -2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colorScheme.onSurface,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: BorderSide(color: colorScheme.outline.withAlpha(30)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('Cancel'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: hasSelection
-                      ? () => Navigator.of(context).pop(cubit.selectedItems)
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: hasSelection
-                        ? colorScheme.primary
-                        : colorScheme.primary.withAlpha(40),
-                    foregroundColor: colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (selectedCount > 0 && widget.allowMultiple)
-                        Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            '$selectedCount',
-                            style: const TextStyle(
-                              color: Colors.blue,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      Text(
-                        widget.allowMultiple ? 'Confirm' : 'Select',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

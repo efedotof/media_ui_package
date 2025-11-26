@@ -13,18 +13,12 @@ class MediaGridLoadingWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isRequestingPermission) return const RequestingPermissionWidget();
 
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircularProgressIndicator(color: colorScheme.primary),
-          const SizedBox(height: 16),
-          Text(
-            'Загрузка медиа...',
-            style: TextStyle(color: colorScheme.onSurfaceVariant),
-          ),
-        ],
+      child: SizedBox(
+        width: 32,
+        height: 32,
+        child: CircularProgressIndicator(color: cs.primary, strokeWidth: 2),
       ),
     );
   }

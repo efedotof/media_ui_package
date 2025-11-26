@@ -1,36 +1,29 @@
 import 'package:flutter/material.dart';
 
 class MediaPlaceholder extends StatelessWidget {
-  final ColorScheme colorScheme;
   final bool isVideo;
   final bool showError;
 
   const MediaPlaceholder({
     super.key,
-    required this.colorScheme,
-    required this.isVideo,
+    this.isVideo = false,
     this.showError = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Container(
-      color: colorScheme.surfaceContainerHighest,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            isVideo ? Icons.videocam : Icons.photo,
-            color: showError
-                ? colorScheme.error
-                : colorScheme.onSurface.withAlpha(150),
-            size: 28,
-          ),
-          if (showError) ...[
-            const SizedBox(height: 4),
-            Icon(Icons.error_outline, color: colorScheme.error, size: 16),
-          ],
-        ],
+      color: cs.surfaceContainerHighest,
+      child: Center(
+        child: showError
+            ? Icon(Icons.error_outline, color: cs.error, size: 28)
+            : Icon(
+                isVideo ? Icons.videocam : Icons.photo,
+                color: cs.onSurface,
+                size: 28,
+              ),
       ),
     );
   }

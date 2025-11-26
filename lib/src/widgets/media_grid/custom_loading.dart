@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'elastic_item.dart';
 
 class CustomLoading extends StatefulWidget {
@@ -27,21 +26,23 @@ class _CustomLoadingState extends State<CustomLoading>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (_, __) {
-        return GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: _columns,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemCount: _itemCount,
-          itemBuilder: (_, index) {
-            final delay = (index % _columns) * 0.1;
-            (_controller.value - delay).clamp(0.0, 1.0);
-            return ElasticItem(index: index, totalLoadingItems: _itemCount);
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: _columns,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: _itemCount,
+      itemBuilder: (_, index) {
+        return AnimatedBuilder(
+          animation: _controller,
+          builder: (_, __) {
+            final scale = 0.5 + 0.5 * (_controller.value);
+            return Transform.scale(
+              scale: scale,
+              child: ElasticItem(index: index, totalLoadingItems: _itemCount),
+            );
           },
         );
       },
