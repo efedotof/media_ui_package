@@ -45,6 +45,10 @@ class MediaGridCubit extends Cubit<MediaGridState> {
 
   Future<void> init() async => checkPermissionAndLoadMedia();
 
+  List<MediaItem> getSelectedItems() {
+    return List.unmodifiable(_selectedItems);
+  }
+
   void clearSelection() {
     if (_selectedItems.isEmpty) return;
     _selectedItems.clear();

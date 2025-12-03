@@ -42,7 +42,7 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
     final colorScheme = theme.colorScheme;
     final config = widget.config ?? const MediaPickerConfig();
     final mediaType = widget.showVideos ? MediaType.all : MediaType.images;
-
+    final isDark = theme.brightness == Brightness.dark;
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -68,10 +68,11 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
               builder: (context, scrollController) {
                 return Container(
                   decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(18),
-                    ),
+                    color: isDark ? Colors.white70 : Colors.black87,
+                    borderRadius: BorderRadius.circular(18),
+                    // borderRadius: const BorderRadius.vertical(
+                    //   top: Radius.circular(18),
+                    // ),
                   ),
                   child: Column(
                     children: [
@@ -89,12 +90,8 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
 
                       BlocBuilder<MediaGridCubit, MediaGridState>(
                         builder: (context, state) {
-                          final selected = state.maybeWhen(
-                            loaded:
-                                (_, __, ___, ____, _____, ______, selected) =>
-                                    selected,
-                            orElse: () => <MediaItem>[],
-                          );
+                          final cubit = context.read<MediaGridCubit>();
+                          final selected = cubit.selectedItems;
                           final hasSelection = selected.isNotEmpty;
 
                           return Padding(
@@ -110,8 +107,11 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                                 const Spacer(),
                                 GestureDetector(
                                   onTap: hasSelection
-                                      ? () =>
-                                            Navigator.of(context).pop(selected)
+                                      ? () {
+                                          widget.onConfirmed?.call(selected);
+
+                                          Navigator.of(context).pop(selected);
+                                        }
                                       : null,
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 180),
