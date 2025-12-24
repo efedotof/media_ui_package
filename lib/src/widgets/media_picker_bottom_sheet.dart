@@ -15,6 +15,7 @@ class MediaPickerBottomSheet extends StatefulWidget {
   final double maxChildSize;
   final bool showSelectionIndicators;
   final MediaPickerConfig? config;
+  final double? borderRadius;
 
   const MediaPickerBottomSheet({
     super.key,
@@ -29,6 +30,7 @@ class MediaPickerBottomSheet extends StatefulWidget {
     this.minChildSize = 0.4,
     this.maxChildSize = 0.9,
     this.config,
+    this.borderRadius,
   });
 
   @override
@@ -43,6 +45,11 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
     final config = widget.config ?? const MediaPickerConfig();
     final mediaType = widget.showVideos ? MediaType.all : MediaType.images;
     final isDark = theme.brightness == Brightness.dark;
+
+    final borderRadius = widget.borderRadius != null
+        ? BorderRadius.circular(widget.borderRadius!)
+        : BorderRadius.zero;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -69,10 +76,7 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                 return Container(
                   decoration: BoxDecoration(
                     color: isDark ? Colors.white70 : Colors.black87,
-                    borderRadius: BorderRadius.circular(18),
-                    // borderRadius: const BorderRadius.vertical(
-                    //   top: Radius.circular(18),
-                    // ),
+                    borderRadius: borderRadius,
                   ),
                   child: Column(
                     children: [
