@@ -1,16 +1,3 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
-
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
-
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
-
 # 📸 Media Attach Package
 
 A beautiful and customizable Flutter package for media selection with multiple UI options - full-screen, dialog, and resizable bottom sheet.
@@ -20,7 +7,7 @@ A beautiful and customizable Flutter package for media selection with multiple U
 - 🎨 **Multiple UI Options**
   - Full-screen media picker
   - Dialog-based picker
-  - Resizable bottom sheet
+  - Resizable bottom sheet with customizable border radius
 - 🎯 **Smart Selection**
   - Single or multiple selection
   - Visual selection indicators
@@ -29,6 +16,7 @@ A beautiful and customizable Flutter package for media selection with multiple U
   - Light, dark, and custom themes
   - Fully customizable colors
   - Adaptive design
+  - Customizable border radius for bottom sheet
 - 📱 **User-Friendly**
   - Drag-to-resize bottom sheet
   - Smooth animations
@@ -47,11 +35,13 @@ Add this to your `pubspec.yaml`:
 ```yaml
 dependencies:
   media_attach_package: ^1.0.0
+```
 
 ### Android Permissions
 
 Add these permissions to your `android/app/src/main/AndroidManifest.xml`:
 
+```xml
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
@@ -114,7 +104,7 @@ void showMediaPickerDialog(BuildContext context) {
 }
 ```
 
-### 3. Resizable Bottom Sheet
+### 3. Resizable Bottom Sheet with Customizable Border Radius
 
 ```dart
 void showMediaPickerBottomSheet(BuildContext context) {
@@ -129,6 +119,28 @@ void showMediaPickerBottomSheet(BuildContext context) {
       initialChildSize: 0.7,
       minChildSize: 0.4,
       maxChildSize: 0.9,
+      borderRadius: 18.0, // Customize border radius (optional)
+      onConfirmed: (selectedItems) {
+        print('Bottom sheet selection: ${selectedItems.length} items');
+      },
+    ),
+  );
+}
+
+// Without border radius (sharp corners)
+void showMediaPickerBottomSheetNoRadius(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => MediaPickerBottomSheet(
+      maxSelection: 10,
+      allowMultiple: true,
+      theme: MediaPickerTheme.customTheme,
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      // borderRadius is omitted - will have no rounded corners
       onConfirmed: (selectedItems) {
         print('Bottom sheet selection: ${selectedItems.length} items');
       },
@@ -185,11 +197,9 @@ MediaPickerScreen(
 );
 ```
 
-## Additional information
+## API Reference
 
-### API Reference
-
-#### MediaPickerScreen
+### MediaPickerScreen
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -200,16 +210,41 @@ MediaPickerScreen(
 | `theme` | `MediaPickerTheme` | `MediaPickerTheme()` | Custom theme |
 | `title` | `String` | `'Select Media'` | Screen title |
 | `onSelectionChanged` | `Function(List<MediaItem>)` | `null` | Selection change callback |
+| `thumbnailBuilder` | `Uint8List? Function(MediaItem)?` | `null` | Custom thumbnail builder |
+| `albumId` | `String?` | `null` | Specific album ID to show |
+| `mediaType` | `MediaType` | `MediaType.all` | Type of media to display |
+| `config` | `MediaPickerConfig?` | `null` | Advanced configuration |
 
-#### MediaPickerBottomSheet
+### MediaPickerDialog
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
+| `initialSelection` | `List<MediaItem>` | `[]` | Pre-selected items |
+| `maxSelection` | `int` | `10` | Maximum selectable items |
+| `allowMultiple` | `bool` | `true` | Allow multiple selection |
+| `showVideos` | `bool` | `true` | Show video files |
+| `onSelectionChanged` | `Function(List<MediaItem>)` | `null` | Selection change callback |
+| `onConfirmed` | `Function(List<MediaItem>)` | `null` | Confirmation callback |
+| `config` | `MediaPickerConfig?` | `null` | Advanced configuration |
+
+### MediaPickerBottomSheet
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `initialSelection` | `List<MediaItem>` | `[]` | Pre-selected items |
+| `maxSelection` | `int` | `10` | Maximum selectable items |
+| `allowMultiple` | `bool` | `true` | Allow multiple selection |
+| `showVideos` | `bool` | `true` | Show video files |
+| `onSelectionChanged` | `Function(List<MediaItem>)` | `null` | Selection change callback |
+| `onConfirmed` | `Function(List<MediaItem>)` | `null` | Confirmation callback |
 | `initialChildSize` | `double` | `0.7` | Initial sheet height (0.0-1.0) |
 | `minChildSize` | `double` | `0.4` | Minimum sheet height (0.0-1.0) |
 | `maxChildSize` | `double` | `0.9` | Maximum sheet height (0.0-1.0) |
+| `showSelectionIndicators` | `bool` | `true` | Show selection indicators |
+| `config` | `MediaPickerConfig?` | `null` | Advanced configuration |
+| **`borderRadius`** | **`double?`** | **`null`** | **Custom border radius. If `null`, no rounding is applied** |
 
-#### MediaItem Model
+### MediaItem Model
 
 ```dart
 MediaItem(
@@ -228,9 +263,24 @@ MediaItem(
 );
 ```
 
-### Examples
+### FullscreenMediaView
 
-#### Basic Implementation
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `mediaItems` | `List<MediaItem>?` | `null` | List of media items |
+| `initialIndex` | `int?` | `null` | Initial media index |
+| `selectedItems` | `List<MediaItem>?` | `null` | Pre-selected items |
+| `onItemSelected` | `Function(MediaItem, bool)?` | `null` | Item selection callback |
+| `urlMedia` | `bool` | `false` | Use URL media mode |
+| `urlMedial` | `String?` | `null` | Single URL for media |
+| `urlMedias` | `List<String>?` | `null` | List of media URLs |
+| `mediaLoaded` | `Uint8List?` | `null` | Single loaded media |
+| `mediasLoaded` | `List<Uint8List>?` | `null` | List of loaded media |
+| `showSelectionIndicator` | `bool` | `true` | Show selection indicators |
+
+## Examples
+
+### Basic Implementation
 
 ```dart
 class MediaPickerExample extends StatelessWidget {
@@ -256,6 +306,11 @@ class MediaPickerExample extends StatelessWidget {
               onPressed: () => showMediaPickerBottomSheet(context),
               child: Text('Bottom Sheet Picker'),
             ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => showMediaPickerBottomSheetNoRadius(context),
+              child: Text('Bottom Sheet (No Radius)'),
+            ),
           ],
         ),
       ),
@@ -264,7 +319,7 @@ class MediaPickerExample extends StatelessWidget {
 }
 ```
 
-#### Advanced Usage with State Management
+### Advanced Usage with State Management
 
 ```dart
 class AdvancedMediaPicker extends StatefulWidget {
@@ -286,7 +341,20 @@ class _AdvancedMediaPickerState extends State<AdvancedMediaPicker> {
     return Scaffold(
       appBar: AppBar(title: Text('Selected: ${_selectedMedia.length}')),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => showMediaPickerBottomSheet(context),
+        onPressed: () => showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => MediaPickerBottomSheet(
+            maxSelection: 10,
+            allowMultiple: true,
+            borderRadius: 24.0, // Custom border radius
+            initialChildSize: 0.7,
+            minChildSize: 0.4,
+            maxChildSize: 0.9,
+            onConfirmed: _handleMediaSelection,
+          ),
+        ),
         child: Icon(Icons.add_photo_alternate),
       ),
       body: _buildSelectedMediaGrid(),
@@ -321,7 +389,79 @@ class _AdvancedMediaPickerState extends State<AdvancedMediaPicker> {
 }
 ```
 
-### Contributing
+### Fullscreen Media Viewer
+
+```dart
+void viewMediaFullscreen(BuildContext context, MediaItem item) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => FullscreenMediaView(
+        mediaItems: [item],
+        initialIndex: 0,
+        showSelectionIndicator: false,
+      ),
+    ),
+  );
+}
+
+// View loaded media
+void viewLoadedMedia(BuildContext context, Uint8List imageBytes) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => FullscreenMediaView(
+        mediaLoaded: imageBytes,
+        showSelectionIndicator: false,
+      ),
+    ),
+  );
+}
+
+// View URL media
+void viewUrlMedia(BuildContext context, String imageUrl) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => FullscreenMediaView(
+        urlMedia: true,
+        urlMedial: imageUrl,
+        showSelectionIndicator: false,
+      ),
+    ),
+  );
+}
+```
+
+## New Features
+
+### Customizable Border Radius for Bottom Sheet
+
+The latest version introduces a new `borderRadius` parameter for the `MediaPickerBottomSheet` widget:
+
+```dart
+// With rounded corners (18px radius)
+MediaPickerBottomSheet(
+  borderRadius: 18.0,
+  // other parameters...
+)
+
+// With no rounded corners (sharp edges)
+MediaPickerBottomSheet(
+  // borderRadius omitted or set to null
+  // other parameters...
+)
+
+// Custom radius
+MediaPickerBottomSheet(
+  borderRadius: 12.0, // 12px radius
+  // other parameters...
+)
+```
+
+**Note:** When `borderRadius` is `null` or not provided, the bottom sheet will have no rounded corners (`BorderRadius.zero`).
+
+## Contributing
 
 We welcome contributions! Please feel free to submit issues and pull requests.
 
@@ -331,16 +471,7 @@ We welcome contributions! Please feel free to submit issues and pull requests.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-### License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Bug Reports & Feature Requests
 
-### Bug Reports & Feature Requests
-
-Found a bug or have a feature request? Please [open an issue](https://github.com/your-repo/media_attach_package/issues) on GitHub.
-
----
-
-**Made with ❤️ for the Flutter community**
-
-For more Flutter packages, check out our [other packages](https://pub.dev/publishers/your-publisher.dev/packages).
+Found a bug or have a feature request? Please [open an issue](https://github.com/efedotof/media_ui_package/issues) on GitHub.
