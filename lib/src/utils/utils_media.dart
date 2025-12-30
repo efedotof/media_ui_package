@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
@@ -11,6 +12,34 @@ class UtilsMedia {
       return bytes;
     } catch (e) {
       debugPrint('Error reading file by URI: $e');
+      return null;
+    }
+  }
+
+  Future<String?> getValidFilePath(String uri) async {
+    try {
+      if (uri.startsWith('content://')) {
+        final bytes = await getFileBytes(uri);
+        if (bytes != null) {
+          return uri;
+        }
+        return null;
+      } else if (uri.startsWith('file://')) {
+        final path = uri.replaceFirst('file://', '');
+        final file = File(path);
+        if (await file.exists()) {
+          return uri;
+        }
+        return null;
+      } else {
+        final file = File(uri);
+        if (await file.exists()) {
+          return 'file://$uri';
+        }
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Error validating file path: $e');
       return null;
     }
   }
