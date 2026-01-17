@@ -90,7 +90,9 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Expanded(child: const MediaGrid()),
+                      Expanded(
+                        child: MediaGrid(autoPlayVideosInFullscreen: true),
+                      ),
 
                       BlocBuilder<MediaGridCubit, MediaGridState>(
                         builder: (context, state) {

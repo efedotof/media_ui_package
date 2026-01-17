@@ -1,24 +1,50 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:media_ui_package/media_ui_package.dart';
+import 'package:media_ui_package/src/models/media_type.dart';
 import 'package:media_ui_package/src/widgets/fullscreen_media_view/cubit/full_screen_media_cubit.dart';
 import 'round_button.dart';
 
 class FullScreenMediaOverlay extends StatelessWidget {
+  final Uint8List? mediaLoaded;
+  final List<Uint8List>? mediasLoaded;
+
   const FullScreenMediaOverlay({
     super.key,
     this.mediaLoaded,
     this.mediasLoaded,
   });
 
-  final Uint8List? mediaLoaded;
-  final List<Uint8List>? mediasLoaded;
+  String _formatDuration(double seconds) {
+    final duration = Duration(seconds: seconds.toInt());
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    final secs = duration.inSeconds.remainder(60);
+
+    if (hours > 0) {
+      return '${hours.toString().padLeft(2, '0')}:'
+          '${minutes.toString().padLeft(2, '0')}:'
+          '${secs.toString().padLeft(2, '0')}';
+    } else {
+      return '${minutes.toString().padLeft(2, '0')}:'
+          '${secs.toString().padLeft(2, '0')}';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (kDebugMode) {
+      debugPrint('Building FullScreenMediaOverlay');
+    }
+
     return BlocBuilder<FullScreenMediaCubit, FullScreenMediaState>(
       builder: (context, state) {
-        final cubit = context.read<FullScreenMediaCubit>();
+        if (kDebugMode) {
+          debugPrint('FullScreenMediaOverlay state: $state');
+        }
+
         return state.maybeWhen(
           loaded:
               (
@@ -27,45 +53,36 @@ class FullScreenMediaOverlay extends StatelessWidget {
                 imageCache,
                 showSelectionIndicators,
                 selectedMediaItems,
+                isVideoPlaying,
+                videoPosition,
+                videoDuration,
+                isVideoBuffering,
               ) {
+                final cubit = context.read<FullScreenMediaCubit>();
                 final currentItem = mediaItems[currentIndex];
                 final selected = cubit.isSelected(currentItem);
                 final selectionIndex = cubit.getSelectionIndex(currentItem);
 
+                // Проверяем, видео ли это
+                final isVideo =
+                    currentItem.type == 'video' ||
+                    currentItem.type == 'videos' ||
+                    currentItem.type == MediaType.videos.name;
+
+                if (kDebugMode) {
+                  debugPrint(
+                    'Is video: $isVideo, videoDuration: $videoDuration, videoPosition: $videoPosition',
+                  );
+                }
+
                 return Stack(
                   children: [
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 120,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Colors.black54, Colors.transparent],
-                          ),
-                        ),
-                      ),
+                    // Полупрозрачный фон для кнопок
+                    Positioned.fill(
+                      child: Container(color: Colors.transparent),
                     ),
 
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 120,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [Colors.black54, Colors.transparent],
-                          ),
-                        ),
-                      ),
-                    ),
-
+                    // Кнопка назад
                     Positioned(
                       top: MediaQuery.of(context).padding.top + 16,
                       left: 16,
@@ -75,6 +92,7 @@ class FullScreenMediaOverlay extends StatelessWidget {
                       ),
                     ),
 
+                    // Кнопка выбора
                     if (showSelectionIndicators)
                       Positioned(
                         top: MediaQuery.of(context).padding.top + 16,
@@ -114,8 +132,29 @@ class FullScreenMediaOverlay extends StatelessWidget {
                         ),
                       ),
 
+                    // Кнопки управления видео (только для видео)
+                    if (isVideo &&
+                        videoDuration != null &&
+                        videoPosition != null)
+                      Positioned.fill(
+                        child: _buildVideoControls(
+                          context,
+                          cubit,
+                          isVideoPlaying ?? false,
+                          videoPosition,
+                          videoDuration,
+                          currentItem.name,
+                        ),
+                      ),
+
+                    // Счетчик медиа
                     Positioned(
-                      bottom: MediaQuery.of(context).padding.bottom + 16,
+                      bottom:
+                          (isVideo &&
+                              videoDuration != null &&
+                              videoPosition != null)
+                          ? MediaQuery.of(context).padding.bottom + 120
+                          : MediaQuery.of(context).padding.bottom + 16,
                       left: 0,
                       right: 0,
                       child: Center(
@@ -139,6 +178,7 @@ class FullScreenMediaOverlay extends StatelessWidget {
                       ),
                     ),
 
+                    // Счетчик выбранных элементов
                     if (selectedMediaItems.isNotEmpty)
                       Positioned(
                         top: MediaQuery.of(context).padding.top + 60,
@@ -167,9 +207,162 @@ class FullScreenMediaOverlay extends StatelessWidget {
                   ],
                 );
               },
-          orElse: () => const SizedBox(),
+          orElse: () {
+            return const SizedBox();
+          },
         );
       },
+    );
+  }
+
+  Widget _buildVideoControls(
+    BuildContext context,
+    FullScreenMediaCubit cubit,
+    bool isPlaying,
+    double position,
+    double duration,
+    String videoName,
+  ) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Верхняя часть
+        Container(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top + 16,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Показываем длительность видео
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  _formatDuration(duration),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Центральные кнопки управления
+        Expanded(
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Кнопка перемотки назад на 10 секунд
+                IconButton(
+                  icon: const Icon(
+                    Icons.replay_10,
+                    color: Colors.white,
+                    size: 36,
+                  ),
+                  onPressed: () => cubit.seekBackward(),
+                ),
+
+                const SizedBox(width: 32),
+
+                // Кнопка play/pause
+                IconButton(
+                  icon: Icon(
+                    isPlaying
+                        ? Icons.pause_circle_filled
+                        : Icons.play_circle_filled,
+                    color: Colors.white,
+                    size: 64,
+                  ),
+                  onPressed: () => cubit.toggleVideoPlayPause(),
+                ),
+
+                const SizedBox(width: 32),
+
+                // Кнопка перемотки вперед на 10 секунд
+                IconButton(
+                  icon: const Icon(
+                    Icons.forward_10,
+                    color: Colors.white,
+                    size: 36,
+                  ),
+                  onPressed: () => cubit.seekForward(),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Прогресс-бар и время внизу
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ).copyWith(bottom: MediaQuery.of(context).padding.bottom + 16),
+          child: Column(
+            children: [
+              // Прогресс-бар
+              Row(
+                children: [
+                  Text(
+                    _formatDuration(position),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 3,
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 8,
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 14,
+                          ),
+                        ),
+                        child: Slider(
+                          value: position,
+                          min: 0,
+                          max: duration > 0 ? duration : 1,
+                          onChanged: (value) {},
+                          onChangeEnd: (value) => cubit.seekVideo(value),
+                          activeColor: Colors.red,
+                          inactiveColor: Color.fromRGBO(255, 255, 255, 0.3),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    _formatDuration(duration),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              // Название видео
+              Text(
+                videoName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

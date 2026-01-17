@@ -12,11 +12,17 @@ part of 'full_screen_media_cubit.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$FullScreenMediaState {
+mixin _$FullScreenMediaState implements DiagnosticableTreeMixin {
 
 
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'FullScreenMediaState'))
+    ;
+}
 
 @override
 bool operator ==(Object other) {
@@ -28,7 +34,7 @@ bool operator ==(Object other) {
 int get hashCode => runtimeType.hashCode;
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'FullScreenMediaState()';
 }
 
@@ -128,12 +134,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( List<MediaItem> mediaItems,  int currentIndex,  Map<String, Uint8List?> imageCache,  bool showSelectionIndicators,  List<MediaItem> selectedMediaItems)?  loaded,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( List<MediaItem> mediaItems,  int currentIndex,  Map<String, Uint8List?> imageCache,  bool showSelectionIndicators,  List<MediaItem> selectedMediaItems,  bool? isVideoPlaying,  double? videoPosition,  double? videoDuration,  bool? isVideoBuffering)?  loaded,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
 return loading();case _Loaded() when loaded != null:
-return loaded(_that.mediaItems,_that.currentIndex,_that.imageCache,_that.showSelectionIndicators,_that.selectedMediaItems);case _Error() when error != null:
+return loaded(_that.mediaItems,_that.currentIndex,_that.imageCache,_that.showSelectionIndicators,_that.selectedMediaItems,_that.isVideoPlaying,_that.videoPosition,_that.videoDuration,_that.isVideoBuffering);case _Error() when error != null:
 return error(_that.message);case _:
   return orElse();
 
@@ -152,12 +158,12 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( List<MediaItem> mediaItems,  int currentIndex,  Map<String, Uint8List?> imageCache,  bool showSelectionIndicators,  List<MediaItem> selectedMediaItems)  loaded,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( List<MediaItem> mediaItems,  int currentIndex,  Map<String, Uint8List?> imageCache,  bool showSelectionIndicators,  List<MediaItem> selectedMediaItems,  bool? isVideoPlaying,  double? videoPosition,  double? videoDuration,  bool? isVideoBuffering)  loaded,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case _Initial():
 return initial();case _Loading():
 return loading();case _Loaded():
-return loaded(_that.mediaItems,_that.currentIndex,_that.imageCache,_that.showSelectionIndicators,_that.selectedMediaItems);case _Error():
+return loaded(_that.mediaItems,_that.currentIndex,_that.imageCache,_that.showSelectionIndicators,_that.selectedMediaItems,_that.isVideoPlaying,_that.videoPosition,_that.videoDuration,_that.isVideoBuffering);case _Error():
 return error(_that.message);case _:
   throw StateError('Unexpected subclass');
 
@@ -175,12 +181,12 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( List<MediaItem> mediaItems,  int currentIndex,  Map<String, Uint8List?> imageCache,  bool showSelectionIndicators,  List<MediaItem> selectedMediaItems)?  loaded,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( List<MediaItem> mediaItems,  int currentIndex,  Map<String, Uint8List?> imageCache,  bool showSelectionIndicators,  List<MediaItem> selectedMediaItems,  bool? isVideoPlaying,  double? videoPosition,  double? videoDuration,  bool? isVideoBuffering)?  loaded,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
 return loading();case _Loaded() when loaded != null:
-return loaded(_that.mediaItems,_that.currentIndex,_that.imageCache,_that.showSelectionIndicators,_that.selectedMediaItems);case _Error() when error != null:
+return loaded(_that.mediaItems,_that.currentIndex,_that.imageCache,_that.showSelectionIndicators,_that.selectedMediaItems,_that.isVideoPlaying,_that.videoPosition,_that.videoDuration,_that.isVideoBuffering);case _Error() when error != null:
 return error(_that.message);case _:
   return null;
 
@@ -192,7 +198,7 @@ return error(_that.message);case _:
 /// @nodoc
 
 
-class _Initial implements FullScreenMediaState {
+class _Initial with DiagnosticableTreeMixin implements FullScreenMediaState {
   const _Initial();
   
 
@@ -200,6 +206,12 @@ class _Initial implements FullScreenMediaState {
 
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'FullScreenMediaState.initial'))
+    ;
+}
 
 @override
 bool operator ==(Object other) {
@@ -211,7 +223,7 @@ bool operator ==(Object other) {
 int get hashCode => runtimeType.hashCode;
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'FullScreenMediaState.initial()';
 }
 
@@ -224,7 +236,7 @@ String toString() {
 /// @nodoc
 
 
-class _Loading implements FullScreenMediaState {
+class _Loading with DiagnosticableTreeMixin implements FullScreenMediaState {
   const _Loading();
   
 
@@ -232,6 +244,12 @@ class _Loading implements FullScreenMediaState {
 
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'FullScreenMediaState.loading'))
+    ;
+}
 
 @override
 bool operator ==(Object other) {
@@ -243,7 +261,7 @@ bool operator ==(Object other) {
 int get hashCode => runtimeType.hashCode;
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'FullScreenMediaState.loading()';
 }
 
@@ -256,8 +274,8 @@ String toString() {
 /// @nodoc
 
 
-class _Loaded implements FullScreenMediaState {
-  const _Loaded({required final  List<MediaItem> mediaItems, required this.currentIndex, required final  Map<String, Uint8List?> imageCache, required this.showSelectionIndicators, required final  List<MediaItem> selectedMediaItems}): _mediaItems = mediaItems,_imageCache = imageCache,_selectedMediaItems = selectedMediaItems;
+class _Loaded with DiagnosticableTreeMixin implements FullScreenMediaState {
+  const _Loaded({required final  List<MediaItem> mediaItems, required this.currentIndex, required final  Map<String, Uint8List?> imageCache, required this.showSelectionIndicators, required final  List<MediaItem> selectedMediaItems, this.isVideoPlaying, this.videoPosition, this.videoDuration, this.isVideoBuffering}): _mediaItems = mediaItems,_imageCache = imageCache,_selectedMediaItems = selectedMediaItems;
   
 
  final  List<MediaItem> _mediaItems;
@@ -283,6 +301,10 @@ class _Loaded implements FullScreenMediaState {
   return EqualUnmodifiableListView(_selectedMediaItems);
 }
 
+ final  bool? isVideoPlaying;
+ final  double? videoPosition;
+ final  double? videoDuration;
+ final  bool? isVideoBuffering;
 
 /// Create a copy of FullScreenMediaState
 /// with the given fields replaced by the non-null parameter values.
@@ -291,19 +313,25 @@ class _Loaded implements FullScreenMediaState {
 _$LoadedCopyWith<_Loaded> get copyWith => __$LoadedCopyWithImpl<_Loaded>(this, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'FullScreenMediaState.loaded'))
+    ..add(DiagnosticsProperty('mediaItems', mediaItems))..add(DiagnosticsProperty('currentIndex', currentIndex))..add(DiagnosticsProperty('imageCache', imageCache))..add(DiagnosticsProperty('showSelectionIndicators', showSelectionIndicators))..add(DiagnosticsProperty('selectedMediaItems', selectedMediaItems))..add(DiagnosticsProperty('isVideoPlaying', isVideoPlaying))..add(DiagnosticsProperty('videoPosition', videoPosition))..add(DiagnosticsProperty('videoDuration', videoDuration))..add(DiagnosticsProperty('isVideoBuffering', isVideoBuffering));
+}
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Loaded&&const DeepCollectionEquality().equals(other._mediaItems, _mediaItems)&&(identical(other.currentIndex, currentIndex) || other.currentIndex == currentIndex)&&const DeepCollectionEquality().equals(other._imageCache, _imageCache)&&(identical(other.showSelectionIndicators, showSelectionIndicators) || other.showSelectionIndicators == showSelectionIndicators)&&const DeepCollectionEquality().equals(other._selectedMediaItems, _selectedMediaItems));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Loaded&&const DeepCollectionEquality().equals(other._mediaItems, _mediaItems)&&(identical(other.currentIndex, currentIndex) || other.currentIndex == currentIndex)&&const DeepCollectionEquality().equals(other._imageCache, _imageCache)&&(identical(other.showSelectionIndicators, showSelectionIndicators) || other.showSelectionIndicators == showSelectionIndicators)&&const DeepCollectionEquality().equals(other._selectedMediaItems, _selectedMediaItems)&&(identical(other.isVideoPlaying, isVideoPlaying) || other.isVideoPlaying == isVideoPlaying)&&(identical(other.videoPosition, videoPosition) || other.videoPosition == videoPosition)&&(identical(other.videoDuration, videoDuration) || other.videoDuration == videoDuration)&&(identical(other.isVideoBuffering, isVideoBuffering) || other.isVideoBuffering == isVideoBuffering));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_mediaItems),currentIndex,const DeepCollectionEquality().hash(_imageCache),showSelectionIndicators,const DeepCollectionEquality().hash(_selectedMediaItems));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_mediaItems),currentIndex,const DeepCollectionEquality().hash(_imageCache),showSelectionIndicators,const DeepCollectionEquality().hash(_selectedMediaItems),isVideoPlaying,videoPosition,videoDuration,isVideoBuffering);
 
 @override
-String toString() {
-  return 'FullScreenMediaState.loaded(mediaItems: $mediaItems, currentIndex: $currentIndex, imageCache: $imageCache, showSelectionIndicators: $showSelectionIndicators, selectedMediaItems: $selectedMediaItems)';
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
+  return 'FullScreenMediaState.loaded(mediaItems: $mediaItems, currentIndex: $currentIndex, imageCache: $imageCache, showSelectionIndicators: $showSelectionIndicators, selectedMediaItems: $selectedMediaItems, isVideoPlaying: $isVideoPlaying, videoPosition: $videoPosition, videoDuration: $videoDuration, isVideoBuffering: $isVideoBuffering)';
 }
 
 
@@ -314,7 +342,7 @@ abstract mixin class _$LoadedCopyWith<$Res> implements $FullScreenMediaStateCopy
   factory _$LoadedCopyWith(_Loaded value, $Res Function(_Loaded) _then) = __$LoadedCopyWithImpl;
 @useResult
 $Res call({
- List<MediaItem> mediaItems, int currentIndex, Map<String, Uint8List?> imageCache, bool showSelectionIndicators, List<MediaItem> selectedMediaItems
+ List<MediaItem> mediaItems, int currentIndex, Map<String, Uint8List?> imageCache, bool showSelectionIndicators, List<MediaItem> selectedMediaItems, bool? isVideoPlaying, double? videoPosition, double? videoDuration, bool? isVideoBuffering
 });
 
 
@@ -331,14 +359,18 @@ class __$LoadedCopyWithImpl<$Res>
 
 /// Create a copy of FullScreenMediaState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? mediaItems = null,Object? currentIndex = null,Object? imageCache = null,Object? showSelectionIndicators = null,Object? selectedMediaItems = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? mediaItems = null,Object? currentIndex = null,Object? imageCache = null,Object? showSelectionIndicators = null,Object? selectedMediaItems = null,Object? isVideoPlaying = freezed,Object? videoPosition = freezed,Object? videoDuration = freezed,Object? isVideoBuffering = freezed,}) {
   return _then(_Loaded(
 mediaItems: null == mediaItems ? _self._mediaItems : mediaItems // ignore: cast_nullable_to_non_nullable
 as List<MediaItem>,currentIndex: null == currentIndex ? _self.currentIndex : currentIndex // ignore: cast_nullable_to_non_nullable
 as int,imageCache: null == imageCache ? _self._imageCache : imageCache // ignore: cast_nullable_to_non_nullable
 as Map<String, Uint8List?>,showSelectionIndicators: null == showSelectionIndicators ? _self.showSelectionIndicators : showSelectionIndicators // ignore: cast_nullable_to_non_nullable
 as bool,selectedMediaItems: null == selectedMediaItems ? _self._selectedMediaItems : selectedMediaItems // ignore: cast_nullable_to_non_nullable
-as List<MediaItem>,
+as List<MediaItem>,isVideoPlaying: freezed == isVideoPlaying ? _self.isVideoPlaying : isVideoPlaying // ignore: cast_nullable_to_non_nullable
+as bool?,videoPosition: freezed == videoPosition ? _self.videoPosition : videoPosition // ignore: cast_nullable_to_non_nullable
+as double?,videoDuration: freezed == videoDuration ? _self.videoDuration : videoDuration // ignore: cast_nullable_to_non_nullable
+as double?,isVideoBuffering: freezed == isVideoBuffering ? _self.isVideoBuffering : isVideoBuffering // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 
@@ -348,7 +380,7 @@ as List<MediaItem>,
 /// @nodoc
 
 
-class _Error implements FullScreenMediaState {
+class _Error with DiagnosticableTreeMixin implements FullScreenMediaState {
   const _Error({required this.message});
   
 
@@ -361,6 +393,12 @@ class _Error implements FullScreenMediaState {
 _$ErrorCopyWith<_Error> get copyWith => __$ErrorCopyWithImpl<_Error>(this, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'FullScreenMediaState.error'))
+    ..add(DiagnosticsProperty('message', message));
+}
 
 @override
 bool operator ==(Object other) {
@@ -372,7 +410,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,message);
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'FullScreenMediaState.error(message: $message)';
 }
 

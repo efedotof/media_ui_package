@@ -37,8 +37,8 @@ class ImageViewerWidget extends StatelessWidget {
               top: 20,
               right: 20,
               child: Container(
-                width: 24,
-                height: 24,
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(
                   color: Colors.blue,
                   shape: BoxShape.circle,

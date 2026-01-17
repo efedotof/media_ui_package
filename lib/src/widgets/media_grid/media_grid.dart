@@ -8,7 +8,9 @@ import 'media_grid_loading_widget.dart';
 import 'elastic_item.dart';
 
 class MediaGrid extends StatefulWidget {
-  const MediaGrid({super.key});
+  final bool autoPlayVideosInFullscreen;
+
+  const MediaGrid({super.key, this.autoPlayVideosInFullscreen = false});
 
   @override
   State<MediaGrid> createState() => _MediaGridState();
@@ -53,6 +55,7 @@ class _MediaGridState extends State<MediaGrid> {
                 onItemSelected: (item, selected) {
                   cubit.toggleSelection(item);
                 },
+                autoPlayVideos: widget.autoPlayVideosInFullscreen,
               ),
             ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {

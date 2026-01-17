@@ -5,12 +5,17 @@ import 'package:media_ui_package/src/models/media_type.dart';
 import 'errors_widget.dart';
 import 'loading_widget.dart';
 import 'image_viewer_widget.dart';
-import 'video_player_widget.dart';
+import 'custom_video_player_widget.dart';
 
 class FullScreenMediaContent extends StatelessWidget {
   final PageController controller;
+  final bool autoPlayVideos;
 
-  const FullScreenMediaContent({super.key, required this.controller});
+  const FullScreenMediaContent({
+    super.key,
+    required this.controller,
+    this.autoPlayVideos = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -48,13 +53,25 @@ class FullScreenMediaContent extends StatelessWidget {
                       final item = mediaItems[index];
                       final data = thumbnailCache[item.id];
                       if (data != null) {
-                        if (item.type == MediaType.videos) {
-                          return VideoPlayerWidget(
+                        if (item.type == 'video' ||
+                            item.type == MediaType.videos.name) {
+                          return CustomVideoPlayerWidget(
                             mediaItem: item,
                             thumbnailData: data,
+
+                            isSelected: selectedItems.contains(item),
+                            selectionIndex: selectedItems.contains(item)
+                                ? selectedItems.indexOf(item) + 1
+                                : 0,
                           );
                         } else {
-                          return ImageViewerWidget(imageData: data);
+                          return ImageViewerWidget(
+                            imageData: data,
+                            isSelected: selectedItems.contains(item),
+                            selectionIndex: selectedItems.contains(item)
+                                ? selectedItems.indexOf(item) + 1
+                                : 0,
+                          );
                         }
                       }
                       return LoadingWidget(screenSize: screenSize);
@@ -73,36 +90,74 @@ class FullScreenMediaContent extends StatelessWidget {
             loading: () => LoadingWidget(screenSize: screenSize),
             error: (message) =>
                 ErrorsWidget(screenSize: screenSize, message: message),
-            loaded: (mediaItems, currentIndex, imageCache, _, __) {
-              if (mediaItems.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'No media',
-                    style: TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                );
-              }
-
-              return PageView.builder(
-                controller: controller,
-                itemCount: mediaItems.length,
-                itemBuilder: (context, index) {
-                  final item = mediaItems[index];
-                  final data = imageCache[item.id];
-                  if (data != null) {
-                    if (item.type == MediaType.videos) {
-                      return VideoPlayerWidget(
-                        mediaItem: item,
-                        thumbnailData: data,
-                      );
-                    } else {
-                      return ImageViewerWidget(imageData: data);
-                    }
+            loaded:
+                (
+                  mediaItems,
+                  currentIndex,
+                  imageCache,
+                  showSelectionIndicators,
+                  selectedMediaItems,
+                  isVideoPlaying,
+                  videoPosition,
+                  videoDuration,
+                  isVideoBuffering, // Добавлен новый параметр
+                ) {
+                  if (mediaItems.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No media',
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    );
                   }
-                  return LoadingWidget(screenSize: screenSize);
+
+                  return PageView.builder(
+                    controller: controller,
+                    itemCount: mediaItems.length,
+                    onPageChanged: (index) {
+                      context.read<FullScreenMediaCubit>().onPageChanged(index);
+                    },
+                    itemBuilder: (context, index) {
+                      final item = mediaItems[index];
+                      final data = imageCache[item.id];
+                      if (data != null) {
+                        if (item.type == 'video' ||
+                            item.type == MediaType.videos.name) {
+                          return CustomVideoPlayerWidget(
+                            mediaItem: item,
+                            thumbnailData: data,
+
+                            isSelected: selectedMediaItems.any(
+                              (e) => e.id == item.id,
+                            ),
+                            selectionIndex:
+                                selectedMediaItems.any((e) => e.id == item.id)
+                                ? selectedMediaItems.indexWhere(
+                                        (e) => e.id == item.id,
+                                      ) +
+                                      1
+                                : 0,
+                          );
+                        } else {
+                          return ImageViewerWidget(
+                            imageData: data,
+                            isSelected: selectedMediaItems.any(
+                              (e) => e.id == item.id,
+                            ),
+                            selectionIndex:
+                                selectedMediaItems.any((e) => e.id == item.id)
+                                ? selectedMediaItems.indexWhere(
+                                        (e) => e.id == item.id,
+                                      ) +
+                                      1
+                                : 0,
+                          );
+                        }
+                      }
+                      return LoadingWidget(screenSize: screenSize);
+                    },
+                  );
                 },
-              );
-            },
           );
         },
       );
