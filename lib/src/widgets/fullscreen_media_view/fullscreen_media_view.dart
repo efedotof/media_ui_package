@@ -50,15 +50,15 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
   }
 
   void _initializePageController() {
-    // Определяем количество элементов для текущего режима
     final itemCount = _getItemCount();
 
-    // Создаем PageController только если есть хотя бы один элемент
     if (itemCount > 0) {
       final initialIndex = widget.initialIndex ?? 0;
-      // Убеждаемся, что initialIndex в пределах допустимого
+
       final safeInitialIndex = initialIndex.clamp(0, itemCount - 1);
       _pageController = PageController(initialPage: safeInitialIndex);
+    } else {
+      debugPrint('FullscreenMediaView: Нет элементов для отображения');
     }
   }
 
@@ -66,99 +66,136 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
     if (widget.mediaLoaded != null) {
       return 1;
     }
+
     if (widget.mediasLoaded?.isNotEmpty ?? false) {
       return widget.mediasLoaded!.length;
     }
-    if (widget.urlMedial?.isNotEmpty ?? false) {
-      return 1;
+
+    if (widget.urlMedia) {
+      final hasUrlMedial =
+          widget.urlMedial != null &&
+          widget.urlMedial!.isNotEmpty &&
+          widget.urlMedial!.startsWith('http');
+
+      final hasUrlMedias =
+          widget.urlMedias != null &&
+          widget.urlMedias!.isNotEmpty &&
+          widget.urlMedias!.any((url) => url.startsWith('http'));
+
+      if (hasUrlMedial) {
+        return 1;
+      }
+
+      if (hasUrlMedias) {
+        return widget.urlMedias!.where((url) => url.startsWith('http')).length;
+      }
+
+      return 0;
     }
-    if (widget.urlMedias?.isNotEmpty ?? false) {
-      return widget.urlMedias!.length;
-    }
+
     if (widget.mediaItems?.isNotEmpty ?? false) {
       return widget.mediaItems!.length;
     }
+
     return 0;
   }
 
-  List<String> _getUrls() {
+  List<String> _getValidUrls() {
     final urls = <String>[];
-    if (widget.urlMedial?.isNotEmpty ?? false) {
+
+    if (widget.urlMedial != null &&
+        widget.urlMedial!.isNotEmpty &&
+        widget.urlMedial!.startsWith('http')) {
       urls.add(widget.urlMedial!);
     }
-    if (widget.urlMedias?.isNotEmpty ?? false) {
-      urls.addAll(widget.urlMedias!);
+
+    if (widget.urlMedias != null && widget.urlMedias!.isNotEmpty) {
+      urls.addAll(
+        widget.urlMedias!.where(
+          (url) => url.isNotEmpty && url.startsWith('http'),
+        ),
+      );
     }
+
     return urls;
   }
 
   Widget _buildEmptyState() {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: GestureDetector(
-        onTap: () => Navigator.of(context).pop(),
-        child: Stack(
-          children: [
-            const Center(
-              child: Text(
-                'Нет доступных медиа',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
+      body: Stack(
+        children: [
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.image_not_supported,
+                  size: 64,
+                  color: Colors.white.withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Нет доступных медиа',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ],
             ),
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 16,
-              left: 16,
-              child: RoundButton(
-                icon: Icons.arrow_back,
-                onTap: () => Navigator.of(context).pop(),
-              ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            child: RoundButton(
+              icon: Icons.arrow_back,
+              onTap: () => Navigator.of(context).pop(),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Определяем текущий режим
     final isLoadedMode =
         widget.mediaLoaded != null ||
         (widget.mediasLoaded?.isNotEmpty ?? false);
 
-    final isUrlMode =
-        !isLoadedMode &&
-        widget.urlMedia &&
-        ((widget.urlMedial?.isNotEmpty ?? false) ||
-            (widget.urlMedias?.isNotEmpty ?? false));
+    final urls = _getValidUrls();
+    final isUrlMode = !isLoadedMode && widget.urlMedia && urls.isNotEmpty;
 
-    // Проверяем, есть ли данные для отображения
     final itemCount = _getItemCount();
+
     if (itemCount == 0) {
+      debugPrint(
+        'FullscreenMediaView: Пустой контент, показываем состояние "Нет медиа"',
+      );
       return _buildEmptyState();
     }
 
-    // Если PageController еще не создан (например, из-за асинхронной загрузки),
-    // создаем его сейчас
-    if (_pageController == null) {
+    if (_pageController == null && itemCount > 0) {
       final initialIndex = widget.initialIndex ?? 0;
       final safeInitialIndex = initialIndex.clamp(0, itemCount - 1);
       _pageController = PageController(initialPage: safeInitialIndex);
     }
 
-    // Определяем содержимое в зависимости от режима
     Widget content;
-    if (isLoadedMode) {
-      content = LoadedMediaContent(
-        mediaLoaded: widget.mediaLoaded,
-        mediasLoaded: widget.mediasLoaded,
-        controller: _pageController!,
-      );
-    } else if (isUrlMode) {
-      final urls = _getUrls();
-      content = UrlMediaContent(urls: urls, controller: _pageController!);
-    } else {
-      content = FullScreenMediaContent(controller: _pageController!);
+
+    try {
+      if (isLoadedMode) {
+        content = LoadedMediaContent(
+          mediaLoaded: widget.mediaLoaded,
+          mediasLoaded: widget.mediasLoaded,
+          controller: _pageController!,
+        );
+      } else if (isUrlMode) {
+        content = UrlMediaContent(urls: urls, controller: _pageController!);
+      } else {
+        content = FullScreenMediaContent(controller: _pageController!);
+      }
+    } catch (e) {
+      debugPrint('Ошибка при создании контента FullscreenMediaView: $e');
+      return _buildEmptyState();
     }
 
     return BlocProvider(
