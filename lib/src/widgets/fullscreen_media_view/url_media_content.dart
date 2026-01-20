@@ -12,6 +12,25 @@ class UrlMediaContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (urls.isEmpty) {
+      return Container(
+        color: Colors.black,
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error, color: Colors.white, size: 32),
+              SizedBox(height: 8),
+              Text(
+                'Нет доступных изображений',
+                style: TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (urls.length == 1) {
       return Container(
         color: Colors.black,
@@ -37,8 +56,19 @@ class UrlMediaContent extends StatelessWidget {
                 );
               },
               errorBuilder: (context, error, stackTrace) {
+                debugPrint('Error loading image: $error');
                 return const Center(
-                  child: Icon(Icons.error, color: Colors.white, size: 32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error, color: Colors.white, size: 32),
+                      SizedBox(height: 8),
+                      Text(
+                        'Ошибка загрузки',
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -75,8 +105,19 @@ class UrlMediaContent extends StatelessWidget {
                   );
                 },
                 errorBuilder: (context, error, stackTrace) {
+                  debugPrint('Error loading image at index $index: $error');
                   return const Center(
-                    child: Icon(Icons.error, color: Colors.white, size: 32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error, color: Colors.white, size: 32),
+                        SizedBox(height: 8),
+                        Text(
+                          'Ошибка загрузки',
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
