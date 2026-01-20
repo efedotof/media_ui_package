@@ -155,16 +155,7 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
         controller: _pageController!,
       );
     } else if (isMediaItemsMode) {
-      return BlocProvider(
-        create: (_) => FullScreenMediaCubit(
-          mediaItems: widget.mediaItems!,
-          initialIndex: widget.initialIndex ?? 0,
-          selectedItems: widget.selectedItems ?? [],
-          onItemSelected: widget.onItemSelected ?? (_, __) {},
-          showSelectionIndicators: widget.showSelectionIndicator,
-        ),
-        child: FullScreenMediaContent(controller: _pageController!),
-      );
+      return FullScreenMediaContent(controller: _pageController!);
     } else {
       return const SizedBox();
     }
@@ -224,6 +215,23 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
             (widget.mediasLoaded?.isNotEmpty ?? false)) &&
         (widget.mediaItems?.isNotEmpty ?? false);
 
+    if (isMediaItemsMode) {
+      return BlocProvider(
+        create: (_) => FullScreenMediaCubit(
+          mediaItems: widget.mediaItems!,
+          initialIndex: widget.initialIndex ?? 0,
+          selectedItems: widget.selectedItems ?? [],
+          onItemSelected: widget.onItemSelected ?? (_, __) {},
+          showSelectionIndicators: widget.showSelectionIndicator,
+        ),
+        child: _buildScaffold(isMediaItemsMode),
+      );
+    }
+
+    return _buildScaffold(isMediaItemsMode);
+  }
+
+  Widget _buildScaffold(bool isMediaItemsMode) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
