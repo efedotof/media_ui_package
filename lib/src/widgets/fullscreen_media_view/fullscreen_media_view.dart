@@ -13,13 +13,13 @@ class FullscreenMediaView extends StatefulWidget {
   final int? initialIndex;
   final List<MediaItem>? selectedItems;
   final Function(MediaItem, bool)? onItemSelected;
+
   final bool urlMedia;
   final String? urlMedial;
   final List<String>? urlMedias;
   final Uint8List? mediaLoaded;
   final List<Uint8List>? mediasLoaded;
   final bool showSelectionIndicator;
-  final bool autoPlayVideos;
 
   const FullscreenMediaView({
     super.key,
@@ -33,7 +33,6 @@ class FullscreenMediaView extends StatefulWidget {
     this.mediaLoaded,
     this.mediasLoaded,
     this.showSelectionIndicator = true,
-    this.autoPlayVideos = false,
   });
 
   @override
@@ -41,23 +40,88 @@ class FullscreenMediaView extends StatefulWidget {
 }
 
 class _FullscreenMediaViewState extends State<FullscreenMediaView> {
-  late final PageController _pageController;
+  PageController? _pageController;
   bool _showOverlay = true;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: widget.initialIndex ?? 0);
+    _initializePageController();
   }
 
-  void _toggleOverlay() {
-    setState(() {
-      _showOverlay = !_showOverlay;
-    });
+  void _initializePageController() {
+    // Определяем количество элементов для текущего режима
+    final itemCount = _getItemCount();
+
+    // Создаем PageController только если есть хотя бы один элемент
+    if (itemCount > 0) {
+      final initialIndex = widget.initialIndex ?? 0;
+      // Убеждаемся, что initialIndex в пределах допустимого
+      final safeInitialIndex = initialIndex.clamp(0, itemCount - 1);
+      _pageController = PageController(initialPage: safeInitialIndex);
+    }
+  }
+
+  int _getItemCount() {
+    if (widget.mediaLoaded != null) {
+      return 1;
+    }
+    if (widget.mediasLoaded?.isNotEmpty ?? false) {
+      return widget.mediasLoaded!.length;
+    }
+    if (widget.urlMedial?.isNotEmpty ?? false) {
+      return 1;
+    }
+    if (widget.urlMedias?.isNotEmpty ?? false) {
+      return widget.urlMedias!.length;
+    }
+    if (widget.mediaItems?.isNotEmpty ?? false) {
+      return widget.mediaItems!.length;
+    }
+    return 0;
+  }
+
+  List<String> _getUrls() {
+    final urls = <String>[];
+    if (widget.urlMedial?.isNotEmpty ?? false) {
+      urls.add(widget.urlMedial!);
+    }
+    if (widget.urlMedias?.isNotEmpty ?? false) {
+      urls.addAll(widget.urlMedias!);
+    }
+    return urls;
+  }
+
+  Widget _buildEmptyState() {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: GestureDetector(
+        onTap: () => Navigator.of(context).pop(),
+        child: Stack(
+          children: [
+            const Center(
+              child: Text(
+                'Нет доступных медиа',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ),
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              left: 16,
+              child: RoundButton(
+                icon: Icons.arrow_back,
+                onTap: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Определяем текущий режим
     final isLoadedMode =
         widget.mediaLoaded != null ||
         (widget.mediasLoaded?.isNotEmpty ?? false);
@@ -68,75 +132,71 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
         ((widget.urlMedial?.isNotEmpty ?? false) ||
             (widget.urlMedias?.isNotEmpty ?? false));
 
-    // Если нет медиа из галереи
-    if (!isLoadedMode && !isUrlMode) {
-      return BlocProvider(
-        create: (_) => FullScreenMediaCubit(
-          mediaItems: widget.mediaItems ?? [],
-          initialIndex: widget.initialIndex ?? 0,
-          selectedItems: widget.selectedItems ?? [],
-          onItemSelected: widget.onItemSelected ?? (_, __) {},
-          showSelectionIndicators: widget.showSelectionIndicator,
-        ),
-        child: Scaffold(
-          backgroundColor: Colors.black,
-          body: Stack(
-            children: [
-              // Контент
-              FullScreenMediaContent(
-                controller: _pageController,
-                autoPlayVideos: widget.autoPlayVideos,
-              ),
+    // Проверяем, есть ли данные для отображения
+    final itemCount = _getItemCount();
+    if (itemCount == 0) {
+      return _buildEmptyState();
+    }
 
-              // Оверлей
+    // Если PageController еще не создан (например, из-за асинхронной загрузки),
+    // создаем его сейчас
+    if (_pageController == null) {
+      final initialIndex = widget.initialIndex ?? 0;
+      final safeInitialIndex = initialIndex.clamp(0, itemCount - 1);
+      _pageController = PageController(initialPage: safeInitialIndex);
+    }
+
+    // Определяем содержимое в зависимости от режима
+    Widget content;
+    if (isLoadedMode) {
+      content = LoadedMediaContent(
+        mediaLoaded: widget.mediaLoaded,
+        mediasLoaded: widget.mediasLoaded,
+        controller: _pageController!,
+      );
+    } else if (isUrlMode) {
+      final urls = _getUrls();
+      content = UrlMediaContent(urls: urls, controller: _pageController!);
+    } else {
+      content = FullScreenMediaContent(controller: _pageController!);
+    }
+
+    return BlocProvider(
+      create: (_) => FullScreenMediaCubit(
+        mediaItems: widget.mediaItems ?? [],
+        initialIndex: widget.initialIndex ?? 0,
+        selectedItems: widget.selectedItems ?? [],
+        onItemSelected: widget.onItemSelected ?? (_, __) {},
+        showSelectionIndicators: widget.showSelectionIndicator,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: GestureDetector(
+          onTap: () => setState(() => _showOverlay = !_showOverlay),
+          child: Stack(
+            children: [
+              content,
               if (_showOverlay)
-                FullScreenMediaOverlay(
-                  mediaLoaded: widget.mediaLoaded,
-                  mediasLoaded: widget.mediasLoaded,
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 16,
+                  left: 16,
+                  child: RoundButton(
+                    icon: Icons.arrow_back,
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
                 ),
+              if (_showOverlay && widget.showSelectionIndicator)
+                const FullScreenMediaOverlay(),
             ],
           ),
         ),
-      );
-    }
-
-    // Для загруженных медиа или URL
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          if (isLoadedMode)
-            LoadedMediaContent(
-              mediaLoaded: widget.mediaLoaded,
-              mediasLoaded: widget.mediasLoaded,
-              controller: _pageController,
-            )
-          else if (isUrlMode)
-            UrlMediaContent(
-              urls: [
-                if (widget.urlMedial?.isNotEmpty ?? false) widget.urlMedial!,
-                if (widget.urlMedias?.isNotEmpty ?? false) ...widget.urlMedias!,
-              ],
-              controller: _pageController,
-            ),
-
-          if (_showOverlay)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 16,
-              left: 16,
-              child: RoundButton(
-                icon: Icons.arrow_back,
-                onTap: () => Navigator.of(context).pop(),
-              ),
-            ),
-        ],
       ),
     );
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _pageController?.dispose();
     super.dispose();
   }
 }

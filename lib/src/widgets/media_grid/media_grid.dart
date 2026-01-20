@@ -55,7 +55,6 @@ class _MediaGridState extends State<MediaGrid> {
                 onItemSelected: (item, selected) {
                   cubit.toggleSelection(item);
                 },
-                autoPlayVideos: widget.autoPlayVideosInFullscreen,
               ),
             ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
