@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/media_ui_package.dart';
@@ -11,6 +13,7 @@ class MediaPickerDialog extends StatefulWidget {
   final Function(List<MediaItem>)? onSelectionChanged;
   final Function(List<MediaItem>)? onConfirmed;
   final MediaPickerConfig? config;
+  final Widget? child;
 
   const MediaPickerDialog({
     super.key,
@@ -21,6 +24,7 @@ class MediaPickerDialog extends StatefulWidget {
     this.onSelectionChanged,
     this.onConfirmed,
     this.config,
+    this.child,
   });
 
   @override
@@ -28,8 +32,31 @@ class MediaPickerDialog extends StatefulWidget {
 }
 
 class _MediaPickerDialogState extends State<MediaPickerDialog> {
+  bool get _isWeb => kIsWeb;
+  bool get _isWindows => !kIsWeb && Platform.isWindows;
+  bool get _shouldUseMediaPickerUI => _isWeb || _isWindows;
+
   @override
   Widget build(BuildContext context) {
+    if (_shouldUseMediaPickerUI) {
+      return Dialog(
+        insetPadding: const EdgeInsets.all(20),
+        child: MediaPickerUI(
+          initialSelection: widget.initialSelection,
+          maxSelection: widget.maxSelection,
+          allowMultiple: widget.allowMultiple,
+          showVideos: widget.showVideos,
+          onFilesSelected: (files) {
+            widget.onConfirmed?.call(files);
+            Navigator.of(context).pop();
+          },
+          showPickButton: true,
+          config: widget.config,
+          child: widget.child ?? Container(),
+        ),
+      );
+    }
+
     final colorScheme = Theme.of(context).colorScheme;
     final config = widget.config ?? const MediaPickerConfig();
     final mediaType = widget.showVideos ? MediaType.all : MediaType.images;

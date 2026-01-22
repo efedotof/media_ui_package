@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/media_ui_package.dart';
@@ -16,6 +18,7 @@ class MediaPickerBottomSheet extends StatefulWidget {
   final bool showSelectionIndicators;
   final MediaPickerConfig? config;
   final double? borderRadius;
+  final Widget? child;
 
   const MediaPickerBottomSheet({
     super.key,
@@ -31,6 +34,7 @@ class MediaPickerBottomSheet extends StatefulWidget {
     this.maxChildSize = 0.9,
     this.config,
     this.borderRadius,
+    this.child, // Необязательный child
   });
 
   @override
@@ -38,8 +42,28 @@ class MediaPickerBottomSheet extends StatefulWidget {
 }
 
 class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
+  // Метод определения платформы
+  bool get _isWeb => kIsWeb;
+  bool get _isWindows => !kIsWeb && Platform.isWindows;
+  bool get _shouldUseMediaPickerUI => _isWeb || _isWindows;
+
   @override
   Widget build(BuildContext context) {
+    if (_shouldUseMediaPickerUI) {
+      return MediaPickerUI(
+        initialSelection: widget.initialSelection,
+        maxSelection: widget.maxSelection,
+        allowMultiple: widget.allowMultiple,
+        showVideos: widget.showVideos,
+        onFilesSelected: (files) {
+          widget.onConfirmed?.call(files);
+        },
+        showPickButton: false,
+        config: widget.config,
+        child: widget.child ?? Container(),
+      );
+    }
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final config = widget.config ?? const MediaPickerConfig();
@@ -115,7 +139,6 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                                   onTap: hasSelection
                                       ? () {
                                           widget.onConfirmed?.call(selected);
-
                                           Navigator.of(context).pop(selected);
                                         }
                                       : null,

@@ -6,6 +6,12 @@
 
 #include "generated_plugin_registrant.h"
 
+#include <desktop_drop/desktop_drop_plugin.h>
+#include <device_media_library/device_media_library_windows.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
+  DesktopDropPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("DesktopDropPlugin"));
+  DeviceMediaLibraryWindowsRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("DeviceMediaLibraryWindows"));
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 
 void main() {
+  DeviceMediaLibrary.initialize();
   runApp(const MyApp());
 }
 
@@ -44,6 +45,7 @@ class _MyHomePageState extends State<MyHomePage> {
           onSelectionChanged: (selectedItems) {
             debugPrint('Selected items: ${selectedItems.length}');
           },
+          child: Container(),
         ),
       ),
     );
@@ -65,6 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onSelectionChanged: (selectedItems) {
           debugPrint('Dialog selection: ${selectedItems.length}');
         },
+        child: Container(),
       ),
     );
 
@@ -88,6 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onSelectionChanged: (selectedItems) {
           debugPrint('Bottom sheet selection: ${selectedItems.length}');
         },
+        child: Container(),
       ),
     );
 
@@ -96,6 +100,100 @@ class _MyHomePageState extends State<MyHomePage> {
         _selectedMediaItems = result;
       });
     }
+  }
+
+  void _openMediaPickerUI() async {
+    await showDialog<List<MediaItem>>(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(20),
+        child: SizedBox(
+          width: 500,
+          height: 500,
+          child: MediaPickerUI(
+            initialSelection: _selectedMediaItems,
+            maxSelection: 5,
+            allowMultiple: true,
+            showVideos: true,
+            onFilesSelected: (files) {
+              setState(() {
+                _selectedMediaItems = files;
+              });
+              Navigator.of(context).pop();
+            },
+            showPickButton: true,
+            enableDragDrop: true,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.cloud_upload, size: 64),
+                    const SizedBox(height: 16),
+                    const Text('Drag & Drop Area'),
+                    const Text('or click the + button'),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        final pickerState = context
+                            .findAncestorStateOfType<MediaPickerWidgetState>();
+                        pickerState?.pickFiles();
+                      },
+                      child: const Text('Select Files Manually'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openPlatformMediaPicker() async {
+    await showDialog<List<MediaItem>>(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(20),
+        child: PlatformMediaPickerUI(
+          initialSelection: _selectedMediaItems,
+          maxSelection: 5,
+          allowMultiple: true,
+          showVideos: true,
+          onConfirmed: (files) {
+            setState(() {
+              _selectedMediaItems = files;
+            });
+            Navigator.of(context).pop();
+          },
+          enableDragDrop: true,
+          child: Container(
+            height: 400,
+            width: 400,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.cloud_upload, size: 64),
+                  SizedBox(height: 16),
+                  Text('Platform Media Picker'),
+                  Text('Supports drag & drop'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _openFullscreenView() {
@@ -191,6 +289,24 @@ class _MyHomePageState extends State<MyHomePage> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.tonal(
+                    onPressed: _openMediaPickerUI,
+                    child: const Text('Open Media Picker UI (Drag & Drop)'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.tonal(
+                    onPressed: _openPlatformMediaPicker,
+                    child: const Text('Open Platform Media Picker'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.tonal(
                     onPressed: _openFullscreenView,
                     child: const Text('Open Fullscreen View'),
                   ),
@@ -251,23 +367,37 @@ class _MyHomePageState extends State<MyHomePage> {
                   _buildFeatureCard(
                     context,
                     'Media Picker Screen',
-                    'Полноэкранный выбор медиа с поддержкой множественного выбора, видео и индикацией выбора',
+                    'Полноэкранный выбор медиа с поддержкой множественного выбора, видео и индикацией выбора. На Windows/Web использует MediaPickerUI',
                     Icons.photo_library,
                     _openMediaPickerScreen,
                   ),
                   _buildFeatureCard(
                     context,
                     'Media Picker Dialog',
-                    'Диалоговое окно выбора медиа с ограниченным количеством элементов',
+                    'Диалоговое окно выбора медиа. На Windows/Web использует MediaPickerUI с drag&drop',
                     Icons.photo,
                     _openMediaPickerDialog,
                   ),
                   _buildFeatureCard(
                     context,
                     'Media Picker Bottom Sheet',
-                    'Bottom Sheet для выбора медиа с плавной анимацией и кастомными размерами',
+                    'Bottom Sheet для выбора медиа. На Windows/Web использует MediaPickerUI',
                     Icons.grid_view,
                     _openMediaPickerBottomSheet,
+                  ),
+                  _buildFeatureCard(
+                    context,
+                    'Media Picker UI',
+                    'Прямое использование MediaPickerUI с поддержкой drag&drop для Windows/Web',
+                    Icons.cloud_upload,
+                    _openMediaPickerUI,
+                  ),
+                  _buildFeatureCard(
+                    context,
+                    'Platform Media Picker',
+                    'Кросс-платформенный пикер с прямым доступом к DeviceMediaLibrary',
+                    Icons.perm_media,
+                    _openPlatformMediaPicker,
                   ),
                   _buildFeatureCard(
                     context,

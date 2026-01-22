@@ -1,4 +1,5 @@
-import 'dart:typed_data' show Uint8List;
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/media_ui_package.dart';
@@ -14,6 +15,7 @@ class MediaPickerScreen extends StatefulWidget {
   final String? albumId;
   final MediaType mediaType;
   final MediaPickerConfig? config;
+  final Widget? child;
 
   const MediaPickerScreen({
     super.key,
@@ -26,6 +28,7 @@ class MediaPickerScreen extends StatefulWidget {
     this.albumId,
     this.mediaType = MediaType.all,
     this.config,
+    this.child,
   });
 
   @override
@@ -33,8 +36,37 @@ class MediaPickerScreen extends StatefulWidget {
 }
 
 class _MediaPickerScreenState extends State<MediaPickerScreen> {
+  bool get _isWeb => kIsWeb;
+  bool get _isWindows => !kIsWeb && Platform.isWindows;
+  bool get _shouldUseMediaPickerUI => _isWeb || _isWindows;
+
   @override
   Widget build(BuildContext context) {
+    if (_shouldUseMediaPickerUI) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Media Picker'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: MediaPickerUI(
+          initialSelection: widget.initialSelection,
+          maxSelection: widget.maxSelection,
+          allowMultiple: widget.allowMultiple,
+          showVideos: widget.showVideos,
+          onFilesSelected: (files) {
+            widget.onSelectionChanged?.call(files);
+            Navigator.of(context).pop(files);
+          },
+          showPickButton: true,
+          config: widget.config,
+          child: widget.child ?? Container(),
+        ),
+      );
+    }
+
     final config = widget.config ?? const MediaPickerConfig();
 
     final mediaType = widget.mediaType == MediaType.all

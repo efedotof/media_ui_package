@@ -1,11 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:device_media_library/device_media_library.dart';
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:media_ui_package/src/models/media_item.dart';
 import 'package:media_ui_package/src/models/media_type.dart';
-
+import 'package:http/http.dart' as http;
 part 'full_screen_media_state.dart';
 part 'full_screen_media_cubit.freezed.dart';
 
@@ -86,24 +88,76 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
     if (imageCache.containsKey(item.id)) return;
 
     try {
-      final mediaType =
-          (item.type == 'video' || item.type == MediaType.videos.name)
-          ? 'video'
-          : 'image';
-
-      final data = await _mediaLibrary.getThumbnail(
-        mediaId: item.id,
-        mediaType: mediaType,
-        width: 1080,
-        height: 1080,
-      );
-      imageCache[item.id] = data;
+      if (item.uri.startsWith('data:') || item.uri.startsWith('file://')) {
+        final data = await _loadDirectData(item.uri);
+        imageCache[item.id] = data;
+      } else {
+        final mediaType = (item.type == 'video') ? 'video' : 'image';
+        final data = await _mediaLibrary.getThumbnail(
+          mediaId: item.id,
+          mediaType: mediaType,
+          width: 1080,
+          height: 1080,
+        );
+        imageCache[item.id] = data;
+      }
 
       state.maybeMap(
         loaded: (s) => emit(s.copyWith(imageCache: Map.from(imageCache))),
         orElse: () {},
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Error loading image: $e');
+
+      await _loadDirectAsFallback(item);
+    }
+  }
+
+  Future<Uint8List?> _loadDirectData(String uri) async {
+    try {
+      if (uri.startsWith('data:')) {
+        final base64Data = uri.split(',').last;
+        return base64Decode(base64Data);
+      } else if (uri.startsWith('file://')) {
+        final fileUri = Uri.parse(uri);
+
+        String path = fileUri.toFilePath(windows: Platform.isWindows);
+
+        if (Platform.isWindows && path.startsWith('/') && path.length > 1) {
+          if (path[2] == ':') {
+            path = path.substring(1);
+          }
+        }
+
+        final file = File(path);
+        return await file.readAsBytes();
+      }
+    } catch (e) {
+      debugPrint('Error loading direct data: $e');
+    }
+    return null;
+  }
+
+  Future<void> _loadDirectAsFallback(MediaItem item) async {
+    try {
+      if (item.thumbnail != null) {
+        imageCache[item.id] = item.thumbnail;
+      } else if (item.uri.startsWith('http')) {
+        final response = await http.get(Uri.parse(item.uri));
+        if (response.statusCode == 200) {
+          imageCache[item.id] = response.bodyBytes;
+        }
+      }
+
+      if (imageCache.containsKey(item.id)) {
+        state.maybeMap(
+          loaded: (s) => emit(s.copyWith(imageCache: Map.from(imageCache))),
+          orElse: () {},
+        );
+      }
+    } catch (e) {
+      debugPrint('Error in fallback loading: $e');
+    }
   }
 
   Future<void> _initializeVideo() async {
@@ -125,17 +179,29 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
         debugPrint('Initializing video: ${currentItem.uri}');
       }
 
-      // Отменяем старую подписку
       _videoEventsSubscription?.cancel();
       _videoEventsSubscription = null;
 
-      // Останавливаем старый таймер
       _positionUpdateTimer?.cancel();
       _positionUpdateTimer = null;
+
       final uri = currentItem.uri;
-      // Инициализируем видео
+      String videoPath = "";
+
+      if (uri.startsWith('file://')) {
+        final fileUri = Uri.parse(uri);
+        String path = fileUri.toFilePath(windows: Platform.isWindows);
+
+        if (Platform.isWindows && path.startsWith('/') && path.length > 1) {
+          if (path[2] == ':') {
+            path = path.substring(1);
+          }
+        }
+        videoPath = path;
+      }
+
       final initialized = await _mediaLibrary.initializeVideo(
-        videoPath: uri.startsWith('file://') ? uri : "",
+        videoPath: videoPath,
         videoUri: uri.startsWith('content://') ? uri : null,
         autoPlay: false,
         volume: 1.0,
@@ -145,7 +211,6 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
         throw Exception('Failed to initialize video');
       }
 
-      // Подписываемся на события
       _videoEventsSubscription = _mediaLibrary.videoEvents.listen(
         _handleVideoEvent,
         onError: (error) {
@@ -372,18 +437,15 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
     if (!_isCurrentVideo || !_isVideoInitialized || _isVideoDisposing) return;
 
     try {
-      // Ограничиваем позицию в пределах длительности
       final safePosition = position.clamp(0.0, _videoDuration);
 
       if (kDebugMode) {
         debugPrint('Seeking to: $safePosition (duration: $_videoDuration)');
       }
 
-      // Обновляем локальную позицию сразу для отзывчивости
       _videoPosition = safePosition;
       _updateState();
 
-      // Затем выполняем реальный seek
       await _mediaLibrary.seekVideoTo(safePosition);
     } catch (e) {
       if (kDebugMode) {

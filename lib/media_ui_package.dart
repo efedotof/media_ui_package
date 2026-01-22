@@ -9,7 +9,12 @@ export 'src/widgets/fullscreen_media_view/fullscreen_media_view.dart';
 export 'src/widgets/media_grid/media_grid.dart';
 export 'src/themes/media_picker_theme.dart';
 export 'src/utils/utils_media.dart';
-
+export 'src/utils/platform_media_picker_utils.dart';
+export 'src/widgets/drag_drop/universal_drop_zone.dart';
+export 'src/widgets/file_selection_dialog/file_selection_dialog.dart';
+export 'src/widgets/media_picker_ui.dart';
+export 'src/widgets/platform_media_picker_ui.dart';
+export 'src/widgets/media_picker_widget.dart';
 export 'src/widgets/fullscreen_media_view/cubit/full_screen_media_cubit.dart';
 export 'src/widgets/media_grid/cubit/media_grid_cubit.dart';
 

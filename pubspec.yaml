@@ -14,7 +14,7 @@ dependencies:
     git:
       url: https://github.com/efedotof/attach_file_photo_plugin
       path: .
-      ref: 59d3b71df4ea70f63091b659bec346442be6895d
+      ref: 5b1f9afd860c5964544ab44b53d300f3ce84e908
 
   bloc: ^9.1.0
   flutter_bloc: ^9.1.1
@@ -23,6 +23,8 @@ dependencies:
   cached_network_image: ^3.4.1
   visibility_detector: ^0.4.0+2
   path_provider: ^2.1.5
+  desktop_drop: ^0.7.0
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

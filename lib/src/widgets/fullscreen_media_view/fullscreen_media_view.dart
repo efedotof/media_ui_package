@@ -46,12 +46,8 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
   @override
   void initState() {
     super.initState();
-    _initializePageController();
-  }
 
-  void _initializePageController() {
     final itemCount = _getItemCount();
-
     if (itemCount > 0) {
       final initialIndex = widget.initialIndex ?? 0;
       final safeInitialIndex = initialIndex.clamp(0, itemCount - 1);
@@ -63,10 +59,7 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
 
   bool _isValidImageUrl(String? url) {
     if (url == null || url.isEmpty) return false;
-
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      return false;
-    }
+    if (!url.startsWith('http://') && !url.startsWith('https://')) return false;
 
     try {
       final uri = Uri.parse(url);
@@ -88,30 +81,17 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
   }
 
   int _getItemCount() {
-    if (widget.mediaLoaded != null) {
-      return 1;
-    }
-
+    if (widget.mediaLoaded != null) return 1;
     if (widget.mediasLoaded?.isNotEmpty ?? false) {
       return widget.mediasLoaded!.length;
     }
 
     if (widget.urlMedia) {
-      final hasUrlMedial = _isValidImageUrl(widget.urlMedial);
-
-      final hasUrlMedias =
-          widget.urlMedias != null &&
-          widget.urlMedias!.isNotEmpty &&
-          widget.urlMedias!.any((url) => _isValidImageUrl(url));
-
-      if (hasUrlMedial) {
-        return 1;
-      }
-
-      if (hasUrlMedias) {
+      if (_isValidImageUrl(widget.urlMedial)) return 1;
+      if (widget.urlMedias != null &&
+          widget.urlMedias!.any((url) => _isValidImageUrl(url))) {
         return widget.urlMedias!.where((url) => _isValidImageUrl(url)).length;
       }
-
       return 0;
     }
 
@@ -124,41 +104,11 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
 
   List<String> _getValidUrls() {
     final urls = <String>[];
-
-    if (_isValidImageUrl(widget.urlMedial)) {
-      urls.add(widget.urlMedial!);
-    }
-
+    if (_isValidImageUrl(widget.urlMedial)) urls.add(widget.urlMedial!);
     if (widget.urlMedias != null && widget.urlMedias!.isNotEmpty) {
       urls.addAll(widget.urlMedias!.where((url) => _isValidImageUrl(url)));
     }
-
     return urls;
-  }
-
-  Widget _buildContent(BuildContext context) {
-    final isLoadedMode =
-        widget.mediaLoaded != null ||
-        (widget.mediasLoaded?.isNotEmpty ?? false);
-
-    final urls = _getValidUrls();
-    final isUrlMode = !isLoadedMode && widget.urlMedia && urls.isNotEmpty;
-    final isMediaItemsMode =
-        !isLoadedMode && !isUrlMode && (widget.mediaItems?.isNotEmpty ?? false);
-
-    if (isUrlMode) {
-      return UrlMediaContent(urls: urls, controller: _pageController!);
-    } else if (isLoadedMode) {
-      return LoadedMediaContent(
-        mediaLoaded: widget.mediaLoaded,
-        mediasLoaded: widget.mediasLoaded,
-        controller: _pageController!,
-      );
-    } else if (isMediaItemsMode) {
-      return FullScreenMediaContent(controller: _pageController!);
-    } else {
-      return const SizedBox();
-    }
   }
 
   @override
@@ -166,9 +116,6 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
     final itemCount = _getItemCount();
 
     if (itemCount == 0) {
-      debugPrint(
-        'FullscreenMediaView: Пустой контент, показываем состояние "Нет медиа"',
-      );
       return Scaffold(
         backgroundColor: Colors.black,
         body: Stack(
@@ -203,17 +150,28 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
       );
     }
 
-    if (_pageController == null && itemCount > 0) {
-      final initialIndex = widget.initialIndex ?? 0;
-      final safeInitialIndex = initialIndex.clamp(0, itemCount - 1);
-      _pageController = PageController(initialPage: safeInitialIndex);
-    }
-
+    final isLoadedMode =
+        widget.mediaLoaded != null ||
+        (widget.mediasLoaded?.isNotEmpty ?? false);
+    final urls = _getValidUrls();
+    final isUrlMode = !isLoadedMode && widget.urlMedia && urls.isNotEmpty;
     final isMediaItemsMode =
-        !widget.urlMedia &&
-        !(widget.mediaLoaded != null ||
-            (widget.mediasLoaded?.isNotEmpty ?? false)) &&
-        (widget.mediaItems?.isNotEmpty ?? false);
+        !isLoadedMode && !isUrlMode && (widget.mediaItems?.isNotEmpty ?? false);
+
+    Widget content;
+    if (isUrlMode) {
+      content = UrlMediaContent(urls: urls, controller: _pageController!);
+    } else if (isLoadedMode) {
+      content = LoadedMediaContent(
+        mediaLoaded: widget.mediaLoaded,
+        mediasLoaded: widget.mediasLoaded,
+        controller: _pageController!,
+      );
+    } else if (isMediaItemsMode) {
+      content = FullScreenMediaContent(controller: _pageController!);
+    } else {
+      content = const SizedBox();
+    }
 
     if (isMediaItemsMode) {
       return BlocProvider(
@@ -224,22 +182,39 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
           onItemSelected: widget.onItemSelected ?? (_, __) {},
           showSelectionIndicators: widget.showSelectionIndicator,
         ),
-        child: _buildScaffold(isMediaItemsMode),
+        child: Scaffold(
+          backgroundColor: Colors.black,
+          body: GestureDetector(
+            onTap: () => setState(() => _showOverlay = !_showOverlay),
+            child: Stack(
+              children: [
+                content,
+                if (_showOverlay) ...[
+                  Positioned(
+                    top: MediaQuery.of(context).padding.top + 16,
+                    left: 16,
+                    child: RoundButton(
+                      icon: Icons.arrow_back,
+                      onTap: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                  if (widget.showSelectionIndicator)
+                    const FullScreenMediaOverlay(),
+                ],
+              ],
+            ),
+          ),
+        ),
       );
     }
 
-    return _buildScaffold(isMediaItemsMode);
-  }
-
-  Widget _buildScaffold(bool isMediaItemsMode) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
         onTap: () => setState(() => _showOverlay = !_showOverlay),
         child: Stack(
           children: [
-            _buildContent(context),
-
+            content,
             if (_showOverlay) ...[
               Positioned(
                 top: MediaQuery.of(context).padding.top + 16,
@@ -249,10 +224,7 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
                   onTap: () => Navigator.of(context).pop(),
                 ),
               ),
-
-              if (_showOverlay &&
-                  widget.showSelectionIndicator &&
-                  isMediaItemsMode)
+              if (isMediaItemsMode && widget.showSelectionIndicator)
                 const FullScreenMediaOverlay(),
             ],
           ],
