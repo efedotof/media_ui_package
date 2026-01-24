@@ -11,7 +11,7 @@ class MediaPickerBottomSheet extends StatefulWidget {
   final bool allowMultiple;
   final bool showVideos;
   final Function(List<MediaItem>)? onSelectionChanged;
-  final Function(List<MediaItem>)? onConfirmed;
+  final Function(List<MapEntry<String, Uint8List>>)? onConfirmed;
   final double initialChildSize;
   final double minChildSize;
   final double maxChildSize;
@@ -19,6 +19,7 @@ class MediaPickerBottomSheet extends StatefulWidget {
   final MediaPickerConfig? config;
   final double? borderRadius;
   final Widget? child;
+  final DeviceMediaLibrary? mediaLibrary;
 
   const MediaPickerBottomSheet({
     super.key,
@@ -34,7 +35,8 @@ class MediaPickerBottomSheet extends StatefulWidget {
     this.maxChildSize = 0.9,
     this.config,
     this.borderRadius,
-    this.child, // Необязательный child
+    this.child,
+    this.mediaLibrary,
   });
 
   @override
@@ -42,28 +44,62 @@ class MediaPickerBottomSheet extends StatefulWidget {
 }
 
 class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
-  // Метод определения платформы
   bool get _isWeb => kIsWeb;
   bool get _isWindows => !kIsWeb && Platform.isWindows;
   bool get _shouldUseMediaPickerUI => _isWeb || _isWindows;
+  late DeviceMediaLibrary _mediaLibrary;
+
+  @override
+  void initState() {
+    super.initState();
+    _mediaLibrary = widget.mediaLibrary ?? DeviceMediaLibrary();
+  }
 
   @override
   Widget build(BuildContext context) {
     if (_shouldUseMediaPickerUI) {
-      return MediaPickerUI(
-        initialSelection: widget.initialSelection,
-        maxSelection: widget.maxSelection,
-        allowMultiple: widget.allowMultiple,
-        showVideos: widget.showVideos,
-        onFilesSelected: (files) {
-          widget.onConfirmed?.call(files);
-        },
-        showPickButton: false,
-        config: widget.config,
-        child: widget.child ?? Container(),
-      );
+      return _buildMediaPickerUI();
     }
 
+    return _buildNativeMediaPicker();
+  }
+
+  Widget _buildMediaPickerUI() {
+    return MediaPickerUI(
+      initialSelection: widget.initialSelection,
+      maxSelection: widget.maxSelection,
+      allowMultiple: widget.allowMultiple,
+      showVideos: widget.showVideos,
+      onFilesSelected: (files) async {
+        final filesWithBytes = await _getFilesWithBytes(files);
+        widget.onConfirmed?.call(filesWithBytes);
+      },
+      showPickButton: false,
+      config: widget.config,
+      child: widget.child ?? Container(),
+    );
+  }
+
+  Future<List<MapEntry<String, Uint8List>>> _getFilesWithBytes(
+    List<MediaItem> files,
+  ) async {
+    final result = <MapEntry<String, Uint8List>>[];
+
+    for (final file in files) {
+      try {
+        final bytes = await _mediaLibrary.getFileBytes(file.uri);
+        if (bytes != null && bytes.isNotEmpty) {
+          result.add(MapEntry(file.uri, bytes));
+        }
+      } catch (e) {
+        debugPrint('Error getting bytes for file ${file.uri}: $e');
+      }
+    }
+
+    return result;
+  }
+
+  Widget _buildNativeMediaPicker() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final config = widget.config ?? const MediaPickerConfig();
@@ -91,6 +127,7 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
         config: config,
         child: Builder(
           builder: (context) {
+            final builderContext = context;
             return DraggableScrollableSheet(
               initialChildSize: widget.initialChildSize,
               minChildSize: widget.minChildSize,
@@ -117,7 +154,6 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                       Expanded(
                         child: MediaGrid(autoPlayVideosInFullscreen: true),
                       ),
-
                       BlocBuilder<MediaGridCubit, MediaGridState>(
                         builder: (context, state) {
                           final cubit = context.read<MediaGridCubit>();
@@ -129,7 +165,8 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                             child: Row(
                               children: [
                                 IconButton(
-                                  onPressed: () => Navigator.of(context).pop(),
+                                  onPressed: () =>
+                                      Navigator.of(builderContext).pop(),
                                   icon: const Icon(Icons.close_rounded),
                                   color: colorScheme.onSurface,
                                   tooltip: 'Cancel',
@@ -138,8 +175,10 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
                                 GestureDetector(
                                   onTap: hasSelection
                                       ? () {
-                                          widget.onConfirmed?.call(selected);
-                                          Navigator.of(context).pop(selected);
+                                          _handleConfirmSelection(
+                                            builderContext,
+                                            selected,
+                                          );
                                         }
                                       : null,
                                   child: AnimatedContainer(
@@ -173,5 +212,17 @@ class _MediaPickerBottomSheetState extends State<MediaPickerBottomSheet> {
         ),
       ),
     );
+  }
+
+  void _handleConfirmSelection(
+    BuildContext context,
+    List<MediaItem> selected,
+  ) async {
+    final filesWithBytes = await _getFilesWithBytes(selected);
+
+    if (context.mounted) {
+      widget.onConfirmed?.call(filesWithBytes);
+      Navigator.of(context).pop(selected);
+    }
   }
 }

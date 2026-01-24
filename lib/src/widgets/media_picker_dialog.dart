@@ -11,9 +11,10 @@ class MediaPickerDialog extends StatefulWidget {
   final bool allowMultiple;
   final bool showVideos;
   final Function(List<MediaItem>)? onSelectionChanged;
-  final Function(List<MediaItem>)? onConfirmed;
+  final Function(List<MapEntry<String, Uint8List>>)? onConfirmed;
   final MediaPickerConfig? config;
   final Widget? child;
+  final DeviceMediaLibrary? mediaLibrary;
 
   const MediaPickerDialog({
     super.key,
@@ -25,6 +26,7 @@ class MediaPickerDialog extends StatefulWidget {
     this.onConfirmed,
     this.config,
     this.child,
+    this.mediaLibrary,
   });
 
   @override
@@ -35,6 +37,44 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
   bool get _isWeb => kIsWeb;
   bool get _isWindows => !kIsWeb && Platform.isWindows;
   bool get _shouldUseMediaPickerUI => _isWeb || _isWindows;
+  late DeviceMediaLibrary _mediaLibrary;
+
+  @override
+  void initState() {
+    super.initState();
+    _mediaLibrary = widget.mediaLibrary ?? DeviceMediaLibrary();
+  }
+
+  Future<List<MapEntry<String, Uint8List>>> _getFilesWithBytes(
+    List<MediaItem> files,
+  ) async {
+    final result = <MapEntry<String, Uint8List>>[];
+
+    for (final file in files) {
+      try {
+        final bytes = await _mediaLibrary.getFileBytes(file.uri);
+        if (bytes != null && bytes.isNotEmpty) {
+          result.add(MapEntry(file.uri, bytes));
+        }
+      } catch (e) {
+        debugPrint('Error getting bytes for file ${file.uri}: $e');
+      }
+    }
+
+    return result;
+  }
+
+  Future<void> _handleConfirmSelection(
+    BuildContext context,
+    List<MediaItem> selected,
+  ) async {
+    final filesWithBytes = await _getFilesWithBytes(selected);
+
+    if (context.mounted) {
+      widget.onConfirmed?.call(filesWithBytes);
+      Navigator.of(context).pop(selected);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +86,12 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
           maxSelection: widget.maxSelection,
           allowMultiple: widget.allowMultiple,
           showVideos: widget.showVideos,
-          onFilesSelected: (files) {
-            widget.onConfirmed?.call(files);
-            Navigator.of(context).pop();
+          onFilesSelected: (files) async {
+            final filesWithBytes = await _getFilesWithBytes(files);
+            if (context.mounted) {
+              widget.onConfirmed?.call(filesWithBytes);
+              Navigator.of(context).pop();
+            }
           },
           showPickButton: true,
           config: widget.config,
@@ -60,12 +103,6 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
     final colorScheme = Theme.of(context).colorScheme;
     final config = widget.config ?? const MediaPickerConfig();
     final mediaType = widget.showVideos ? MediaType.all : MediaType.images;
-
-    void confirmSelection() {
-      final items = context.read<MediaGridCubit>().selectedItems;
-      Navigator.pop(context, items);
-      widget.onConfirmed?.call(items);
-    }
 
     void cancel() => Navigator.pop(context);
 
@@ -86,6 +123,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
         config: config,
         child: Builder(
           builder: (context) {
+            final builderContext = context;
             return Dialog(
               insetPadding: const EdgeInsets.all(18),
               backgroundColor: colorScheme.surface,
@@ -130,7 +168,12 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                             children: [
                               const Spacer(),
                               GestureDetector(
-                                onTap: hasSelection ? confirmSelection : null,
+                                onTap: hasSelection
+                                    ? () => _handleConfirmSelection(
+                                        builderContext,
+                                        selected,
+                                      )
+                                    : null,
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 180),
                                   padding: const EdgeInsets.all(14),

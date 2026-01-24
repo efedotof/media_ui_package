@@ -11,11 +11,13 @@ class MediaPickerScreen extends StatefulWidget {
   final bool allowMultiple;
   final bool showVideos;
   final Function(List<MediaItem>)? onSelectionChanged;
+  final Function(List<MapEntry<String, Uint8List>>)? onConfirmed;
   final Uint8List? Function(MediaItem)? thumbnailBuilder;
   final String? albumId;
   final MediaType mediaType;
   final MediaPickerConfig? config;
   final Widget? child;
+  final DeviceMediaLibrary? mediaLibrary;
 
   const MediaPickerScreen({
     super.key,
@@ -24,11 +26,13 @@ class MediaPickerScreen extends StatefulWidget {
     this.allowMultiple = true,
     this.showVideos = true,
     this.onSelectionChanged,
+    this.onConfirmed,
     this.thumbnailBuilder,
     this.albumId,
     this.mediaType = MediaType.all,
     this.config,
     this.child,
+    this.mediaLibrary,
   });
 
   @override
@@ -39,6 +43,44 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
   bool get _isWeb => kIsWeb;
   bool get _isWindows => !kIsWeb && Platform.isWindows;
   bool get _shouldUseMediaPickerUI => _isWeb || _isWindows;
+  late DeviceMediaLibrary _mediaLibrary;
+
+  @override
+  void initState() {
+    super.initState();
+    _mediaLibrary = widget.mediaLibrary ?? DeviceMediaLibrary();
+  }
+
+  Future<List<MapEntry<String, Uint8List>>> _getFilesWithBytes(
+    List<MediaItem> files,
+  ) async {
+    final result = <MapEntry<String, Uint8List>>[];
+
+    for (final file in files) {
+      try {
+        final bytes = await _mediaLibrary.getFileBytes(file.uri);
+        if (bytes != null && bytes.isNotEmpty) {
+          result.add(MapEntry(file.uri, bytes));
+        }
+      } catch (e) {
+        debugPrint('Error getting bytes for file ${file.uri}: $e');
+      }
+    }
+
+    return result;
+  }
+
+  void _handleConfirmSelection(
+    BuildContext context,
+    List<MediaItem> selected,
+  ) async {
+    final filesWithBytes = await _getFilesWithBytes(selected);
+
+    if (context.mounted) {
+      widget.onConfirmed?.call(filesWithBytes);
+      Navigator.of(context).pop(selected);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,9 +98,12 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
           maxSelection: widget.maxSelection,
           allowMultiple: widget.allowMultiple,
           showVideos: widget.showVideos,
-          onFilesSelected: (files) {
-            widget.onSelectionChanged?.call(files);
-            Navigator.of(context).pop(files);
+          onFilesSelected: (files) async {
+            final filesWithBytes = await _getFilesWithBytes(files);
+            if (context.mounted) {
+              widget.onConfirmed?.call(filesWithBytes);
+              Navigator.of(context).pop(files);
+            }
           },
           showPickButton: true,
           config: widget.config,
@@ -90,6 +135,7 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
         config: config,
         child: Builder(
           builder: (context) {
+            final builderContext = context;
             return BlocConsumer<MediaGridCubit, MediaGridState>(
               listener: (context, state) {
                 state.whenOrNull(
@@ -119,7 +165,10 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
                       IconButton(
                         icon: const Icon(Icons.check_rounded),
                         onPressed: hasSelection
-                            ? () => _confirmSelection(context)
+                            ? () => _handleConfirmSelection(
+                                builderContext,
+                                selected,
+                              )
                             : null,
                         color: hasSelection
                             ? Theme.of(context).colorScheme.primary
@@ -136,10 +185,5 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
         ),
       ),
     );
-  }
-
-  void _confirmSelection(BuildContext context) {
-    final selectedItems = context.read<MediaGridCubit>().selectedItems;
-    Navigator.of(context).pop(selectedItems);
   }
 }
