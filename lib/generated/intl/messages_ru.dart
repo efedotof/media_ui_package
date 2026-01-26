@@ -22,34 +22,34 @@ class MessageLookup extends MessageLookupByLibrary {
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
-    "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
-    "chooseFiles": MessageLookupByLibrary.simpleMessage("Choose files"),
-    "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
+    "cancel": MessageLookupByLibrary.simpleMessage("Отмена"),
+    "chooseFiles": MessageLookupByLibrary.simpleMessage("Выбрать файлы"),
+    "confirm": MessageLookupByLibrary.simpleMessage("Подтвердить"),
     "dropFilesOrUseButtonBelow": MessageLookupByLibrary.simpleMessage(
-      "Drop files or use button below",
+      "Перетащите файлы или используйте кнопку ниже",
     ),
     "dropFilesToAddMedia": MessageLookupByLibrary.simpleMessage(
-      "Drop files to add media",
+      "Перетащите файлы для добавления медиа",
     ),
     "failedToPickFilesE": MessageLookupByLibrary.simpleMessage(
-      "Failed to pick files: \$e",
+      "Не удалось выбрать файлы: \$e",
     ),
-    "loadingError": MessageLookupByLibrary.simpleMessage("Loading error"),
+    "loadingError": MessageLookupByLibrary.simpleMessage("Ошибка загрузки"),
     "maximumWidgetmaxselectionFilesAllowed":
         MessageLookupByLibrary.simpleMessage(
-          "Maximum \${widget.maxSelection} files allowed",
+          "Максимум \${widget.maxSelection} файлов разрешено",
         ),
-    "noMedia": MessageLookupByLibrary.simpleMessage("No media"),
+    "noMedia": MessageLookupByLibrary.simpleMessage("Нет медиа"),
     "noMediaAvailable": MessageLookupByLibrary.simpleMessage(
-      "No media available",
+      "Нет доступных медиа",
     ),
-    "noMediaFiles": MessageLookupByLibrary.simpleMessage("No media files"),
+    "noMediaFiles": MessageLookupByLibrary.simpleMessage("Нет медиафайлов"),
     "permissionDenied": MessageLookupByLibrary.simpleMessage(
-      "Permission denied",
+      "Разрешение отклонено",
     ),
-    "selectMedia": MessageLookupByLibrary.simpleMessage("Select Media"),
+    "selectMedia": MessageLookupByLibrary.simpleMessage("Выбор медиа"),
     "thereAreNoAvailableImages": MessageLookupByLibrary.simpleMessage(
-      "There are no available images",
+      "Нет доступных изображений",
     ),
   };
 }
