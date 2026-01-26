@@ -1,0 +1,16 @@
+{
+  "chooseFiles": "Выбрать файлы",
+  "dropFilesOrUseButtonBelow": "Перетащите файлы или используйте кнопку ниже",
+  "confirm": "Подтвердить",
+  "selectMedia": "Выбор медиа",
+  "cancel": "Отмена",
+  "dropFilesToAddMedia": "Перетащите файлы для добавления медиа",
+  "maximumWidgetmaxselectionFilesAllowed": "Максимум ${widget.maxSelection} файлов разрешено",
+  "failedToPickFilesE": "Не удалось выбрать файлы: $e",
+  "noMediaFiles": "Нет медиафайлов",
+  "noMediaAvailable": "Нет доступных медиа",
+  "permissionDenied": "Разрешение отклонено",
+  "noMedia": "Нет медиа",
+  "loadingError": "Ошибка загрузки",
+  "thereAreNoAvailableImages": "Нет доступных изображений"
+}

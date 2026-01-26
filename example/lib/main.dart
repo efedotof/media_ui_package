@@ -35,22 +35,18 @@ class _MyHomePageState extends State<MyHomePage> {
   List<MediaItem> _selectedMediaItems = [];
 
   void _openMediaPickerScreen() async {
-    final result = await Navigator.of(context).push(
+    final result = await Navigator.of(context).push<List<MediaItem>>(
       MaterialPageRoute(
         builder: (context) => MediaPickerScreen(
           allowMultiple: true,
           maxSelection: 5,
           showVideos: true,
           initialSelection: _selectedMediaItems,
-          onSelectionChanged: (selectedItems) {
-            debugPrint('Selected items: ${selectedItems.length}');
-          },
-          child: Container(),
         ),
       ),
     );
 
-    if (result != null && result is List<MediaItem>) {
+    if (result != null) {
       setState(() {
         _selectedMediaItems = result;
       });
@@ -58,17 +54,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _openMediaPickerDialog() async {
-    final result = await showDialog<List<MediaItem>>(
-      context: context,
-      builder: (context) => MediaPickerDialog(
-        allowMultiple: false,
-        showVideos: false,
-        initialSelection: _selectedMediaItems,
-        onSelectionChanged: (selectedItems) {
-          debugPrint('Dialog selection: ${selectedItems.length}');
-        },
-        child: Container(),
-      ),
+    final result = await MediaPickerBottomSheet.open(
+      context,
+      allowMultiple: false,
+      showVideos: false,
+      initialSelection: _selectedMediaItems,
+      maxSelection: 5,
     );
 
     if (result != null) {
@@ -79,20 +70,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _openMediaPickerBottomSheet() async {
-    final result = await showModalBottomSheet<List<MediaItem>>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => MediaPickerBottomSheet(
-        allowMultiple: true,
-        maxSelection: 3,
-        showVideos: true,
-        initialSelection: _selectedMediaItems,
-        onSelectionChanged: (selectedItems) {
-          debugPrint('Bottom sheet selection: ${selectedItems.length}');
-        },
-        child: Container(),
-      ),
+    final result = await MediaPickerBottomSheet.open(
+      context,
+      allowMultiple: true,
+      maxSelection: 3,
+      showVideos: true,
+      initialSelection: _selectedMediaItems,
     );
 
     if (result != null) {
@@ -103,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _openMediaPickerUI() async {
-    await showDialog<List<MediaItem>>(
+    await showDialog(
       context: context,
       builder: (context) => Dialog(
         insetPadding: const EdgeInsets.all(20),
@@ -156,7 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _openPlatformMediaPicker() async {
-    await showDialog<List<MediaItem>>(
+    await showDialog(
       context: context,
       builder: (context) => Dialog(
         insetPadding: const EdgeInsets.all(20),

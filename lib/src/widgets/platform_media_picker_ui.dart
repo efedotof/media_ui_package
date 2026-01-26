@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 
 class PlatformMediaPickerUI extends StatefulWidget {
@@ -42,8 +43,8 @@ class PlatformMediaPickerUI extends StatefulWidget {
 
 class _PlatformMediaPickerUIState extends State<PlatformMediaPickerUI> {
   final List<MediaItem> _selectedFiles = [];
-  final DeviceMediaLibrary _mediaLibrary = DeviceMediaLibrary();
 
+  bool _dropActive = true;
   bool get _isWeb => kIsWeb;
   bool get _isDesktop =>
       !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
@@ -54,53 +55,15 @@ class _PlatformMediaPickerUIState extends State<PlatformMediaPickerUI> {
     _selectedFiles.addAll(widget.initialSelection);
   }
 
-  Future<void> _pickFiles() async {
-    if (_isWeb || _isDesktop) {
-      final result = await _mediaLibrary.pickFiles(
-        multiple: widget.allowMultiple,
-        allowedFileTypes: widget.allowedExtensions,
-      );
+  Future<void> _handleDroppedFiles(List<MediaItem> files) async {
+    if (!mounted) return;
 
-      if (result != null && result.isNotEmpty) {
-        final mediaItems = result.map((file) {
-          return MediaItem(
-            id:
-                file['id']?.toString() ??
-                DateTime.now().microsecondsSinceEpoch.toString(),
-            name: file['name']?.toString() ?? 'Unknown',
-            uri: file['uri']?.toString() ?? file['filePath']?.toString() ?? '',
-            dateAdded: DateTime.now().millisecondsSinceEpoch,
-            size: file['size'] is int ? file['size'] : 0,
-            width: file['width'] is int ? file['width'] : 0,
-            height: file['height'] is int ? file['height'] : 0,
-            albumId: file['albumId']?.toString() ?? '',
-            albumName: file['albumName']?.toString() ?? '',
-            type: file['type']?.toString() ?? 'unknown',
-            duration: file['duration'] is int ? file['duration'] : 0,
-          );
-        }).toList();
+    setState(() => _dropActive = false);
 
-        _handleSelectedFiles(mediaItems);
-      }
-    } else {
-      if (!mounted) return;
-      final result = await showDialog<List<MediaItem>>(
-        context: context,
-        builder: (context) => MediaPickerBottomSheet(
-          initialSelection: _selectedFiles,
-          maxSelection: widget.maxSelection,
-          allowMultiple: widget.allowMultiple,
-          showVideos: widget.showVideos,
-          onConfirmed: (files) {
-            Navigator.of(context).pop(files);
-          },
-          config: widget.config,
-        ),
-      );
+    await _handleSelectedFiles(files);
 
-      if (result != null && result.isNotEmpty) {
-        _handleSelectedFiles(result);
-      }
+    if (mounted) {
+      setState(() => _dropActive = true);
     }
   }
 
@@ -108,13 +71,13 @@ class _PlatformMediaPickerUIState extends State<PlatformMediaPickerUI> {
     if (!mounted) return;
 
     setState(() {
-      _selectedFiles.clear();
-      _selectedFiles.addAll(files);
+      _selectedFiles
+        ..clear()
+        ..addAll(files);
     });
 
     widget.onSelectionChanged?.call(_selectedFiles);
 
-    if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => FileSelectionDialog(
@@ -123,16 +86,12 @@ class _PlatformMediaPickerUIState extends State<PlatformMediaPickerUI> {
         onCancel: () => Navigator.of(context).pop(false),
         onClearAll: () {
           if (!mounted) return;
-          setState(() {
-            _selectedFiles.clear();
-          });
+          setState(() => _selectedFiles.clear());
           Navigator.of(context).pop(false);
         },
         onItemRemoved: (file) {
           if (!mounted) return;
-          setState(() {
-            _selectedFiles.remove(file);
-          });
+          setState(() => _selectedFiles.remove(file));
           if (_selectedFiles.isEmpty) {
             Navigator.of(context).pop(false);
           }
@@ -142,52 +101,6 @@ class _PlatformMediaPickerUIState extends State<PlatformMediaPickerUI> {
 
     if (confirmed == true && _selectedFiles.isNotEmpty) {
       widget.onConfirmed?.call(_selectedFiles);
-      _showMediaGrid();
-    }
-  }
-
-  void _showMediaGrid() {
-    if (!mounted) return;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.8,
-        child: MediaPickerScreen(
-          initialSelection: _selectedFiles,
-          maxSelection: widget.maxSelection,
-          allowMultiple: widget.allowMultiple,
-          showVideos: widget.showVideos,
-          onSelectionChanged: (files) {
-            if (!mounted) return;
-            setState(() {
-              _selectedFiles.clear();
-              _selectedFiles.addAll(files);
-            });
-          },
-          config: widget.config,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _handleDroppedFiles(List<MediaItem> files) async {
-    if (!mounted) return;
-
-    if (!widget.allowMultiple && files.isNotEmpty) {
-      _handleSelectedFiles([files.first]);
-    } else if (widget.allowMultiple &&
-        _selectedFiles.length + files.length <= widget.maxSelection) {
-      _handleSelectedFiles([..._selectedFiles, ...files]);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Maximum ${widget.maxSelection} files allowed'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
     }
   }
 
@@ -195,12 +108,12 @@ class _PlatformMediaPickerUIState extends State<PlatformMediaPickerUI> {
   Widget build(BuildContext context) {
     final child = widget.child ?? Container();
 
-    if (widget.enableDragDrop && (_isWeb || _isDesktop)) {
+    if (widget.enableDragDrop && (_isWeb || _isDesktop) && _dropActive) {
       return UniversalDropZone(
         onFilesDropped: _handleDroppedFiles,
         allowedExtensions: widget.allowedExtensions,
         enabled: true,
-        overlayText: 'Drop files to add media',
+        overlayText: S.of(context).dropFilesToAddMedia,
         showOverlay: true,
         child: child,
       );
@@ -208,6 +121,4 @@ class _PlatformMediaPickerUIState extends State<PlatformMediaPickerUI> {
 
     return child;
   }
-
-  void pickFiles() => _pickFiles();
 }

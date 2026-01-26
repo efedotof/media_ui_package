@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'fullscreen_media_content.dart';
 import 'fullscreen_media_overlay.dart';
@@ -130,8 +131,8 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
                     color: Colors.white.withAlpha(128),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Нет доступных медиа',
+                  Text(
+                    S.of(context).noMediaAvailable,
                     style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ],

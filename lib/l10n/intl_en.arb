@@ -1,0 +1,16 @@
+{
+  "chooseFiles": "Choose files",
+  "dropFilesOrUseButtonBelow": "Drop files or use button below",
+  "confirm": "Confirm",
+  "selectMedia": "Select Media",
+  "cancel": "Cancel",
+  "dropFilesToAddMedia": "Drop files to add media",
+  "maximumWidgetmaxselectionFilesAllowed": "Maximum ${widget.maxSelection} files allowed",
+  "failedToPickFilesE": "Failed to pick files: $e",
+  "noMediaFiles": "No media files",
+  "noMediaAvailable": "No media available",
+  "permissionDenied": "Permission denied",
+  "noMedia": "No media",
+  "loadingError": "Loading error",
+  "thereAreNoAvailableImages": "There are no available images"
+}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'package:media_ui_package/src/models/media_type.dart';
 import 'errors_widget.dart';
@@ -31,16 +32,16 @@ class FullScreenMediaContent extends StatelessWidget {
             permissionRequesting: () => LoadingWidget(screenSize: screenSize),
             permissionDenied: () => ErrorsWidget(
               screenSize: screenSize,
-              message: 'Permission denied',
+              message: S.of(context).permissionDenied,
             ),
             error: (message) =>
                 ErrorsWidget(screenSize: screenSize, message: message),
             loaded:
                 (mediaItems, thumbnailCache, _, __, ___, ____, selectedItems) {
                   if (mediaItems.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
-                        'No media',
+                        S.of(context).noMedia,
                         style: TextStyle(color: Colors.white, fontSize: 14),
                       ),
                     );
@@ -100,12 +101,12 @@ class FullScreenMediaContent extends StatelessWidget {
                   isVideoPlaying,
                   videoPosition,
                   videoDuration,
-                  isVideoBuffering, // Добавлен новый параметр
+                  isVideoBuffering,
                 ) {
                   if (mediaItems.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
-                        'No media',
+                        S.of(context).noMedia,
                         style: TextStyle(color: Colors.white, fontSize: 14),
                       ),
                     );

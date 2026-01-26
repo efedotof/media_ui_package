@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:media_ui_package/generated/l10n.dart';
 
 class UrlMediaContent extends StatelessWidget {
   final List<String> urls;
@@ -15,15 +16,15 @@ class UrlMediaContent extends StatelessWidget {
     if (urls.isEmpty) {
       return Container(
         color: Colors.black,
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error, color: Colors.white, size: 32),
-              SizedBox(height: 8),
+              const Icon(Icons.error, color: Colors.white, size: 32),
+              const SizedBox(height: 8),
               Text(
-                'Нет доступных изображений',
-                style: TextStyle(color: Colors.white, fontSize: 14),
+                S.of(context).thereAreNoAvailableImages,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
               ),
             ],
           ),
@@ -57,15 +58,18 @@ class UrlMediaContent extends StatelessWidget {
               },
               errorBuilder: (context, error, stackTrace) {
                 debugPrint('Error loading image: $error');
-                return const Center(
+                return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error, color: Colors.white, size: 32),
-                      SizedBox(height: 8),
+                      const Icon(Icons.error, color: Colors.white, size: 32),
+                      const SizedBox(height: 8),
                       Text(
-                        'Ошибка загрузки',
-                        style: TextStyle(color: Colors.white, fontSize: 14),
+                        S.of(context).loadingError,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -106,15 +110,18 @@ class UrlMediaContent extends StatelessWidget {
                 },
                 errorBuilder: (context, error, stackTrace) {
                   debugPrint('Error loading image at index $index: $error');
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error, color: Colors.white, size: 32),
-                        SizedBox(height: 8),
+                        const Icon(Icons.error, color: Colors.white, size: 32),
+                        const SizedBox(height: 8),
                         Text(
-                          'Ошибка загрузки',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                          S.of(context).loadingError,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),

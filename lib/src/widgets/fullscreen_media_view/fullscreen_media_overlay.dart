@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -63,7 +62,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
                 final selected = cubit.isSelected(currentItem);
                 final selectionIndex = cubit.getSelectionIndex(currentItem);
 
-                // Проверяем, видео ли это
                 final isVideo =
                     currentItem.type == 'video' ||
                     currentItem.type == 'videos' ||
@@ -77,12 +75,10 @@ class FullScreenMediaOverlay extends StatelessWidget {
 
                 return Stack(
                   children: [
-                    // Полупрозрачный фон для кнопок
                     Positioned.fill(
                       child: Container(color: Colors.transparent),
                     ),
 
-                    // Кнопка назад
                     Positioned(
                       top: MediaQuery.of(context).padding.top + 16,
                       left: 16,
@@ -92,7 +88,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
                       ),
                     ),
 
-                    // Кнопка выбора
                     if (showSelectionIndicators)
                       Positioned(
                         top: MediaQuery.of(context).padding.top + 16,
@@ -132,7 +127,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
                         ),
                       ),
 
-                    // Кнопки управления видео (только для видео)
                     if (isVideo &&
                         videoDuration != null &&
                         videoPosition != null)
@@ -147,7 +141,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
                         ),
                       ),
 
-                    // Счетчик медиа
                     Positioned(
                       bottom:
                           (isVideo &&
@@ -178,7 +171,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
                       ),
                     ),
 
-                    // Счетчик выбранных элементов
                     if (selectedMediaItems.isNotEmpty)
                       Positioned(
                         top: MediaQuery.of(context).padding.top + 60,
@@ -226,7 +218,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Верхняя часть
         Container(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 16,
@@ -234,7 +225,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              // Показываем длительность видео
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -253,13 +243,11 @@ class FullScreenMediaOverlay extends StatelessWidget {
           ),
         ),
 
-        // Центральные кнопки управления
         Expanded(
           child: Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Кнопка перемотки назад на 10 секунд
                 IconButton(
                   icon: const Icon(
                     Icons.replay_10,
@@ -271,7 +259,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
 
                 const SizedBox(width: 32),
 
-                // Кнопка play/pause
                 IconButton(
                   icon: Icon(
                     isPlaying
@@ -285,7 +272,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
 
                 const SizedBox(width: 32),
 
-                // Кнопка перемотки вперед на 10 секунд
                 IconButton(
                   icon: const Icon(
                     Icons.forward_10,
@@ -299,7 +285,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
           ),
         ),
 
-        // Прогресс-бар и время внизу
         Container(
           padding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -307,7 +292,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
           ).copyWith(bottom: MediaQuery.of(context).padding.bottom + 16),
           child: Column(
             children: [
-              // Прогресс-бар
               Row(
                 children: [
                   Text(
@@ -348,7 +332,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              // Название видео
               Text(
                 videoName,
                 style: const TextStyle(

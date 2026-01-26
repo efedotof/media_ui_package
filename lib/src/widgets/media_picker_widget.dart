@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 
 class MediaPickerWidget extends StatefulWidget {
@@ -95,7 +96,7 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to pick files: $e'),
+              content: Text(S.of(context).failedToPickFilesE),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -103,18 +104,12 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
       }
     } else {
       if (!mounted) return;
-      final result = await showDialog<List<MediaItem>>(
-        context: context,
-        builder: (context) => MediaPickerBottomSheet(
-          initialSelection: _selectedFiles,
-          maxSelection: widget.maxSelection,
-          allowMultiple: widget.allowMultiple,
-          showVideos: widget.showVideos,
-          onConfirmed: (files) {
-            Navigator.of(context).pop(files);
-          },
-          config: widget.config,
-        ),
+      final result = await MediaPickerBottomSheet.open(
+        context,
+        initialSelection: _selectedFiles,
+        maxSelection: widget.maxSelection,
+        allowMultiple: widget.allowMultiple,
+        showVideos: widget.showVideos,
       );
 
       if (result != null && result.isNotEmpty) {
@@ -176,7 +171,7 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Maximum ${widget.maxSelection} files allowed'),
+            content: Text(S.of(context).maximumWidgetmaxselectionFilesAllowed),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -195,7 +190,7 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
         onFilesDropped: _handleDroppedFiles,
         allowedExtensions: widget.allowedExtensions,
         enabled: true,
-        overlayText: 'Drop files to add media',
+        overlayText: S.of(context).dropFilesToAddMedia,
         showOverlay: true,
         child: widget.child,
       );

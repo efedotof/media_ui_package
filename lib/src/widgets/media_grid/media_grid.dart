@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'media_grid_item.dart';
 import 'media_grid_error_widget.dart';
@@ -115,7 +116,7 @@ class _MediaGridState extends State<MediaGrid> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No media files',
+                          S.of(context).noMediaFiles,
                           style: TextStyle(
                             fontSize: 16,
                             color: Theme.of(

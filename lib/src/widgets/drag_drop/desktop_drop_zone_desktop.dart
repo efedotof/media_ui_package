@@ -102,6 +102,9 @@ class _DesktopDropZoneState extends State<DesktopDropZone> {
         final paths = detail.files.map((e) => e.path).toList();
         await _process(paths);
         setState(() => _dragging = false);
+        if (context.mounted) {
+          Navigator.pop(context);
+        }
       },
       child: Stack(
         children: [

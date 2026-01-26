@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 
-import 'media_picker_widget.dart';
-
 class MediaPickerUI extends StatefulWidget {
   final Widget child;
   final List<MediaItem> initialSelection;
@@ -64,12 +62,14 @@ class _MediaPickerUIState extends State<MediaPickerUI> {
         onConfirm: () => Navigator.of(context).pop(true),
         onCancel: () => Navigator.of(context).pop(false),
         onClearAll: () {
+          if (!mounted) return;
           setState(() {
             _selectedFiles.clear();
           });
           Navigator.of(context).pop(false);
         },
         onItemRemoved: (file) {
+          if (!mounted) return;
           setState(() {
             _selectedFiles.remove(file);
           });
@@ -82,32 +82,7 @@ class _MediaPickerUIState extends State<MediaPickerUI> {
 
     if (confirmed == true && _selectedFiles.isNotEmpty) {
       widget.onFilesSelected?.call(_selectedFiles);
-      _showMediaGrid();
     }
-  }
-
-  void _showMediaGrid() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.8,
-        child: MediaPickerScreen(
-          initialSelection: _selectedFiles,
-          maxSelection: widget.maxSelection,
-          allowMultiple: widget.allowMultiple,
-          showVideos: widget.showVideos,
-          onSelectionChanged: (files) {
-            if (!mounted) return;
-            setState(() {
-              _selectedFiles.clear();
-              _selectedFiles.addAll(files);
-            });
-          },
-          config: widget.config,
-        ),
-      ),
-    );
   }
 
   @override

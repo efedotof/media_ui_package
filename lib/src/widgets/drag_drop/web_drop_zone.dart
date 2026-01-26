@@ -92,6 +92,9 @@ class _WebDropZoneState extends State<WebDropZone> {
       onDragDone: (detail) async {
         await _process(detail.files);
         setState(() => _dragging = false);
+        if (context.mounted) {
+          Navigator.pop(context);
+        }
       },
       child: Stack(
         children: [
