@@ -17,6 +17,7 @@ class MediaPickerScreen extends StatefulWidget {
   final bool showSelectionIndicators;
   final MediaPickerConfig config;
   final DeviceMediaLibrary mediaLibrary;
+  final void Function(List<MediaItem>)? onSelectionChanged;
   final void Function(List<MapEntry<MediaItem, Uint8List?>>) onConfirmed;
 
   const MediaPickerScreen({
@@ -31,6 +32,7 @@ class MediaPickerScreen extends StatefulWidget {
     required this.showSelectionIndicators,
     required this.config,
     required this.mediaLibrary,
+    this.onSelectionChanged,
     required this.onConfirmed,
   });
 
@@ -56,7 +58,6 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
 
     for (final item in items) {
       try {
-        // Используем getFileBytes вместо getThumbnail, так как у нас нет нужных параметров
         final bytes = await widget.mediaLibrary.getFileBytes(item.uri);
         result.add(MapEntry(item, bytes));
       } catch (e) {
@@ -98,89 +99,109 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
         config: widget.config,
         child: Builder(
           builder: (context) {
-            return Column(
-              children: [
-                if (widget.showDragHandle) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(4),
+            return BlocListener<MediaGridCubit, MediaGridState>(
+              listener: (context, state) {
+                state.whenOrNull(
+                  loaded:
+                      (
+                        mediaItems,
+                        thumbnailCache,
+                        hasMoreItems,
+                        currentOffset,
+                        isLoadingMore,
+                        showSelectionIndicators,
+                        selectedMediaItems,
+                      ) {
+                        widget.onSelectionChanged?.call(selectedMediaItems);
+                      },
+                );
+              },
+              child: Column(
+                children: [
+                  if (widget.showDragHandle) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colorScheme.outlineVariant,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          S.of(context).selectMedia,
+                          style: theme.textTheme.titleLarge,
+                        ),
+                        if (widget.showCancelButton)
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded),
+                            color: colorScheme.onSurface,
+                            tooltip: S.of(context).cancel,
+                          ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                ],
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        S.of(context).selectMedia,
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      if (widget.showCancelButton)
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close_rounded),
-                          color: colorScheme.onSurface,
-                          tooltip: S.of(context).cancel,
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Expanded(child: MediaGrid(autoPlayVideosInFullscreen: true)),
-                BlocBuilder<MediaGridCubit, MediaGridState>(
-                  builder: (context, state) {
-                    final cubit = context.read<MediaGridCubit>();
-                    final selected = cubit.selectedItems;
-                    final hasSelection = selected.isNotEmpty;
+                  const SizedBox(height: 8),
+                  Expanded(child: MediaGrid(autoPlayVideosInFullscreen: true)),
+                  BlocBuilder<MediaGridCubit, MediaGridState>(
+                    builder: (context, state) {
+                      final cubit = context.read<MediaGridCubit>();
+                      final selected = cubit.selectedItems;
+                      final hasSelection = selected.isNotEmpty;
 
-                    return SafeArea(
-                      top: false,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
-                        child: Row(
-                          children: [
-                            if (selected.isNotEmpty)
-                              Text(
-                                '${selected.length}/${widget.maxSelection}',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
+                      return SafeArea(
+                        top: false,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+                          child: Row(
+                            children: [
+                              if (selected.isNotEmpty)
+                                Text(
+                                  '${selected.length}/${widget.maxSelection}',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
+                              const Spacer(),
+                              OutlinedButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: Text(S.of(context).cancel),
                               ),
-                            const Spacer(),
-                            OutlinedButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: Text(S.of(context).cancel),
-                            ),
-                            const SizedBox(width: 12),
-                            ElevatedButton(
-                              onPressed: hasSelection
-                                  ? () async {
-                                      if (context.mounted) {
-                                        final filesWithBytes =
-                                            await _getFilesWithBytes(selected);
+                              const SizedBox(width: 12),
+                              ElevatedButton(
+                                onPressed: hasSelection
+                                    ? () async {
                                         if (context.mounted) {
-                                          Navigator.of(
-                                            context,
-                                          ).pop(filesWithBytes);
+                                          final filesWithBytes =
+                                              await _getFilesWithBytes(
+                                                selected,
+                                              );
+                                          if (context.mounted) {
+                                            Navigator.of(
+                                              context,
+                                            ).pop(filesWithBytes);
+                                          }
                                         }
                                       }
-                                    }
-                                  : null,
-                              child: Text(S.of(context).confirm),
-                            ),
-                          ],
+                                    : null,
+                                child: Text(S.of(context).confirm),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             );
           },
         ),

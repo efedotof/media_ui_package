@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
@@ -14,6 +15,7 @@ class MediaPickerBottomSheet extends StatelessWidget {
   final bool showSelectionIndicators;
   final MediaPickerConfig config;
   final DeviceMediaLibrary mediaLibrary;
+  final void Function(List<MediaItem>)? onSelectionChanged;
   final void Function(List<MapEntry<MediaItem, Uint8List?>>) onConfirmed;
 
   const MediaPickerBottomSheet({
@@ -28,6 +30,7 @@ class MediaPickerBottomSheet extends StatelessWidget {
     required this.showSelectionIndicators,
     required this.config,
     required this.mediaLibrary,
+    this.onSelectionChanged,
     required this.onConfirmed,
   });
 
@@ -43,6 +46,7 @@ class MediaPickerBottomSheet extends StatelessWidget {
     bool showSelectionIndicators = true,
     MediaPickerConfig? config,
     DeviceMediaLibrary? mediaLibrary,
+    void Function(List<MediaItem>)? onSelectionChanged,
     required void Function(List<MapEntry<MediaItem, Uint8List?>>) onConfirmed,
   }) async {
     final isWeb = kIsWeb;
@@ -63,6 +67,7 @@ class MediaPickerBottomSheet extends StatelessWidget {
           showSelectionIndicators: showSelectionIndicators,
           config: actualConfig,
           mediaLibrary: actualMediaLibrary,
+          onSelectionChanged: onSelectionChanged,
           onConfirmed: onConfirmed,
         ),
       );
@@ -97,6 +102,7 @@ class MediaPickerBottomSheet extends StatelessWidget {
               showSelectionIndicators: showSelectionIndicators,
               config: actualConfig,
               mediaLibrary: actualMediaLibrary,
+              onSelectionChanged: onSelectionChanged,
               onConfirmed: onConfirmed,
             ),
           );

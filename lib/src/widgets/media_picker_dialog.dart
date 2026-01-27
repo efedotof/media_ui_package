@@ -1,8 +1,9 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
+import 'package:media_ui_package/src/models/media_type.dart';
 
 class MediaPickerDialog extends StatefulWidget {
   final List<MediaItem> initialSelection;
@@ -12,6 +13,7 @@ class MediaPickerDialog extends StatefulWidget {
   final bool showSelectionIndicators;
   final MediaPickerConfig config;
   final DeviceMediaLibrary mediaLibrary;
+  final void Function(List<MediaItem>)? onSelectionChanged;
   final void Function(List<MapEntry<MediaItem, Uint8List?>>) onConfirmed;
 
   const MediaPickerDialog({
@@ -23,6 +25,7 @@ class MediaPickerDialog extends StatefulWidget {
     required this.showSelectionIndicators,
     required this.config,
     required this.mediaLibrary,
+    this.onSelectionChanged,
     required this.onConfirmed,
   });
 
@@ -31,12 +34,27 @@ class MediaPickerDialog extends StatefulWidget {
 }
 
 class _MediaPickerDialogState extends State<MediaPickerDialog> {
-  late List<MediaItem> _selectedFiles;
+  late MediaGridCubit _mediaGridCubit;
 
   @override
   void initState() {
     super.initState();
-    _selectedFiles = [...widget.initialSelection];
+
+    final mediaType = widget.showVideos ? MediaType.all : MediaType.images;
+    _mediaGridCubit = MediaGridCubit(
+      mediaType: mediaType,
+      albumId: null,
+      thumbnailBuilder: null,
+      allowMultiple: widget.allowMultiple,
+      maxSelection: widget.maxSelection,
+      initialSelection: widget.initialSelection,
+    )..init();
+  }
+
+  @override
+  void dispose() {
+    _mediaGridCubit.close();
+    super.dispose();
   }
 
   Future<List<MapEntry<MediaItem, Uint8List?>>> _getFilesWithBytes(
@@ -58,39 +76,66 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return MediaPickerConfigScope(
-      config: widget.config,
-      child: Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(widget.config.borderRadius),
-        ),
-        child: SizedBox(
-          width: 520,
-          height: 520,
-          child: Column(
-            children: [
-              AppBar(
-                title: Text(S.of(context).selectMedia),
-                automaticallyImplyLeading: false,
-                actions: [
-                  TextButton(
-                    onPressed: _selectedFiles.isEmpty
-                        ? null
-                        : () async {
-                            final filesWithBytes = await _getFilesWithBytes(
-                              _selectedFiles,
-                            );
-                            if (context.mounted) {
-                              Navigator.of(context).pop(filesWithBytes);
-                            }
-                          },
-                    child: Text(S.of(context).confirm),
+    return BlocProvider.value(
+      value: _mediaGridCubit,
+      child: BlocListener<MediaGridCubit, MediaGridState>(
+        listener: (context, state) {
+          state.whenOrNull(
+            loaded:
+                (
+                  mediaItems,
+                  thumbnailCache,
+                  hasMoreItems,
+                  currentOffset,
+                  isLoadingMore,
+                  showSelectionIndicators,
+                  selectedMediaItems,
+                ) {
+                  widget.onSelectionChanged?.call(selectedMediaItems);
+                },
+          );
+        },
+        child: MediaPickerConfigScope(
+          config: widget.config,
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(widget.config.borderRadius),
+            ),
+            child: SizedBox(
+              width: 520,
+              height: 520,
+              child: Column(
+                children: [
+                  AppBar(
+                    title: Text(S.of(context).selectMedia),
+                    automaticallyImplyLeading: false,
+                    actions: [
+                      BlocBuilder<MediaGridCubit, MediaGridState>(
+                        builder: (context, state) {
+                          final cubit = context.read<MediaGridCubit>();
+                          final selected = cubit.selectedItems;
+
+                          return TextButton(
+                            onPressed: selected.isEmpty
+                                ? null
+                                : () async {
+                                    final filesWithBytes =
+                                        await _getFilesWithBytes(selected);
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop(filesWithBytes);
+                                    }
+                                  },
+                            child: Text(S.of(context).confirm),
+                          );
+                        },
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 8),
+                  Expanded(child: MediaGrid(autoPlayVideosInFullscreen: true)),
                 ],
               ),
-              const SizedBox(height: 8),
-              Expanded(child: MediaGrid(autoPlayVideosInFullscreen: true)),
-            ],
+            ),
           ),
         ),
       ),
