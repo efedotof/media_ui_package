@@ -11,7 +11,7 @@ class MediaPickerWidget extends StatefulWidget {
   final bool allowMultiple;
   final bool showVideos;
   final Function(List<MediaItem>)? onSelectionChanged;
-  final Function(List<MediaItem>)? onConfirmed;
+  final Function(List<MapEntry<MediaItem, Uint8List?>>)? onConfirmed;
   final Widget child;
   final bool enableDragDrop;
   final List<String> allowedExtensions;
@@ -104,17 +104,34 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
       }
     } else {
       if (!mounted) return;
-      final result = await MediaPickerBottomSheet.open(
-        context,
+
+      await MediaPickerBottomSheet.open(
+        context: context,
         initialSelection: _selectedFiles,
         maxSelection: widget.maxSelection,
         allowMultiple: widget.allowMultiple,
         showVideos: widget.showVideos,
-      );
+        initialChildSize: 0.7,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        showSelectionIndicators: true,
+        config: widget.config ?? const MediaPickerConfig(),
+        mediaLibrary: _mediaLibrary,
+        onConfirmed: (filesWithBytes) {
+          if (filesWithBytes.isEmpty) return;
 
-      if (result != null && result.isNotEmpty) {
-        await _handleSelectedFiles(result);
-      }
+          if (widget.onConfirmed != null) {
+            widget.onConfirmed!(filesWithBytes);
+          }
+          if (mounted) {
+            setState(() {
+              _selectedFiles.clear();
+              _selectedFiles.addAll(filesWithBytes.map((e) => e.key).toList());
+            });
+            widget.onSelectionChanged?.call(_selectedFiles);
+          }
+        },
+      );
     }
   }
 
@@ -155,7 +172,9 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
     );
 
     if (confirmed == true && _selectedFiles.isNotEmpty) {
-      widget.onConfirmed?.call(_selectedFiles);
+      widget.onConfirmed?.call(
+        _selectedFiles.map((item) => MapEntry(item, null)).toList(),
+      );
     }
   }
 

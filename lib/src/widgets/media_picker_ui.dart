@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 
@@ -45,8 +46,12 @@ class _MediaPickerUIState extends State<MediaPickerUI> {
     }
   }
 
-  Future<void> _handleSelectedFiles(List<MediaItem> files) async {
+  Future<void> _handleSelectedFilesWithBytes(
+    List<MapEntry<MediaItem, Uint8List?>> filesWithBytes,
+  ) async {
     if (!mounted) return;
+
+    final files = filesWithBytes.map((e) => e.key).toList();
 
     setState(() {
       _selectedFiles.clear();
@@ -54,35 +59,6 @@ class _MediaPickerUIState extends State<MediaPickerUI> {
     });
 
     widget.onFilesSelected?.call(_selectedFiles);
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => FileSelectionDialog(
-        selectedFiles: _selectedFiles,
-        onConfirm: () => Navigator.of(context).pop(true),
-        onCancel: () => Navigator.of(context).pop(false),
-        onClearAll: () {
-          if (!mounted) return;
-          setState(() {
-            _selectedFiles.clear();
-          });
-          Navigator.of(context).pop(false);
-        },
-        onItemRemoved: (file) {
-          if (!mounted) return;
-          setState(() {
-            _selectedFiles.remove(file);
-          });
-          if (_selectedFiles.isEmpty) {
-            Navigator.of(context).pop(false);
-          }
-        },
-      ),
-    );
-
-    if (confirmed == true && _selectedFiles.isNotEmpty) {
-      widget.onFilesSelected?.call(_selectedFiles);
-    }
   }
 
   @override
@@ -100,7 +76,7 @@ class _MediaPickerUIState extends State<MediaPickerUI> {
           _selectedFiles.addAll(files);
         });
       },
-      onConfirmed: _handleSelectedFiles,
+      onConfirmed: _handleSelectedFilesWithBytes,
       enableDragDrop: widget.enableDragDrop,
       config: widget.config,
       child: Stack(

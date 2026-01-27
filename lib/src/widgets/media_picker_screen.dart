@@ -14,6 +14,10 @@ class MediaPickerScreen extends StatefulWidget {
   final bool showDragHandle;
   final bool showCancelButton;
   final bool forceWebDesktopLayout;
+  final bool showSelectionIndicators;
+  final MediaPickerConfig config;
+  final DeviceMediaLibrary mediaLibrary;
+  final void Function(List<MapEntry<MediaItem, Uint8List?>>) onConfirmed;
 
   const MediaPickerScreen({
     super.key,
@@ -24,6 +28,10 @@ class MediaPickerScreen extends StatefulWidget {
     this.showDragHandle = false,
     this.showCancelButton = true,
     this.forceWebDesktopLayout = false,
+    required this.showSelectionIndicators,
+    required this.config,
+    required this.mediaLibrary,
+    required this.onConfirmed,
   });
 
   @override
@@ -31,14 +39,32 @@ class MediaPickerScreen extends StatefulWidget {
 }
 
 class _MediaPickerScreenState extends State<MediaPickerScreen> {
-  late List<MediaItem> selectedFiles;
+  late List<MediaItem> selectedItems;
 
   bool get isMobile => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   @override
   void initState() {
     super.initState();
-    selectedFiles = [...widget.initialSelection];
+    selectedItems = [...widget.initialSelection];
+  }
+
+  Future<List<MapEntry<MediaItem, Uint8List?>>> _getFilesWithBytes(
+    List<MediaItem> items,
+  ) async {
+    final result = <MapEntry<MediaItem, Uint8List?>>[];
+
+    for (final item in items) {
+      try {
+        // Используем getFileBytes вместо getThumbnail, так как у нас нет нужных параметров
+        final bytes = await widget.mediaLibrary.getFileBytes(item.uri);
+        result.add(MapEntry(item, bytes));
+      } catch (e) {
+        result.add(MapEntry(item, null));
+      }
+    }
+
+    return result;
   }
 
   @override
@@ -68,171 +94,158 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
           )..init(),
         ),
       ],
-      child: Builder(
-        builder: (context) {
-          return Column(
-            children: [
-              if (widget.showDragHandle) ...[
-                const SizedBox(height: 8),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(4),
+      child: MediaPickerConfigScope(
+        config: widget.config,
+        child: Builder(
+          builder: (context) {
+            return Column(
+              children: [
+                if (widget.showDragHandle) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        S.of(context).selectMedia,
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      if (widget.showCancelButton)
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                          color: colorScheme.onSurface,
+                          tooltip: S.of(context).cancel,
+                        ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-              ],
-              Expanded(child: MediaGrid(autoPlayVideosInFullscreen: true)),
-              BlocBuilder<MediaGridCubit, MediaGridState>(
-                builder: (context, state) {
-                  final cubit = context.read<MediaGridCubit>();
-                  final selected = cubit.selectedItems;
-                  final hasSelection = selected.isNotEmpty;
+                const SizedBox(height: 8),
+                Expanded(child: MediaGrid(autoPlayVideosInFullscreen: true)),
+                BlocBuilder<MediaGridCubit, MediaGridState>(
+                  builder: (context, state) {
+                    final cubit = context.read<MediaGridCubit>();
+                    final selected = cubit.selectedItems;
+                    final hasSelection = selected.isNotEmpty;
 
-                  return SafeArea(
-                    top: false,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 20),
-                      child: Row(
-                        children: [
-                          if (widget.showCancelButton)
-                            IconButton(
+                    return SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+                        child: Row(
+                          children: [
+                            if (selected.isNotEmpty)
+                              Text(
+                                '${selected.length}/${widget.maxSelection}',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            const Spacer(),
+                            OutlinedButton(
                               onPressed: () => Navigator.of(context).pop(),
-                              icon: const Icon(Icons.close_rounded),
-                              color: colorScheme.onSurface,
-                              tooltip: S.of(context).cancel,
+                              child: Text(S.of(context).cancel),
                             ),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: hasSelection
-                                ? () {
-                                    Navigator.of(context).pop(selected);
-                                  }
-                                : null,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: hasSelection
-                                    ? colorScheme.primary
-                                    : colorScheme.surfaceContainerHighest,
-                              ),
-                              child: Icon(
-                                Icons.check_rounded,
-                                color: hasSelection
-                                    ? colorScheme.onPrimary
-                                    : colorScheme.onSurfaceVariant,
-                              ),
+                            const SizedBox(width: 12),
+                            ElevatedButton(
+                              onPressed: hasSelection
+                                  ? () async {
+                                      if (context.mounted) {
+                                        final filesWithBytes =
+                                            await _getFilesWithBytes(selected);
+                                        if (context.mounted) {
+                                          Navigator.of(
+                                            context,
+                                          ).pop(filesWithBytes);
+                                        }
+                                      }
+                                    }
+                                  : null,
+                              child: Text(S.of(context).confirm),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          );
-        },
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
   Widget _buildWebDesktopPicker() {
-    Future<void> pickFilesFromDialog() async {
-      final library = DeviceMediaLibrary();
-      final result = await library.pickFiles(multiple: widget.allowMultiple);
+    final theme = Theme.of(context);
 
-      if (result == null) return;
-
-      final mappedFiles = result.map((file) {
-        return MediaItem(
-          id: DateTime.now().microsecondsSinceEpoch.toString(),
-          name: file['name']?.toString() ?? 'Unknown',
-          uri: file['uri']?.toString() ?? file['filePath']?.toString() ?? '',
-          dateAdded: DateTime.now().millisecondsSinceEpoch,
-          size: file['size'] is int ? file['size'] : 0,
-          width: file['width'] is int ? file['width'] : 0,
-          height: file['height'] is int ? file['height'] : 0,
-          albumId: file['albumId']?.toString() ?? '',
-          albumName: file['albumName']?.toString() ?? '',
-          type: file['type']?.toString() ?? 'image',
-          duration: file['duration'] is int ? file['duration'] : null,
-        );
-      }).toList();
-
-      setState(() {
-        if (!widget.allowMultiple && mappedFiles.isNotEmpty) {
-          selectedFiles
-            ..clear()
-            ..add(mappedFiles.first);
-        } else {
-          for (final f in mappedFiles) {
-            if (selectedFiles.length < widget.maxSelection) {
-              selectedFiles.add(f);
-            }
-          }
-        }
-      });
-    }
-
-    void confirmSelection() {
-      Navigator.of(context).pop(selectedFiles);
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(S.of(context).selectMedia),
-        actions: [
-          TextButton(
-            onPressed: selectedFiles.isEmpty ? null : confirmSelection,
-            child: Text(S.of(context).confirm),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: UniversalDropZone(
-              enabled: true,
-              allowedExtensions: const ['.jpg', '.jpeg', '.png', '.mp4'],
-              onFilesDropped: (droppedFiles) async {
-                setState(() {
-                  for (final f in droppedFiles) {
-                    if (selectedFiles.length < widget.maxSelection) {
-                      selectedFiles.add(f);
-                    }
-                  }
-                });
-              },
-              child: selectedFiles.isEmpty
-                  ? Center(child: Text(S.of(context).dropFilesOrUseButtonBelow))
-                  : ListView.builder(
-                      itemCount: selectedFiles.length,
-                      itemBuilder: (_, index) => ListTile(
-                        title: Text(selectedFiles[index].name),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () {
-                            setState(() => selectedFiles.removeAt(index));
-                          },
-                        ),
-                      ),
+    return MediaPickerConfigScope(
+      config: widget.config,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(S.of(context).selectMedia),
+          actions: [
+            TextButton(
+              onPressed: selectedItems.isEmpty
+                  ? null
+                  : () async {
+                      if (context.mounted) {
+                        final filesWithBytes = await _getFilesWithBytes(
+                          selectedItems,
+                        );
+                        if (context.mounted) {
+                          Navigator.of(context).pop(filesWithBytes);
+                        }
+                      }
+                    },
+              child: Text(S.of(context).confirm),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            if (selectedItems.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: theme.dividerColor, width: 1),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      '${selectedItems.length}/${widget.maxSelection} выбранных',
+                      style: theme.textTheme.bodyMedium,
                     ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: ElevatedButton.icon(
-              onPressed: pickFilesFromDialog,
-              icon: const Icon(Icons.folder_open),
-              label: Text(S.of(context).chooseFiles),
-            ),
-          ),
-        ],
+                    const Spacer(),
+                    if (selectedItems.isNotEmpty)
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            selectedItems.clear();
+                          });
+                        },
+                        child: const Text('Очистить все'),
+                      ),
+                  ],
+                ),
+              ),
+            Expanded(child: MediaGrid(autoPlayVideosInFullscreen: true)),
+          ],
+        ),
       ),
     );
   }
