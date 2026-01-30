@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
@@ -16,7 +15,9 @@ class MediaPickerBottomSheet extends StatelessWidget {
   final MediaPickerConfig config;
   final DeviceMediaLibrary mediaLibrary;
   final void Function(List<MediaItem>)? onSelectionChanged;
-  final void Function(List<MapEntry<MediaItem, Uint8List?>>) onConfirmed;
+  final void Function(List<MediaItem>)? onConfirmed;
+  final void Function(List<MapEntry<MediaItem, Uint8List?>>)?
+  onConfirmedWithBytes;
 
   const MediaPickerBottomSheet({
     super.key,
@@ -31,10 +32,11 @@ class MediaPickerBottomSheet extends StatelessWidget {
     required this.config,
     required this.mediaLibrary,
     this.onSelectionChanged,
-    required this.onConfirmed,
+    this.onConfirmed,
+    this.onConfirmedWithBytes,
   });
 
-  static Future<List<MapEntry<MediaItem, Uint8List?>>?> open({
+  static Future<List<MediaItem>?> open({
     required BuildContext context,
     List<MediaItem> initialSelection = const [],
     int maxSelection = 10,
@@ -47,7 +49,8 @@ class MediaPickerBottomSheet extends StatelessWidget {
     MediaPickerConfig? config,
     DeviceMediaLibrary? mediaLibrary,
     void Function(List<MediaItem>)? onSelectionChanged,
-    required void Function(List<MapEntry<MediaItem, Uint8List?>>) onConfirmed,
+    void Function(List<MediaItem>)? onConfirmed,
+    void Function(List<MapEntry<MediaItem, Uint8List?>>)? onConfirmedWithBytes,
   }) async {
     final isWeb = kIsWeb;
     final isDesktop =
@@ -57,7 +60,7 @@ class MediaPickerBottomSheet extends StatelessWidget {
     final actualConfig = config ?? const MediaPickerConfig();
 
     if (isWeb || isDesktop) {
-      return showDialog<List<MapEntry<MediaItem, Uint8List?>>>(
+      return showDialog<List<MediaItem>>(
         context: context,
         builder: (_) => MediaPickerDialog(
           initialSelection: initialSelection,
@@ -69,11 +72,12 @@ class MediaPickerBottomSheet extends StatelessWidget {
           mediaLibrary: actualMediaLibrary,
           onSelectionChanged: onSelectionChanged,
           onConfirmed: onConfirmed,
+          onConfirmedWithBytes: onConfirmedWithBytes,
         ),
       );
     }
 
-    return showModalBottomSheet<List<MapEntry<MediaItem, Uint8List?>>>(
+    return showModalBottomSheet<List<MediaItem>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

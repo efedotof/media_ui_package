@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/generated/l10n.dart';
@@ -14,7 +15,9 @@ class MediaPickerDialog extends StatefulWidget {
   final MediaPickerConfig config;
   final DeviceMediaLibrary mediaLibrary;
   final void Function(List<MediaItem>)? onSelectionChanged;
-  final void Function(List<MapEntry<MediaItem, Uint8List?>>) onConfirmed;
+  final void Function(List<MediaItem>)? onConfirmed;
+  final void Function(List<MapEntry<MediaItem, Uint8List?>>)?
+  onConfirmedWithBytes;
 
   const MediaPickerDialog({
     super.key,
@@ -26,7 +29,8 @@ class MediaPickerDialog extends StatefulWidget {
     required this.config,
     required this.mediaLibrary,
     this.onSelectionChanged,
-    required this.onConfirmed,
+    this.onConfirmed,
+    this.onConfirmedWithBytes,
   });
 
   @override
@@ -67,6 +71,7 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
         final bytes = await widget.mediaLibrary.getFileBytes(item.uri);
         result.add(MapEntry(item, bytes));
       } catch (e) {
+        debugPrint('Error getting bytes for ${item.uri}: $e');
         result.add(MapEntry(item, null));
       }
     }
@@ -119,10 +124,20 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                             onPressed: selected.isEmpty
                                 ? null
                                 : () async {
-                                    final filesWithBytes =
-                                        await _getFilesWithBytes(selected);
-                                    if (context.mounted) {
-                                      Navigator.of(context).pop(filesWithBytes);
+                                    if (kIsWeb) {
+                                      final filesWithBytes =
+                                          await _getFilesWithBytes(selected);
+                                      if (context.mounted) {
+                                        Navigator.of(context).pop(selected);
+                                        widget.onConfirmedWithBytes?.call(
+                                          filesWithBytes,
+                                        );
+                                      }
+                                    } else {
+                                      if (context.mounted) {
+                                        Navigator.of(context).pop(selected);
+                                        widget.onConfirmed?.call(selected);
+                                      }
                                     }
                                   },
                             child: Text(S.of(context).confirm),

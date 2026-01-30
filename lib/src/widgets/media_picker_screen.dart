@@ -18,7 +18,7 @@ class MediaPickerScreen extends StatefulWidget {
   final MediaPickerConfig config;
   final DeviceMediaLibrary mediaLibrary;
   final void Function(List<MediaItem>)? onSelectionChanged;
-  final void Function(List<MapEntry<MediaItem, Uint8List?>>) onConfirmed;
+  final void Function(List<MediaItem>)? onConfirmed;
 
   const MediaPickerScreen({
     super.key,
@@ -49,23 +49,6 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
   void initState() {
     super.initState();
     selectedItems = [...widget.initialSelection];
-  }
-
-  Future<List<MapEntry<MediaItem, Uint8List?>>> _getFilesWithBytes(
-    List<MediaItem> items,
-  ) async {
-    final result = <MapEntry<MediaItem, Uint8List?>>[];
-
-    for (final item in items) {
-      try {
-        final bytes = await widget.mediaLibrary.getFileBytes(item.uri);
-        result.add(MapEntry(item, bytes));
-      } catch (e) {
-        result.add(MapEntry(item, null));
-      }
-    }
-
-    return result;
   }
 
   @override
@@ -180,15 +163,8 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
                                 onPressed: hasSelection
                                     ? () async {
                                         if (context.mounted) {
-                                          final filesWithBytes =
-                                              await _getFilesWithBytes(
-                                                selected,
-                                              );
-                                          if (context.mounted) {
-                                            Navigator.of(
-                                              context,
-                                            ).pop(filesWithBytes);
-                                          }
+                                          Navigator.of(context).pop(selected);
+                                          widget.onConfirmed?.call(selected);
                                         }
                                       }
                                     : null,
@@ -223,12 +199,8 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
                   ? null
                   : () async {
                       if (context.mounted) {
-                        final filesWithBytes = await _getFilesWithBytes(
-                          selectedItems,
-                        );
-                        if (context.mounted) {
-                          Navigator.of(context).pop(filesWithBytes);
-                        }
+                        Navigator.of(context).pop(selectedItems);
+                        widget.onConfirmed?.call(selectedItems);
                       }
                     },
               child: Text(S.of(context).confirm),

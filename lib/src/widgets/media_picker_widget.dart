@@ -117,7 +117,7 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
         showSelectionIndicators: true,
         config: widget.config ?? const MediaPickerConfig(),
         mediaLibrary: _mediaLibrary,
-        onConfirmed: (filesWithBytes) {
+        onConfirmedWithBytes: (filesWithBytes) {
           if (filesWithBytes.isEmpty) return;
 
           if (widget.onConfirmed != null) {
