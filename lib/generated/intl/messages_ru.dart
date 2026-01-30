@@ -24,6 +24,7 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "cancel": MessageLookupByLibrary.simpleMessage("Отмена"),
     "chooseFiles": MessageLookupByLibrary.simpleMessage("Выбрать файлы"),
+    "clearEverything": MessageLookupByLibrary.simpleMessage("Очистить все"),
     "confirm": MessageLookupByLibrary.simpleMessage("Подтвердить"),
     "dropFilesOrUseButtonBelow": MessageLookupByLibrary.simpleMessage(
       "Перетащите файлы или используйте кнопку ниже",
@@ -48,6 +49,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Разрешение отклонено",
     ),
     "selectMedia": MessageLookupByLibrary.simpleMessage("Выбор медиа"),
+    "selected": MessageLookupByLibrary.simpleMessage("выбранных"),
     "thereAreNoAvailableImages": MessageLookupByLibrary.simpleMessage(
       "Нет доступных изображений",
     ),

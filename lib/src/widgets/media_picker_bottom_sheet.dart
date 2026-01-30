@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
+import 'package:media_ui_package/src/models/upload_media_request.dart';
 
 class MediaPickerBottomSheet extends StatelessWidget {
   final List<MediaItem> initialSelection;
@@ -15,9 +16,7 @@ class MediaPickerBottomSheet extends StatelessWidget {
   final MediaPickerConfig config;
   final DeviceMediaLibrary mediaLibrary;
   final void Function(List<MediaItem>)? onSelectionChanged;
-  final void Function(List<MediaItem>)? onConfirmed;
-  final void Function(List<MapEntry<MediaItem, Uint8List?>>)?
-  onConfirmedWithBytes;
+  final void Function(List<UploadMediaRequest>)? onConfirmedWithRequests;
 
   const MediaPickerBottomSheet({
     super.key,
@@ -32,11 +31,10 @@ class MediaPickerBottomSheet extends StatelessWidget {
     required this.config,
     required this.mediaLibrary,
     this.onSelectionChanged,
-    this.onConfirmed,
-    this.onConfirmedWithBytes,
+    this.onConfirmedWithRequests,
   });
 
-  static Future<List<MediaItem>?> open({
+  static Future<List<UploadMediaRequest>?> open({
     required BuildContext context,
     List<MediaItem> initialSelection = const [],
     int maxSelection = 10,
@@ -49,8 +47,7 @@ class MediaPickerBottomSheet extends StatelessWidget {
     MediaPickerConfig? config,
     DeviceMediaLibrary? mediaLibrary,
     void Function(List<MediaItem>)? onSelectionChanged,
-    void Function(List<MediaItem>)? onConfirmed,
-    void Function(List<MapEntry<MediaItem, Uint8List?>>)? onConfirmedWithBytes,
+    void Function(List<UploadMediaRequest>)? onConfirmedWithRequests,
   }) async {
     final isWeb = kIsWeb;
     final isDesktop =
@@ -60,7 +57,7 @@ class MediaPickerBottomSheet extends StatelessWidget {
     final actualConfig = config ?? const MediaPickerConfig();
 
     if (isWeb || isDesktop) {
-      return showDialog<List<MediaItem>>(
+      return showDialog<List<UploadMediaRequest>>(
         context: context,
         builder: (_) => MediaPickerDialog(
           initialSelection: initialSelection,
@@ -71,13 +68,12 @@ class MediaPickerBottomSheet extends StatelessWidget {
           config: actualConfig,
           mediaLibrary: actualMediaLibrary,
           onSelectionChanged: onSelectionChanged,
-          onConfirmed: onConfirmed,
-          onConfirmedWithBytes: onConfirmedWithBytes,
+          onConfirmedWithRequests: onConfirmedWithRequests,
         ),
       );
     }
 
-    return showModalBottomSheet<List<MediaItem>>(
+    final result = await showModalBottomSheet<List<MediaItem>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -107,12 +103,37 @@ class MediaPickerBottomSheet extends StatelessWidget {
               config: actualConfig,
               mediaLibrary: actualMediaLibrary,
               onSelectionChanged: onSelectionChanged,
-              onConfirmed: onConfirmed,
+              onConfirmed: (selectedItems) async {
+                final utilsMedia = UtilsMedia();
+                final requests = <UploadMediaRequest>[];
+                for (final item in selectedItems) {
+                  final request = await utilsMedia.createUploadRequest(item);
+                  if (request != null) {
+                    requests.add(request);
+                  }
+                }
+                if (context.mounted) {
+                  Navigator.of(context).pop(requests);
+                }
+              },
             ),
           );
         },
       ),
     );
+
+    if (result != null && onConfirmedWithRequests != null) {
+      final utilsMedia = UtilsMedia();
+      final requests = <UploadMediaRequest>[];
+      for (final item in result) {
+        final request = await utilsMedia.createUploadRequest(item);
+        if (request != null) {
+          requests.add(request);
+        }
+      }
+      onConfirmedWithRequests(requests);
+    }
+    return null;
   }
 
   @override
