@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'package:media_ui_package/src/models/upload_media_request.dart';
+import 'package:media_ui_package/src/widgets/media_picker_dialog.dart';
+import 'package:media_ui_package/src/widgets/media_picker_screen.dart';
 
 class MediaPickerBottomSheet extends StatelessWidget {
   final List<MediaItem> initialSelection;

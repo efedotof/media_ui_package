@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'package:media_ui_package/src/models/upload_media_request.dart';
+import 'package:media_ui_package/src/widgets/media_picker_widget.dart';
 
 class MediaPickerUI extends StatefulWidget {
   final Widget child;

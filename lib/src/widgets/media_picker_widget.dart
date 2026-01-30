@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'package:media_ui_package/src/models/upload_media_request.dart';
+import 'package:media_ui_package/src/widgets/file_selection_dialog/file_selection_dialog.dart';
+import 'package:media_ui_package/src/widgets/media_picker_bottom_sheet.dart';
 
 class MediaPickerWidget extends StatefulWidget {
   final List<MediaItem> initialSelection;

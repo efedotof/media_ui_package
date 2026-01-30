@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
+import 'package:media_ui_package/src/widgets/file_selection_dialog/file_selection_dialog.dart';
 
 class PlatformMediaPickerUI extends StatefulWidget {
   final List<MediaItem> initialSelection;
