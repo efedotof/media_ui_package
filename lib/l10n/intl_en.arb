@@ -12,7 +12,5 @@
   "permissionDenied": "Permission denied",
   "noMedia": "No media",
   "loadingError": "Loading error",
-  "thereAreNoAvailableImages": "There are no available images",
-  "clearEverything": "Clear everything",
-  "selected": "selected"
+  "thereAreNoAvailableImages": "There are no available images"
 }

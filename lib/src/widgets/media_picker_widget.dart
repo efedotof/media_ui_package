@@ -1,9 +1,9 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
-import 'package:media_ui_package/src/models/upload_media_request.dart';
 import 'package:media_ui_package/src/widgets/file_selection_dialog/file_selection_dialog.dart';
 import 'package:media_ui_package/src/widgets/media_picker_bottom_sheet.dart';
 
@@ -13,7 +13,7 @@ class MediaPickerWidget extends StatefulWidget {
   final bool allowMultiple;
   final bool showVideos;
   final Function(List<MediaItem>)? onSelectionChanged;
-  final Function(List<UploadMediaRequest>)? onConfirmedWithRequests;
+  final Function(List<MapEntry<MediaItem, Uint8List?>>)? onConfirmed;
   final Widget child;
   final bool enableDragDrop;
   final List<String> allowedExtensions;
@@ -26,7 +26,7 @@ class MediaPickerWidget extends StatefulWidget {
     this.allowMultiple = true,
     this.showVideos = true,
     this.onSelectionChanged,
-    this.onConfirmedWithRequests,
+    this.onConfirmed,
     required this.child,
     this.enableDragDrop = true,
     this.allowedExtensions = const [
@@ -47,7 +47,6 @@ class MediaPickerWidget extends StatefulWidget {
 class MediaPickerWidgetState extends State<MediaPickerWidget> {
   final List<MediaItem> _selectedFiles = [];
   final DeviceMediaLibrary _mediaLibrary = DeviceMediaLibrary();
-  final UtilsMedia _utilsMedia = UtilsMedia();
 
   @override
   void initState() {
@@ -63,7 +62,7 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
 
     if (isWeb || isDesktop) {
       try {
-        debugPrint('Opening file picker for ${isWeb ? 'Web' : 'Desktop'}');
+        debugPrint('Opening file picker for ${isWeb ? 'Web' : 'Windows'}');
 
         final result = await _mediaLibrary.pickFiles(
           multiple: widget.allowMultiple,
@@ -120,32 +119,16 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
         showSelectionIndicators: true,
         config: widget.config ?? const MediaPickerConfig(),
         mediaLibrary: _mediaLibrary,
-        onConfirmedWithRequests: (requests) {
-          if (requests.isEmpty) return;
+        onConfirmedWithBytes: (filesWithBytes) {
+          if (filesWithBytes.isEmpty) return;
 
-          if (widget.onConfirmedWithRequests != null) {
-            widget.onConfirmedWithRequests!(requests);
+          if (widget.onConfirmed != null) {
+            widget.onConfirmed!(filesWithBytes);
           }
           if (mounted) {
             setState(() {
               _selectedFiles.clear();
-              final mediaItems = requests
-                  .map(
-                    (req) => MediaItem(
-                      id: DateTime.now().microsecondsSinceEpoch.toString(),
-                      name: req.fileName,
-                      uri: 'temp://${req.fileName}',
-                      dateAdded: DateTime.now().millisecondsSinceEpoch,
-                      size: req.bytes.length,
-                      width: 0,
-                      height: 0,
-                      albumId: '',
-                      albumName: '',
-                      type: _getTypeFromFileName(req.fileName),
-                    ),
-                  )
-                  .toList();
-              _selectedFiles.addAll(mediaItems);
+              _selectedFiles.addAll(filesWithBytes.map((e) => e.key).toList());
             });
             widget.onSelectionChanged?.call(_selectedFiles);
           }
@@ -191,21 +174,9 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
     );
 
     if (confirmed == true && _selectedFiles.isNotEmpty) {
-      final requests = <UploadMediaRequest>[];
-      for (final mediaItem in _selectedFiles) {
-        try {
-          final request = await _utilsMedia.createUploadRequest(mediaItem);
-          if (request != null) {
-            requests.add(request);
-          }
-        } catch (e) {
-          debugPrint('Error creating upload request for ${mediaItem.name}: $e');
-        }
-      }
-
-      if (requests.isNotEmpty && widget.onConfirmedWithRequests != null) {
-        widget.onConfirmedWithRequests!(requests);
-      }
+      widget.onConfirmed?.call(
+        _selectedFiles.map((item) => MapEntry(item, null)).toList(),
+      );
     }
   }
 
@@ -227,18 +198,6 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
         );
       }
     }
-  }
-
-  String _getTypeFromFileName(String fileName) {
-    final lower = fileName.toLowerCase();
-    if (lower.endsWith('.mp4') ||
-        lower.endsWith('.mov') ||
-        lower.endsWith('.avi') ||
-        lower.endsWith('.mkv') ||
-        lower.endsWith('.webm')) {
-      return 'video';
-    }
-    return 'image';
   }
 
   @override

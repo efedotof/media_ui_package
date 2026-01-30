@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,7 +19,9 @@ class MediaPickerScreen extends StatefulWidget {
   final MediaPickerConfig config;
   final DeviceMediaLibrary mediaLibrary;
   final void Function(List<MediaItem>)? onSelectionChanged;
-  final void Function(List<MapEntry<MediaItem, Uint8List?>>) onConfirmed;
+  final void Function(List<MediaItem>)? onConfirmed;
+  final void Function(List<MapEntry<MediaItem, Uint8List?>>)?
+  onConfirmedWithBytes;
 
   const MediaPickerScreen({
     super.key,
@@ -33,7 +36,8 @@ class MediaPickerScreen extends StatefulWidget {
     required this.config,
     required this.mediaLibrary,
     this.onSelectionChanged,
-    required this.onConfirmed,
+    this.onConfirmed, // Изменен тип
+    this.onConfirmedWithBytes, // Добавлен
   });
 
   @override
@@ -66,6 +70,22 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
     }
 
     return result;
+  }
+
+  Future<void> _handleConfirmation() async {
+    if (selectedItems.isEmpty) return;
+
+    // Вызываем оба коллбека если они есть
+    widget.onConfirmed?.call(selectedItems);
+
+    if (widget.onConfirmedWithBytes != null) {
+      final filesWithBytes = await _getFilesWithBytes(selectedItems);
+      widget.onConfirmedWithBytes?.call(filesWithBytes);
+    }
+
+    if (mounted) {
+      Navigator.of(context).pop(selectedItems);
+    }
   }
 
   @override
@@ -112,6 +132,9 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
                         showSelectionIndicators,
                         selectedMediaItems,
                       ) {
+                        setState(() {
+                          selectedItems = selectedMediaItems;
+                        });
                         widget.onSelectionChanged?.call(selectedMediaItems);
                       },
                 );
@@ -178,19 +201,7 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
                               const SizedBox(width: 12),
                               ElevatedButton(
                                 onPressed: hasSelection
-                                    ? () async {
-                                        if (context.mounted) {
-                                          final filesWithBytes =
-                                              await _getFilesWithBytes(
-                                                selected,
-                                              );
-                                          if (context.mounted) {
-                                            Navigator.of(
-                                              context,
-                                            ).pop(filesWithBytes);
-                                          }
-                                        }
-                                      }
+                                    ? _handleConfirmation
                                     : null,
                                 child: Text(S.of(context).confirm),
                               ),
@@ -219,18 +230,7 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
           title: Text(S.of(context).selectMedia),
           actions: [
             TextButton(
-              onPressed: selectedItems.isEmpty
-                  ? null
-                  : () async {
-                      if (context.mounted) {
-                        final filesWithBytes = await _getFilesWithBytes(
-                          selectedItems,
-                        );
-                        if (context.mounted) {
-                          Navigator.of(context).pop(filesWithBytes);
-                        }
-                      }
-                    },
+              onPressed: selectedItems.isEmpty ? null : _handleConfirmation,
               child: Text(S.of(context).confirm),
             ),
           ],
@@ -248,7 +248,7 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
                 child: Row(
                   children: [
                     Text(
-                      '${selectedItems.length}/${widget.maxSelection} ${S.of(context).selected}',
+                      '${selectedItems.length}/${widget.maxSelection} выбранных',
                       style: theme.textTheme.bodyMedium,
                     ),
                     const Spacer(),
@@ -259,7 +259,7 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
                             selectedItems.clear();
                           });
                         },
-                        child: Text(S.of(context).clearEverything),
+                        child: const Text('Очистить все'),
                       ),
                   ],
                 ),

@@ -12,7 +12,5 @@
   "permissionDenied": "Разрешение отклонено",
   "noMedia": "Нет медиа",
   "loadingError": "Ошибка загрузки",
-  "thereAreNoAvailableImages": "Нет доступных изображений",
-  "clearEverything": "Очистить все",
-  "selected": "выбранных"
+  "thereAreNoAvailableImages": "Нет доступных изображений"
 }

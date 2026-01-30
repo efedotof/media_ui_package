@@ -178,21 +178,6 @@ class S {
       args: [],
     );
   }
-
-  /// `Clear everything`
-  String get clearEverything {
-    return Intl.message(
-      'Clear everything',
-      name: 'clearEverything',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `selected`
-  String get selected {
-    return Intl.message('selected', name: 'selected', desc: '', args: []);
-  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

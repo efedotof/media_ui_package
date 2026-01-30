@@ -24,7 +24,6 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
     "chooseFiles": MessageLookupByLibrary.simpleMessage("Choose files"),
-    "clearEverything": MessageLookupByLibrary.simpleMessage("Clear everything"),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
     "dropFilesOrUseButtonBelow": MessageLookupByLibrary.simpleMessage(
       "Drop files or use button below",
@@ -49,7 +48,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Permission denied",
     ),
     "selectMedia": MessageLookupByLibrary.simpleMessage("Select Media"),
-    "selected": MessageLookupByLibrary.simpleMessage("selected"),
     "thereAreNoAvailableImages": MessageLookupByLibrary.simpleMessage(
       "There are no available images",
     ),

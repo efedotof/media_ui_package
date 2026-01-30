@@ -1,9 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'package:media_ui_package/src/models/media_type.dart';
-import 'package:media_ui_package/src/models/upload_media_request.dart';
 
 class MediaPickerDialog extends StatefulWidget {
   final List<MediaItem> initialSelection;
@@ -14,7 +14,9 @@ class MediaPickerDialog extends StatefulWidget {
   final MediaPickerConfig config;
   final DeviceMediaLibrary mediaLibrary;
   final void Function(List<MediaItem>)? onSelectionChanged;
-  final void Function(List<UploadMediaRequest>)? onConfirmedWithRequests;
+  final void Function(List<MediaItem>)? onConfirmed;
+  final void Function(List<MapEntry<MediaItem, Uint8List?>>)?
+  onConfirmedWithBytes;
 
   const MediaPickerDialog({
     super.key,
@@ -26,7 +28,8 @@ class MediaPickerDialog extends StatefulWidget {
     required this.config,
     required this.mediaLibrary,
     this.onSelectionChanged,
-    this.onConfirmedWithRequests,
+    this.onConfirmed,
+    this.onConfirmedWithBytes,
   });
 
   @override
@@ -35,7 +38,6 @@ class MediaPickerDialog extends StatefulWidget {
 
 class _MediaPickerDialogState extends State<MediaPickerDialog> {
   late MediaGridCubit _mediaGridCubit;
-  final UtilsMedia _utilsMedia = UtilsMedia();
 
   @override
   void initState() {
@@ -58,19 +60,18 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
     super.dispose();
   }
 
-  Future<List<UploadMediaRequest>> _getUploadRequests(
+  Future<List<MapEntry<MediaItem, Uint8List?>>> _getFilesWithBytes(
     List<MediaItem> items,
   ) async {
-    final result = <UploadMediaRequest>[];
+    final result = <MapEntry<MediaItem, Uint8List?>>[];
 
     for (final item in items) {
       try {
-        final request = await _utilsMedia.createUploadRequest(item);
-        if (request != null) {
-          result.add(request);
-        }
+        final bytes = await widget.mediaLibrary.getFileBytes(item.uri);
+        result.add(MapEntry(item, bytes));
       } catch (e) {
-        debugPrint('Error creating upload request for ${item.uri}: $e');
+        debugPrint('Error getting bytes for ${item.uri}: $e');
+        result.add(MapEntry(item, null));
       }
     }
 
@@ -122,14 +123,20 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                             onPressed: selected.isEmpty
                                 ? null
                                 : () async {
-                                    final requests = await _getUploadRequests(
-                                      selected,
-                                    );
-                                    if (context.mounted) {
-                                      Navigator.of(context).pop(selected);
-                                      widget.onConfirmedWithRequests?.call(
-                                        requests,
-                                      );
+                                    if (kIsWeb) {
+                                      final filesWithBytes =
+                                          await _getFilesWithBytes(selected);
+                                      if (context.mounted) {
+                                        Navigator.of(context).pop(selected);
+                                        widget.onConfirmedWithBytes?.call(
+                                          filesWithBytes,
+                                        );
+                                      }
+                                    } else {
+                                      if (context.mounted) {
+                                        Navigator.of(context).pop(selected);
+                                        widget.onConfirmed?.call(selected);
+                                      }
                                     }
                                   },
                             child: Text(S.of(context).confirm),
