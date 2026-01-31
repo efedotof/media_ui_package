@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/generated/l10n.dart';
@@ -147,9 +146,14 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
         onConfirmedWithBytes: (filesWithBytes) {
           if (filesWithBytes.isEmpty) return;
 
+          final result = filesWithBytes
+              .map((e) => MapEntry(e.key, e.value))
+              .toList(growable: false);
+
           if (widget.onConfirmed != null) {
-            widget.onConfirmed!(filesWithBytes);
+            widget.onConfirmed!(result);
           }
+
           if (mounted) {
             setState(() {
               _selectedFiles.clear();
@@ -175,6 +179,7 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
     widget.onSelectionChanged?.call(_selectedFiles);
 
     if (!mounted) return;
+
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -214,10 +219,32 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
           .where(
             (entry) => _selectedFiles.any((item) => item.id == entry.key.id),
           )
-          .toList();
+          .toList(growable: false);
 
       debugPrint('Confirming with ${result.length} files and bytes');
-      widget.onConfirmed?.call(result);
+      if (widget.onConfirmed != null) {
+        widget.onConfirmed!(result);
+      }
+    }
+  }
+
+  Future<void> _handleDroppedFiles(List<MediaItem> files) async {
+    if (!mounted) return;
+
+    if (!widget.allowMultiple && files.isNotEmpty) {
+      await _handleSelectedFiles([files.first]);
+    } else if (widget.allowMultiple &&
+        _selectedFiles.length + files.length <= widget.maxSelection) {
+      await _handleSelectedFiles([..._selectedFiles, ...files]);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(S.of(context).maximumWidgetmaxselectionFilesAllowed),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -267,28 +294,12 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
     );
 
     if (confirmed == true && _selectedFiles.isNotEmpty) {
-      widget.onConfirmed?.call(
-        _selectedFiles.map((item) => MapEntry(item, null)).toList(),
-      );
-    }
-  }
+      final result = _selectedFiles
+          .map((item) => MapEntry<MediaItem, Uint8List?>(item, null))
+          .toList(growable: false);
 
-  Future<void> _handleDroppedFiles(List<MediaItem> files) async {
-    if (!mounted) return;
-
-    if (!widget.allowMultiple && files.isNotEmpty) {
-      await _handleSelectedFiles([files.first]);
-    } else if (widget.allowMultiple &&
-        _selectedFiles.length + files.length <= widget.maxSelection) {
-      await _handleSelectedFiles([..._selectedFiles, ...files]);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(S.of(context).maximumWidgetmaxselectionFilesAllowed),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+      if (widget.onConfirmed != null) {
+        widget.onConfirmed!(result);
       }
     }
   }
