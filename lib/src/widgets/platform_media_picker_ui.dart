@@ -81,20 +81,28 @@ class _PlatformMediaPickerUIState extends State<PlatformMediaPickerUI> {
 
     final confirmed = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => FileSelectionDialog(
         selectedFiles: _selectedFiles,
-        onConfirm: () => Navigator.of(context).pop(true),
-        onCancel: () => Navigator.of(context).pop(false),
+
+        onConfirm: () {
+          debugPrint("onConfirm: [PlatformMediaPickerUI]");
+        },
+
+        onCancel: () {
+          debugPrint("onCancel: [PlatformMediaPickerUI]");
+        },
         onClearAll: () {
           if (!mounted) return;
           setState(() => _selectedFiles.clear());
-          Navigator.of(context).pop(false);
+
+          debugPrint("onClearAll: [PlatformMediaPickerUI]");
         },
         onItemRemoved: (file) {
           if (!mounted) return;
           setState(() => _selectedFiles.remove(file));
           if (_selectedFiles.isEmpty) {
-            Navigator.of(context).pop(false);
+            debugPrint("onItemRemoved: [PlatformMediaPickerUI]");
           }
         },
       ),

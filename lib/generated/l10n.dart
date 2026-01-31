@@ -178,6 +178,16 @@ class S {
       args: [],
     );
   }
+
+  /// `Drop files here`
+  String get dropFilesHere {
+    return Intl.message(
+      'Drop files here',
+      name: 'dropFilesHere',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

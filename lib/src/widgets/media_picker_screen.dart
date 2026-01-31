@@ -36,8 +36,8 @@ class MediaPickerScreen extends StatefulWidget {
     required this.config,
     required this.mediaLibrary,
     this.onSelectionChanged,
-    this.onConfirmed, // Изменен тип
-    this.onConfirmedWithBytes, // Добавлен
+    this.onConfirmed,
+    this.onConfirmedWithBytes,
   });
 
   @override
@@ -75,16 +75,11 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
   Future<void> _handleConfirmation() async {
     if (selectedItems.isEmpty) return;
 
-    // Вызываем оба коллбека если они есть
     widget.onConfirmed?.call(selectedItems);
 
     if (widget.onConfirmedWithBytes != null) {
       final filesWithBytes = await _getFilesWithBytes(selectedItems);
       widget.onConfirmedWithBytes?.call(filesWithBytes);
-    }
-
-    if (mounted) {
-      Navigator.of(context).pop(selectedItems);
     }
   }
 
@@ -165,6 +160,7 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
                         if (widget.showCancelButton)
                           IconButton(
                             onPressed: () => Navigator.of(context).pop(),
+
                             icon: const Icon(Icons.close_rounded),
                             color: colorScheme.onSurface,
                             tooltip: S.of(context).cancel,
@@ -196,6 +192,7 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
                               const Spacer(),
                               OutlinedButton(
                                 onPressed: () => Navigator.of(context).pop(),
+
                                 child: Text(S.of(context).cancel),
                               ),
                               const SizedBox(width: 12),

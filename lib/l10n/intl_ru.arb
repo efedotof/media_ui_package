@@ -12,5 +12,6 @@
   "permissionDenied": "Разрешение отклонено",
   "noMedia": "Нет медиа",
   "loadingError": "Ошибка загрузки",
-  "thereAreNoAvailableImages": "Нет доступных изображений"
+  "thereAreNoAvailableImages": "Нет доступных изображений",
+  "dropFilesHere": "Сбрасывайте файлы сюда"
 }

@@ -2,8 +2,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 
-import 'media_picker_widget.dart';
-
 class MediaPickerUI extends StatefulWidget {
   final Widget child;
   final List<MediaItem> initialSelection;

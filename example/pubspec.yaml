@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   media_ui_package:
     path: ../ 
   # The following adds the Cupertino Icons font to your application.

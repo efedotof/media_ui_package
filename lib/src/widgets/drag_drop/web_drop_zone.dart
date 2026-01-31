@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:desktop_drop/desktop_drop.dart';
+import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 
 class WebDropZone extends StatefulWidget {
@@ -92,9 +93,6 @@ class _WebDropZoneState extends State<WebDropZone> {
       onDragDone: (detail) async {
         await _process(detail.files);
         setState(() => _dragging = false);
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
       },
       child: Stack(
         children: [
@@ -105,7 +103,7 @@ class _WebDropZoneState extends State<WebDropZone> {
                 color: Colors.black54,
                 alignment: Alignment.center,
                 child: Text(
-                  widget.overlayText ?? 'Drop files here',
+                  widget.overlayText ?? S.of(context).dropFilesHere,
                   style: const TextStyle(color: Colors.white, fontSize: 20),
                 ),
               ),

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:desktop_drop/desktop_drop.dart';
+import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 
 class DesktopDropZone extends StatefulWidget {
@@ -102,9 +103,6 @@ class _DesktopDropZoneState extends State<DesktopDropZone> {
         final paths = detail.files.map((e) => e.path).toList();
         await _process(paths);
         setState(() => _dragging = false);
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
       },
       child: Stack(
         children: [
@@ -115,7 +113,7 @@ class _DesktopDropZoneState extends State<DesktopDropZone> {
                 color: Colors.black.withOpacity(0.6),
                 alignment: Alignment.center,
                 child: Text(
-                  widget.overlayText ?? 'Drop files here',
+                  widget.overlayText ?? S.of(context).dropFilesHere,
                   style: const TextStyle(color: Colors.white, fontSize: 22),
                 ),
               ),

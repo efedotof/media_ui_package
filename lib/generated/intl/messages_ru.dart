@@ -25,6 +25,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancel": MessageLookupByLibrary.simpleMessage("Отмена"),
     "chooseFiles": MessageLookupByLibrary.simpleMessage("Выбрать файлы"),
     "confirm": MessageLookupByLibrary.simpleMessage("Подтвердить"),
+    "dropFilesHere": MessageLookupByLibrary.simpleMessage(
+      "Сбрасывайте файлы сюда",
+    ),
     "dropFilesOrUseButtonBelow": MessageLookupByLibrary.simpleMessage(
       "Перетащите файлы или используйте кнопку ниже",
     ),

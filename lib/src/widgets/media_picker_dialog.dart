@@ -127,14 +127,18 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                                       final filesWithBytes =
                                           await _getFilesWithBytes(selected);
                                       if (context.mounted) {
-                                        Navigator.of(context).pop(selected);
+                                        debugPrint(
+                                          "TextButton: [MediaPickerDialog]",
+                                        );
                                         widget.onConfirmedWithBytes?.call(
                                           filesWithBytes,
                                         );
                                       }
                                     } else {
                                       if (context.mounted) {
-                                        Navigator.of(context).pop(selected);
+                                        debugPrint(
+                                          "TextButton: [MediaPickerDialog]",
+                                        );
                                         widget.onConfirmed?.call(selected);
                                       }
                                     }

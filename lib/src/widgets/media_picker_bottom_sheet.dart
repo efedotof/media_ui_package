@@ -2,8 +2,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/media_ui_package.dart';
-import 'package:media_ui_package/src/widgets/media_picker_dialog.dart';
-import 'package:media_ui_package/src/widgets/media_picker_screen.dart';
 
 class MediaPickerBottomSheet extends StatelessWidget {
   final List<MediaItem> initialSelection;
@@ -61,13 +59,6 @@ class MediaPickerBottomSheet extends StatelessWidget {
     final actualMediaLibrary = mediaLibrary ?? DeviceMediaLibrary();
     final actualConfig = config ?? const MediaPickerConfig();
 
-    // Helper function to convert bytes to media items
-    Future<List<MediaItem>> _getMediaItems(
-      List<MapEntry<MediaItem, Uint8List?>> entries,
-    ) async {
-      return entries.map((entry) => entry.key).toList();
-    }
-
     if (isWeb || isDesktop) {
       return showDialog<List<MediaItem>>(
         context: context,
@@ -116,18 +107,7 @@ class MediaPickerBottomSheet extends StatelessWidget {
               config: actualConfig,
               mediaLibrary: actualMediaLibrary,
               onSelectionChanged: onSelectionChanged,
-              // Convert the callback type
-              onConfirmed: (entriesWithBytes) async {
-                // Call onConfirmedWithBytes if provided
-                onConfirmedWithBytes?.call(entriesWithBytes);
-
-                // Call onConfirmed with just media items
-                final mediaItems = entriesWithBytes.map((e) => e.key).toList();
-                onConfirmed?.call(mediaItems);
-
-                // Return media items for the bottom sheet
-                Navigator.of(context).pop(mediaItems);
-              },
+              onConfirmed: onConfirmed,
             ),
           );
         },

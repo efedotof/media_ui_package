@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 import 'package:media_ui_package/src/widgets/file_selection_dialog/file_selection_dialog.dart';
-import 'package:media_ui_package/src/widgets/media_picker_bottom_sheet.dart';
 
 class MediaPickerWidget extends StatefulWidget {
   final List<MediaItem> initialSelection;
@@ -150,16 +149,24 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
     if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => FileSelectionDialog(
         selectedFiles: _selectedFiles,
-        onConfirm: () => Navigator.of(context).pop(true),
-        onCancel: () => Navigator.of(context).pop(false),
+        onConfirm: () {
+          debugPrint("onConfirm: [MediaPickerWidget]");
+          Navigator.of(context).pop(true);
+        },
+        onCancel: () {
+          debugPrint("onCancel: [MediaPickerWidget]");
+          Navigator.of(context).pop(false);
+        },
         onClearAll: () {
           if (!mounted) return;
           setState(() {
             _selectedFiles.clear();
           });
           Navigator.of(context).pop(false);
+          debugPrint("onClearAll: [MediaPickerWidget]");
         },
         onItemRemoved: (file) {
           if (!mounted) return;
@@ -168,6 +175,7 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
           });
           if (_selectedFiles.isEmpty) {
             Navigator.of(context).pop(false);
+            debugPrint("onClearAll: [onItemRemoved]");
           }
         },
       ),
