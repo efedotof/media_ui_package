@@ -71,26 +71,52 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
         if (result != null && result.isNotEmpty) {
           debugPrint('Got ${result.length} files from picker');
 
-          final mediaItems = result.map((file) {
-            return MediaItem(
+          final filesWithBytes = <MapEntry<MediaItem, Uint8List?>>[];
+
+          for (final file in result) {
+            final uri =
+                file['uri']?.toString() ?? file['filePath']?.toString() ?? '';
+            final name = file['name']?.toString() ?? 'Unknown';
+            final size = file['size'] is int ? file['size'] : 0;
+            final type = file['type']?.toString() ?? 'unknown';
+
+            Uint8List? bytes;
+
+            if (isDesktop && uri.startsWith('file://')) {
+              try {
+                final filePath = Uri.parse(
+                  uri,
+                ).toFilePath(windows: Platform.isWindows);
+                final file = File(filePath);
+                if (await file.exists()) {
+                  bytes = await file.readAsBytes();
+                  debugPrint('Read ${bytes.length} bytes from file: $filePath');
+                }
+              } catch (e) {
+                debugPrint('Error reading file bytes: $e');
+              }
+            }
+
+            final mediaItem = MediaItem(
               id:
                   file['id']?.toString() ??
                   DateTime.now().microsecondsSinceEpoch.toString(),
-              name: file['name']?.toString() ?? 'Unknown',
-              uri:
-                  file['uri']?.toString() ?? file['filePath']?.toString() ?? '',
+              name: name,
+              uri: uri,
               dateAdded: DateTime.now().millisecondsSinceEpoch,
-              size: file['size'] is int ? file['size'] : 0,
+              size: size,
               width: file['width'] is int ? file['width'] : 0,
               height: file['height'] is int ? file['height'] : 0,
               albumId: file['albumId']?.toString() ?? '',
               albumName: file['albumName']?.toString() ?? '',
-              type: file['type']?.toString() ?? 'unknown',
+              type: type,
               duration: file['duration'] is int ? file['duration'] : 0,
             );
-          }).toList();
 
-          await _handleSelectedFiles(mediaItems);
+            filesWithBytes.add(MapEntry(mediaItem, bytes));
+          }
+
+          await _handleSelectedFilesWithBytes(filesWithBytes);
         }
       } catch (e) {
         debugPrint('Error in pickFiles: $e');
@@ -133,6 +159,65 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
           }
         },
       );
+    }
+  }
+
+  Future<void> _handleSelectedFilesWithBytes(
+    List<MapEntry<MediaItem, Uint8List?>> filesWithBytes,
+  ) async {
+    if (!mounted) return;
+
+    setState(() {
+      _selectedFiles.clear();
+      _selectedFiles.addAll(filesWithBytes.map((e) => e.key).toList());
+    });
+
+    widget.onSelectionChanged?.call(_selectedFiles);
+
+    if (!mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => FileSelectionDialog(
+        selectedFiles: _selectedFiles,
+        onConfirm: () {
+          debugPrint("onConfirm: [MediaPickerWidget]");
+          Navigator.of(context).pop(true);
+        },
+        onCancel: () {
+          debugPrint("onCancel: [MediaPickerWidget]");
+          Navigator.of(context).pop(false);
+        },
+        onClearAll: () {
+          if (!mounted) return;
+          setState(() {
+            _selectedFiles.clear();
+          });
+          Navigator.of(context).pop(false);
+          debugPrint("onClearAll: [MediaPickerWidget]");
+        },
+        onItemRemoved: (file) {
+          if (!mounted) return;
+          setState(() {
+            _selectedFiles.remove(file);
+          });
+          if (_selectedFiles.isEmpty) {
+            Navigator.of(context).pop(false);
+            debugPrint("onClearAll: [onItemRemoved]");
+          }
+        },
+      ),
+    );
+
+    if (confirmed == true && _selectedFiles.isNotEmpty) {
+      final result = filesWithBytes
+          .where(
+            (entry) => _selectedFiles.any((item) => item.id == entry.key.id),
+          )
+          .toList();
+
+      debugPrint('Confirming with ${result.length} files and bytes');
+      widget.onConfirmed?.call(result);
     }
   }
 
