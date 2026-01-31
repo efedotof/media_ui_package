@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/generated/l10n.dart';
@@ -180,25 +182,31 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
 
     if (!mounted) return;
 
-    final confirmed = await showDialog<bool>(
+    final result = await showDialog<List<MapEntry<MediaItem, Uint8List?>>>(
       context: context,
       barrierDismissible: false,
       builder: (context) => FileSelectionDialog(
         selectedFiles: _selectedFiles,
         onConfirm: () {
           debugPrint("onConfirm: [MediaPickerWidget]");
-          Navigator.of(context).pop(true);
+          final confirmedFiles = filesWithBytes
+              .where(
+                (entry) =>
+                    _selectedFiles.any((item) => item.id == entry.key.id),
+              )
+              .toList(growable: false);
+          Navigator.of(context).pop(confirmedFiles);
         },
         onCancel: () {
           debugPrint("onCancel: [MediaPickerWidget]");
-          Navigator.of(context).pop(false);
+          Navigator.of(context).pop(<MapEntry<MediaItem, Uint8List?>>[]);
         },
         onClearAll: () {
           if (!mounted) return;
           setState(() {
             _selectedFiles.clear();
           });
-          Navigator.of(context).pop(false);
+          Navigator.of(context).pop(<MapEntry<MediaItem, Uint8List?>>[]);
           debugPrint("onClearAll: [MediaPickerWidget]");
         },
         onItemRemoved: (file) {
@@ -207,20 +215,14 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
             _selectedFiles.remove(file);
           });
           if (_selectedFiles.isEmpty) {
-            Navigator.of(context).pop(false);
+            Navigator.of(context).pop(<MapEntry<MediaItem, Uint8List?>>[]);
             debugPrint("onClearAll: [onItemRemoved]");
           }
         },
       ),
     );
 
-    if (confirmed == true && _selectedFiles.isNotEmpty) {
-      final result = filesWithBytes
-          .where(
-            (entry) => _selectedFiles.any((item) => item.id == entry.key.id),
-          )
-          .toList(growable: false);
-
+    if (result != null && result.isNotEmpty) {
       debugPrint('Confirming with ${result.length} files and bytes');
       if (widget.onConfirmed != null) {
         widget.onConfirmed!(result);
@@ -259,25 +261,29 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
     widget.onSelectionChanged?.call(_selectedFiles);
 
     if (!mounted) return;
-    final confirmed = await showDialog<bool>(
+
+    final result = await showDialog<List<MapEntry<MediaItem, Uint8List?>>>(
       context: context,
       barrierDismissible: false,
       builder: (context) => FileSelectionDialog(
         selectedFiles: _selectedFiles,
         onConfirm: () {
           debugPrint("onConfirm: [MediaPickerWidget]");
-          Navigator.of(context).pop(true);
+          final confirmedFiles = _selectedFiles
+              .map((item) => MapEntry<MediaItem, Uint8List?>(item, null))
+              .toList(growable: false);
+          Navigator.of(context).pop(confirmedFiles);
         },
         onCancel: () {
           debugPrint("onCancel: [MediaPickerWidget]");
-          Navigator.of(context).pop(false);
+          Navigator.of(context).pop(<MapEntry<MediaItem, Uint8List?>>[]);
         },
         onClearAll: () {
           if (!mounted) return;
           setState(() {
             _selectedFiles.clear();
           });
-          Navigator.of(context).pop(false);
+          Navigator.of(context).pop(<MapEntry<MediaItem, Uint8List?>>[]);
           debugPrint("onClearAll: [MediaPickerWidget]");
         },
         onItemRemoved: (file) {
@@ -286,18 +292,14 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
             _selectedFiles.remove(file);
           });
           if (_selectedFiles.isEmpty) {
-            Navigator.of(context).pop(false);
+            Navigator.of(context).pop(<MapEntry<MediaItem, Uint8List?>>[]);
             debugPrint("onClearAll: [onItemRemoved]");
           }
         },
       ),
     );
 
-    if (confirmed == true && _selectedFiles.isNotEmpty) {
-      final result = _selectedFiles
-          .map((item) => MapEntry<MediaItem, Uint8List?>(item, null))
-          .toList(growable: false);
-
+    if (result != null && result.isNotEmpty) {
       if (widget.onConfirmed != null) {
         widget.onConfirmed!(result);
       }
