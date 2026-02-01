@@ -24,6 +24,7 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "cancel": MessageLookupByLibrary.simpleMessage("Отмена"),
     "chooseFiles": MessageLookupByLibrary.simpleMessage("Выбрать файлы"),
+    "clearAll": MessageLookupByLibrary.simpleMessage("Clear All"),
     "confirm": MessageLookupByLibrary.simpleMessage("Подтвердить"),
     "dropFilesHere": MessageLookupByLibrary.simpleMessage(
       "Сбрасывайте файлы сюда",
@@ -42,6 +43,9 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage(
           "Максимум \${widget.maxSelection} файлов разрешено",
         ),
+    "noFilesSelected": MessageLookupByLibrary.simpleMessage(
+      "No files selected",
+    ),
     "noMedia": MessageLookupByLibrary.simpleMessage("Нет медиа"),
     "noMediaAvailable": MessageLookupByLibrary.simpleMessage(
       "Нет доступных медиа",
@@ -51,6 +55,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Разрешение отклонено",
     ),
     "selectMedia": MessageLookupByLibrary.simpleMessage("Выбор медиа"),
+    "selectedFiles": MessageLookupByLibrary.simpleMessage("Selected Files"),
     "thereAreNoAvailableImages": MessageLookupByLibrary.simpleMessage(
       "Нет доступных изображений",
     ),

@@ -13,5 +13,8 @@
   "noMedia": "No media",
   "loadingError": "Loading error",
   "thereAreNoAvailableImages": "There are no available images",
-  "dropFilesHere": "Drop files here"
+  "dropFilesHere": "Drop files here",
+  "selectedFiles": "Selected Files",
+  "noFilesSelected": "No files selected",
+  "clearAll": "Clear All"
 }

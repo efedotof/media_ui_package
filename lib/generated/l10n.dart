@@ -188,6 +188,31 @@ class S {
       args: [],
     );
   }
+
+  /// `Selected Files`
+  String get selectedFiles {
+    return Intl.message(
+      'Selected Files',
+      name: 'selectedFiles',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No files selected`
+  String get noFilesSelected {
+    return Intl.message(
+      'No files selected',
+      name: 'noFilesSelected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear All`
+  String get clearAll {
+    return Intl.message('Clear All', name: 'clearAll', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

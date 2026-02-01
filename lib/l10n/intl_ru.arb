@@ -13,5 +13,8 @@
   "noMedia": "Нет медиа",
   "loadingError": "Ошибка загрузки",
   "thereAreNoAvailableImages": "Нет доступных изображений",
-  "dropFilesHere": "Сбрасывайте файлы сюда"
+  "dropFilesHere": "Сбрасывайте файлы сюда",
+  "selectedFiles": "Selected Files",
+  "noFilesSelected": "No files selected",
+  "clearAll": "Clear All"
 }

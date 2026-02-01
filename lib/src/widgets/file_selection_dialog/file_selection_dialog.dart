@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:media_ui_package/generated/l10n.dart';
 import 'package:media_ui_package/media_ui_package.dart';
 
 class FileSelectionDialog extends StatelessWidget {
@@ -43,7 +44,7 @@ class FileSelectionDialog extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Selected Files (${selectedFiles.length})',
+                      '${S.of(context).selectedFiles} (${selectedFiles.length})',
                       style: theme.textTheme.titleMedium,
                     ),
                   ),
@@ -54,13 +55,13 @@ class FileSelectionDialog extends StatelessWidget {
 
             Expanded(
               child: selectedFiles.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.folder_open, size: 48, color: Colors.grey),
                           SizedBox(height: 16),
-                          Text('No files selected'),
+                          Text(S.of(context).noFilesSelected),
                         ],
                       ),
                     )
@@ -130,14 +131,17 @@ class FileSelectionDialog extends StatelessWidget {
                   if (selectedFiles.isNotEmpty && onClearAll != null)
                     TextButton(
                       onPressed: onClearAll,
-                      child: const Text('Clear All'),
+                      child: Text(S.of(context).clearAll),
                     ),
                   const SizedBox(width: 8),
-                  TextButton(onPressed: onCancel, child: const Text('Cancel')),
+                  TextButton(
+                    onPressed: onCancel,
+                    child: Text(S.of(context).cancel),
+                  ),
                   if (showConfirmButton && selectedFiles.isNotEmpty)
                     ElevatedButton(
                       onPressed: onConfirm,
-                      child: const Text('Confirm'),
+                      child: Text(S.of(context).confirm),
                     ),
                 ],
               ),
