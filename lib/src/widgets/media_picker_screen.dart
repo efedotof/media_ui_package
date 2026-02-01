@@ -245,7 +245,7 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
                 child: Row(
                   children: [
                     Text(
-                      '${selectedItems.length}/${widget.maxSelection} выбранных',
+                      '${selectedItems.length}/${widget.maxSelection} ${S.of(context).selected}',
                       style: theme.textTheme.bodyMedium,
                     ),
                     const Spacer(),
@@ -256,7 +256,7 @@ class _MediaPickerScreenState extends State<MediaPickerScreen> {
                             selectedItems.clear();
                           });
                         },
-                        child: const Text('Очистить все'),
+                        child: Text(S.of(context).clearAll),
                       ),
                   ],
                 ),

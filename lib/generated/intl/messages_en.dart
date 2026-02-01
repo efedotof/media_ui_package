@@ -53,6 +53,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Permission denied",
     ),
     "selectMedia": MessageLookupByLibrary.simpleMessage("Select Media"),
+    "selected": MessageLookupByLibrary.simpleMessage("selected"),
     "selectedFiles": MessageLookupByLibrary.simpleMessage("Selected Files"),
     "thereAreNoAvailableImages": MessageLookupByLibrary.simpleMessage(
       "There are no available images",

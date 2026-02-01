@@ -14,7 +14,8 @@
   "loadingError": "Ошибка загрузки",
   "thereAreNoAvailableImages": "Нет доступных изображений",
   "dropFilesHere": "Сбрасывайте файлы сюда",
-  "selectedFiles": "Selected Files",
-  "noFilesSelected": "No files selected",
-  "clearAll": "Clear All"
+  "selectedFiles": "Выбранные файлы",
+  "noFilesSelected": "Файлы не выбраны",
+  "clearAll": "Очистить все",
+  "selected": "selected"
 }

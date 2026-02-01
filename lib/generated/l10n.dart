@@ -213,6 +213,11 @@ class S {
   String get clearAll {
     return Intl.message('Clear All', name: 'clearAll', desc: '', args: []);
   }
+
+  /// `selected`
+  String get selected {
+    return Intl.message('selected', name: 'selected', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

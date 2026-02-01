@@ -16,5 +16,6 @@
   "dropFilesHere": "Drop files here",
   "selectedFiles": "Selected Files",
   "noFilesSelected": "No files selected",
-  "clearAll": "Clear All"
+  "clearAll": "Clear All",
+  "selected": "selected"
 }
