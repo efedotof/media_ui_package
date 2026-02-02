@@ -1,6 +1,5 @@
 import 'dart:io';
-import 'dart:typed_data';
-
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/generated/l10n.dart';
@@ -83,20 +82,40 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
 
             Uint8List? bytes;
 
-            if (isDesktop && uri.startsWith('file://')) {
+            if (kIsWeb) {
+              try {
+                if (file['bytes'] is Uint8List) {
+                  bytes = file['bytes'];
+                  debugPrint('Got bytes from file[bytes]: ${bytes?.length}');
+                } else if (uri.startsWith('data:')) {
+                  final base64Data = uri.split(',').last;
+                  bytes = Uint8List.fromList(base64Decode(base64Data));
+                  debugPrint('Decoded base64 data: ${bytes.length} bytes');
+                } else {
+                  debugPrint('WEB: No bytes and not a data URI');
+                }
+              } catch (e) {
+                debugPrint('WEB bytes error: $e');
+              }
+            } else if (isDesktop && uri.startsWith('file://')) {
               try {
                 final filePath = Uri.parse(
                   uri,
                 ).toFilePath(windows: Platform.isWindows);
-                final file = File(filePath);
-                if (await file.exists()) {
-                  bytes = await file.readAsBytes();
+                final fileObj = File(filePath);
+                if (await fileObj.exists()) {
+                  bytes = await fileObj.readAsBytes();
                   debugPrint('Read ${bytes.length} bytes from file: $filePath');
                 }
               } catch (e) {
-                debugPrint('Error reading file bytes: $e');
+                debugPrint('Desktop bytes error: $e');
               }
             }
+
+            debugPrint('URI: $uri');
+            debugPrint('HAS BYTES: ${bytes != null}');
+            debugPrint('BYTES LENGTH: ${bytes?.length}');
+            debugPrint('TYPE: ${file['bytes']?.runtimeType}');
 
             final mediaItem = MediaItem(
               id:

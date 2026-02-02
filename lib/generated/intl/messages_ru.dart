@@ -53,7 +53,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Разрешение отклонено",
     ),
     "selectMedia": MessageLookupByLibrary.simpleMessage("Выбор медиа"),
-    "selected": MessageLookupByLibrary.simpleMessage("selected"),
+    "selected": MessageLookupByLibrary.simpleMessage("выбранных"),
     "selectedFiles": MessageLookupByLibrary.simpleMessage("Выбранные файлы"),
     "thereAreNoAvailableImages": MessageLookupByLibrary.simpleMessage(
       "Нет доступных изображений",
