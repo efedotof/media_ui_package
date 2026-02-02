@@ -108,6 +108,7 @@ class MediaPickerBottomSheet extends StatelessWidget {
               mediaLibrary: actualMediaLibrary,
               onSelectionChanged: onSelectionChanged,
               onConfirmed: onConfirmed,
+              onConfirmedWithBytes: onConfirmedWithBytes,
             ),
           );
         },

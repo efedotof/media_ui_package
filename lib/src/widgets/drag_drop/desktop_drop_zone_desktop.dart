@@ -69,7 +69,6 @@ class _DesktopDropZoneState extends State<DesktopDropZone> {
             thumbnail: bytes,
           ),
         );
-        debugPrint("done:${items[0].uri}");
       } catch (e) {
         debugPrint('Error processing file: $e');
       }

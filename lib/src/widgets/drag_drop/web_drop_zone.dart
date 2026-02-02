@@ -72,7 +72,6 @@ class _WebDropZoneState extends State<WebDropZone> {
             thumbnail: bytes,
           ),
         );
-        debugPrint("done:${mediaItems[0].uri}");
       } catch (e) {
         debugPrint('Error processing file: $e');
       }
