@@ -74,9 +74,7 @@ class MediaGridCubit extends Cubit<MediaGridState> {
       } else {
         emit(const MediaGridState.permissionDenied());
       }
-    } catch (e, st) {
-      debugPrint('Permission error: $e');
-      debugPrintStack(stackTrace: st);
+    } catch (e) {
       emit(MediaGridState.error(message: 'Permission error: $e'));
     }
   }
@@ -127,9 +125,7 @@ class MediaGridCubit extends Cubit<MediaGridState> {
 
       _emitLoaded(hasMore: newItems.length == _pageSize);
       _preloadThumbnails(newItems);
-    } catch (e, st) {
-      debugPrint('Load media error: $e');
-      debugPrintStack(stackTrace: st);
+    } catch (e) {
       emit(MediaGridState.error(message: 'Load error: $e'));
     } finally {
       _isLoadingMedia = false;
@@ -163,7 +159,6 @@ class MediaGridCubit extends Cubit<MediaGridState> {
           );
       }
     } catch (e) {
-      debugPrint('Error fetching media: $e');
       return null;
     }
   }
@@ -243,7 +238,6 @@ class MediaGridCubit extends Cubit<MediaGridState> {
           }
         })
         .catchError((error, stackTrace) {
-          debugPrint('Error loading thumbnail for ${item.id}: $error');
           _thumbnailErrors[item.id] = true;
           completer.complete(null);
           _thumbnailCompleters.remove(item.id);

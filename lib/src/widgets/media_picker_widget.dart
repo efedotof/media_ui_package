@@ -1,8 +1,5 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:math';
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:media_ui_package/generated/l10n.dart';
@@ -19,6 +16,7 @@ class MediaPickerWidget extends StatefulWidget {
   final Widget child;
   final bool enableDragDrop;
   final List<String> allowedExtensions;
+  final List<String> allowedMimeTypes;
   final MediaPickerConfig? config;
 
   const MediaPickerWidget({
@@ -40,6 +38,7 @@ class MediaPickerWidget extends StatefulWidget {
       '.mov',
     ],
     this.config,
+    this.allowedMimeTypes = const ['image/*', 'video/*'],
   });
 
   @override
@@ -64,16 +63,14 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
 
     if (isWeb || isDesktop) {
       try {
-        debugPrint('Opening file picker for ${isWeb ? 'Web' : 'Windows'}');
-
         final result = await _mediaLibrary.pickFiles(
           multiple: widget.allowMultiple,
-          allowedFileTypes: widget.allowedExtensions,
+          allowedFileTypes: widget.allowedMimeTypes.isNotEmpty
+              ? widget.allowedMimeTypes
+              : widget.allowedExtensions,
         );
 
         if (result != null && result.isNotEmpty) {
-          debugPrint('Got ${result.length} files from picker');
-
           final filesWithBytes = <MapEntry<MediaItem, Uint8List?>>[];
 
           for (final file in result) {
@@ -85,25 +82,14 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
 
             Uint8List? bytes;
 
-          
             if (uri.startsWith('data:')) {
               try {
                 final base64Data = uri.split(',').last;
                 bytes = Uint8List.fromList(base64Decode(base64Data));
-                debugPrint('✅ DATA URI decoded: ${bytes.length} bytes');
-              } catch (e) {
-                debugPrint('❌ DATA URI decode error: $e');
-              }
-            }
-  
-            else if (kIsWeb && file['bytes'] is Uint8List) {
-              bytes = file['bytes'];
-              debugPrint(
-                '✅ WEB: Got bytes from file[bytes]: ${bytes?.length} bytes',
-              );
-            }
-   
-            else if (isDesktop && uri.startsWith('file://')) {
+              } catch (_) {}
+            } else if (kIsWeb && file['bytes'] is Uint8List) {
+              bytes = file['bytes'] as Uint8List;
+            } else if (isDesktop && uri.startsWith('file://')) {
               try {
                 final filePath = Uri.parse(
                   uri,
@@ -111,35 +97,16 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
                 final fileObj = File(filePath);
                 if (await fileObj.exists()) {
                   bytes = await fileObj.readAsBytes();
-                  debugPrint(
-                    '✅ DESKTOP: Read ${bytes.length} bytes from file: $filePath',
-                  );
                 }
-              } catch (e) {
-                debugPrint('❌ Desktop bytes error: $e');
-              }
+              } catch (_) {}
             }
 
-         
             if (bytes == null) {
               try {
                 bytes = await _mediaLibrary.getFileBytes(uri);
-                if (bytes != null) {
-                  debugPrint(
-                    '✅ Read bytes via DeviceMediaLibrary: ${bytes.length} bytes',
-                  );
-                }
-              } catch (e) {
-                debugPrint('❌ DeviceMediaLibrary bytes error: $e');
-              }
+                if (bytes != null) {}
+              } catch (_) {}
             }
-
-            debugPrint(
-              '📄 URI prefix: ${uri.substring(0, min(60, uri.length))}',
-            );
-            debugPrint('📦 HAS BYTES: ${bytes != null}');
-            debugPrint('📏 BYTES LENGTH: ${bytes?.length ?? 0}');
-
             final mediaItem = MediaItem(
               id:
                   file['id']?.toString() ??
@@ -160,9 +127,8 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
           }
 
           await _handleSelectedFilesWithBytes(filesWithBytes);
-        }
+        } else {}
       } catch (e) {
-        debugPrint('Error in pickFiles: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -224,18 +190,12 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
 
     if (!mounted) return;
 
-    debugPrint('🔄 FILES WITH BYTES COUNT: ${filesWithBytes.length}');
-    if (filesWithBytes.isNotEmpty) {
-      debugPrint('📦 FIRST BYTES SIZE: ${filesWithBytes.first.value?.length}');
-    }
-
     final result = await showDialog<List<MapEntry<MediaItem, Uint8List?>>>(
       context: context,
       barrierDismissible: false,
       builder: (context) => FileSelectionDialog(
         selectedFiles: _selectedFiles,
         onConfirm: () {
-          debugPrint("✅ onConfirm: [MediaPickerWidget]");
           final confirmedFiles = filesWithBytes
               .where(
                 (entry) =>
@@ -243,17 +203,9 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
               )
               .toList(growable: false);
 
-          debugPrint('✅ CONFIRMED FILES: ${confirmedFiles.length}');
-          if (confirmedFiles.isNotEmpty) {
-            debugPrint(
-              '✅ FIRST CONFIRMED BYTES: ${confirmedFiles.first.value?.length}',
-            );
-          }
-
           Navigator.of(context).pop(confirmedFiles);
         },
         onCancel: () {
-          debugPrint("❌ onCancel: [MediaPickerWidget]");
           Navigator.of(context).pop(<MapEntry<MediaItem, Uint8List?>>[]);
         },
         onClearAll: () {
@@ -262,7 +214,6 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
             _selectedFiles.clear();
           });
           Navigator.of(context).pop(<MapEntry<MediaItem, Uint8List?>>[]);
-          debugPrint("🗑️ onClearAll: [MediaPickerWidget]");
         },
         onItemRemoved: (file) {
           if (!mounted) return;
@@ -271,15 +222,12 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
           });
           if (_selectedFiles.isEmpty) {
             Navigator.of(context).pop(<MapEntry<MediaItem, Uint8List?>>[]);
-            debugPrint("🗑️ onClearAll: [onItemRemoved]");
           }
         },
       ),
     );
 
     if (result != null && result.isNotEmpty) {
-      debugPrint('✅ CONFIRMING WITH ${result.length} FILES AND BYTES');
-      debugPrint('✅ FIRST RESULT BYTES: ${result.first.value?.length}');
       if (widget.onConfirmed != null) {
         widget.onConfirmed!(result);
       }
@@ -324,14 +272,12 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
       builder: (context) => FileSelectionDialog(
         selectedFiles: _selectedFiles,
         onConfirm: () {
-          debugPrint("✅ onConfirm: [MediaPickerWidget]");
           final confirmedFiles = _selectedFiles
               .map((item) => MapEntry<MediaItem, Uint8List?>(item, null))
               .toList(growable: false);
           Navigator.of(context).pop(confirmedFiles);
         },
         onCancel: () {
-          debugPrint("❌ onCancel: [MediaPickerWidget]");
           Navigator.of(context).pop(<MapEntry<MediaItem, Uint8List?>>[]);
         },
         onClearAll: () {
@@ -340,7 +286,6 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
             _selectedFiles.clear();
           });
           Navigator.of(context).pop(<MapEntry<MediaItem, Uint8List?>>[]);
-          debugPrint("🗑️ onClearAll: [MediaPickerWidget]");
         },
         onItemRemoved: (file) {
           if (!mounted) return;
@@ -349,7 +294,6 @@ class MediaPickerWidgetState extends State<MediaPickerWidget> {
           });
           if (_selectedFiles.isEmpty) {
             Navigator.of(context).pop(<MapEntry<MediaItem, Uint8List?>>[]);
-            debugPrint("🗑️ onClearAll: [onItemRemoved]");
           }
         },
       ),

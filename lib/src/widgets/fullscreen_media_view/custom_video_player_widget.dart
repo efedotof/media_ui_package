@@ -51,7 +51,6 @@ class _CustomVideoPlayerWidgetState extends State<CustomVideoPlayerWidget> {
         creationParamsCodec: const StandardMessageCodec(),
         onPlatformViewCreated: (id) {
           _platformViewId = id;
-          debugPrint('✅ AndroidView created with id: $id');
 
           _initializeVideo();
         },
@@ -63,7 +62,6 @@ class _CustomVideoPlayerWidgetState extends State<CustomVideoPlayerWidget> {
         creationParamsCodec: const StandardMessageCodec(),
         onPlatformViewCreated: (id) {
           _platformViewId = id;
-          debugPrint('✅ UiKitView created with id: $id');
 
           _initializeVideo();
         },
@@ -85,11 +83,7 @@ class _CustomVideoPlayerWidgetState extends State<CustomVideoPlayerWidget> {
         autoPlay: widget.autoPlay,
         volume: 1.0,
       );
-
-      debugPrint('✅ Video initialized via PlatformView');
-    } catch (e) {
-      debugPrint('❌ Error initializing video: $e');
-    }
+    } catch (_) {}
   }
 
   @override

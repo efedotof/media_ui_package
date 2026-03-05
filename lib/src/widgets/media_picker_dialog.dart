@@ -70,7 +70,6 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
         final bytes = await widget.mediaLibrary.getFileBytes(item.uri);
         result.add(MapEntry(item, bytes));
       } catch (e) {
-        debugPrint('Error getting bytes for ${item.uri}: $e');
         result.add(MapEntry(item, null));
       }
     }
@@ -127,18 +126,12 @@ class _MediaPickerDialogState extends State<MediaPickerDialog> {
                                       final filesWithBytes =
                                           await _getFilesWithBytes(selected);
                                       if (context.mounted) {
-                                        debugPrint(
-                                          "TextButton: [MediaPickerDialog]",
-                                        );
                                         widget.onConfirmedWithBytes?.call(
                                           filesWithBytes,
                                         );
                                       }
                                     } else {
                                       if (context.mounted) {
-                                        debugPrint(
-                                          "TextButton: [MediaPickerDialog]",
-                                        );
                                         widget.onConfirmed?.call(selected);
                                       }
                                     }

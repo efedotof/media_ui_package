@@ -34,16 +34,8 @@ class FullScreenMediaOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (kDebugMode) {
-      debugPrint('Building FullScreenMediaOverlay');
-    }
-
     return BlocBuilder<FullScreenMediaCubit, FullScreenMediaState>(
       builder: (context, state) {
-        if (kDebugMode) {
-          debugPrint('FullScreenMediaOverlay state: $state');
-        }
-
         return state.maybeWhen(
           loaded:
               (
@@ -66,12 +58,6 @@ class FullScreenMediaOverlay extends StatelessWidget {
                     currentItem.type == 'video' ||
                     currentItem.type == 'videos' ||
                     currentItem.type == MediaType.videos.name;
-
-                if (kDebugMode) {
-                  debugPrint(
-                    'Is video: $isVideo, videoDuration: $videoDuration, videoPosition: $videoPosition',
-                  );
-                }
 
                 return Stack(
                   children: [

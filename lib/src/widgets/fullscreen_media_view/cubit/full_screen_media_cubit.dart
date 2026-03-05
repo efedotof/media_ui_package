@@ -107,8 +107,6 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
         orElse: () {},
       );
     } catch (e) {
-      debugPrint('Error loading image: $e');
-
       await _loadDirectAsFallback(item);
     }
   }
@@ -132,9 +130,7 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
         final file = File(path);
         return await file.readAsBytes();
       }
-    } catch (e) {
-      debugPrint('Error loading direct data: $e');
-    }
+    } catch (_) {}
     return null;
   }
 
@@ -155,18 +151,13 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
           orElse: () {},
         );
       }
-    } catch (e) {
-      debugPrint('Error in fallback loading: $e');
-    }
+    } catch (_) {}
   }
 
   Future<void> _initializeVideo() async {
     if (_isVideoDisposing || _isVideoInitialized) return;
 
     try {
-      if (kDebugMode) {
-        debugPrint('Starting video initialization...');
-      }
       _isVideoInitialized = false;
       _isVideoBuffering = true;
       _videoPosition = 0.0;
@@ -175,9 +166,6 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
       _updateState();
 
       final currentItem = mediaItems[_currentIndex];
-      if (kDebugMode) {
-        debugPrint('Initializing video: ${currentItem.uri}');
-      }
 
       _videoEventsSubscription?.cancel();
       _videoEventsSubscription = null;
@@ -214,18 +202,12 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
       _videoEventsSubscription = _mediaLibrary.videoEvents.listen(
         _handleVideoEvent,
         onError: (error) {
-          if (kDebugMode) {
-            debugPrint('Video event error: $error');
-          }
           _isVideoBuffering = false;
           _updateState();
         },
         cancelOnError: false,
       );
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error initializing video: $e');
-      }
       _isVideoBuffering = false;
       _isVideoInitialized = false;
       _updateState();
@@ -236,9 +218,6 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
     if (_isVideoDisposing) return;
 
     final eventType = event['event'];
-    if (kDebugMode) {
-      debugPrint('Video event: $eventType');
-    }
 
     switch (eventType) {
       case 'onPrepared':
@@ -246,13 +225,10 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
         _isVideoInitialized = true;
         _isVideoBuffering = false;
 
-        // Запускаем таймер для обновления позиции
         _startPositionUpdateTimer();
 
         _updateState();
-        if (kDebugMode) {
-          debugPrint('Video prepared, duration: $_videoDuration');
-        }
+
         break;
 
       case 'onPlaybackUpdate':
@@ -273,9 +249,6 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
         break;
 
       case 'onError':
-        if (kDebugMode) {
-          debugPrint('Video error: ${event['message']}');
-        }
         _isVideoPlaying = false;
         _isVideoBuffering = false;
         _positionUpdateTimer?.cancel();
@@ -284,11 +257,6 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
         break;
 
       case 'onVideoSizeChanged':
-        if (kDebugMode) {
-          debugPrint(
-            'Video size changed: ${event['width']}x${event['height']}',
-          );
-        }
         break;
     }
   }
@@ -311,11 +279,7 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
         _videoPosition = position;
         _updateState();
       }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error updating video position: $e');
-      }
-    }
+    } catch (_) {}
   }
 
   void _updateState() {
@@ -335,10 +299,6 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
   Future<void> _disposeVideo() async {
     if (_isVideoDisposing) return;
 
-    if (kDebugMode) {
-      debugPrint('Disposing video...');
-    }
-
     _isVideoDisposing = true;
     _isVideoPlaying = false;
     _isVideoBuffering = false;
@@ -352,20 +312,12 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
 
     try {
       await _mediaLibrary.disposeVideo();
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error disposing video: $e');
-      }
-    }
+    } catch (_) {}
 
     _isVideoDisposing = false;
   }
 
   Future<void> onPageChanged(int index) async {
-    if (kDebugMode) {
-      debugPrint('Page changed to $index');
-    }
-
     if (_isCurrentVideo && _isVideoInitialized) {
       await _disposeVideo();
     }
@@ -413,24 +365,14 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
 
     try {
       if (_isVideoPlaying) {
-        if (kDebugMode) {
-          debugPrint('Pausing video');
-        }
         await _mediaLibrary.pauseVideo();
         _isVideoPlaying = false;
       } else {
-        if (kDebugMode) {
-          debugPrint('Playing video');
-        }
         await _mediaLibrary.playVideo();
         _isVideoPlaying = true;
       }
       _updateState();
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error toggling video play/pause: $e');
-      }
-    }
+    } catch (_) {}
   }
 
   Future<void> seekVideo(double position) async {
@@ -439,19 +381,11 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
     try {
       final safePosition = position.clamp(0.0, _videoDuration);
 
-      if (kDebugMode) {
-        debugPrint('Seeking to: $safePosition (duration: $_videoDuration)');
-      }
-
       _videoPosition = safePosition;
       _updateState();
 
       await _mediaLibrary.seekVideoTo(safePosition);
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error seeking video: $e');
-      }
-    }
+    } catch (_) {}
   }
 
   Future<void> seekBackward() async {
@@ -481,9 +415,6 @@ class FullScreenMediaCubit extends Cubit<FullScreenMediaState> {
 
   @override
   Future<void> close() async {
-    if (kDebugMode) {
-      debugPrint('Closing FullScreenMediaCubit');
-    }
     await _disposeVideo();
     return super.close();
   }

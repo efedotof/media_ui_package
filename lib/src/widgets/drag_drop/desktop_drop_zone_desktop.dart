@@ -69,9 +69,7 @@ class _DesktopDropZoneState extends State<DesktopDropZone> {
             thumbnail: bytes,
           ),
         );
-      } catch (e) {
-        debugPrint('Error processing file: $e');
-      }
+      } catch (_) {}
     }
 
     if (items.isNotEmpty && widget.onFilesDropped != null) {

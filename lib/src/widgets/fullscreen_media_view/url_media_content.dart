@@ -57,7 +57,6 @@ class UrlMediaContent extends StatelessWidget {
                 );
               },
               errorBuilder: (context, error, stackTrace) {
-                debugPrint('Error loading image: $error');
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -109,7 +108,6 @@ class UrlMediaContent extends StatelessWidget {
                   );
                 },
                 errorBuilder: (context, error, stackTrace) {
-                  debugPrint('Error loading image at index $index: $error');
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,

@@ -72,9 +72,7 @@ class _WebDropZoneState extends State<WebDropZone> {
             thumbnail: bytes,
           ),
         );
-      } catch (e) {
-        debugPrint('Error processing file: $e');
-      }
+      } catch (_) {}
     }
 
     if (mediaItems.isNotEmpty && widget.onFilesDropped != null) {

@@ -53,9 +53,7 @@ class _FullscreenMediaViewState extends State<FullscreenMediaView> {
       final initialIndex = widget.initialIndex ?? 0;
       final safeInitialIndex = initialIndex.clamp(0, itemCount - 1);
       _pageController = PageController(initialPage: safeInitialIndex);
-    } else {
-      debugPrint('FullscreenMediaView: Нет элементов для отображения');
-    }
+    } else {}
   }
 
   bool _isValidImageUrl(String? url) {
