@@ -2,7 +2,7 @@
   "name": "Flutter Plugin Dev (attach_file_photo_plugin)",
   "image": "ghcr.io/cirruslabs/flutter:stable",
   "overrideCommand": true,
-  "postCreateCommand": "yes | /opt/android-sdk-linux/cmdline-tools/latest/bin/sdkmanager --licenses && /opt/android-sdk-linux/cmdline-tools/latest/bin/sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools' && sudo apt-get update && sudo apt-get install -y scrcpy ninja-build cmake && flutter pub get",
+  "postCreateCommand": "yes | /opt/android-sdk-linux/cmdline-tools/latest/bin/sdkmanager --licenses && /opt/android-sdk-linux/cmdline-tools/latest/bin/sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools' && flutter pub get",
   "containerEnv": {
     "ANDROID_HOME": "/opt/android-sdk-linux",
     "ANDROID_SDK_ROOT": "/opt/android-sdk-linux",
@@ -22,20 +22,13 @@
     "ghcr.io/devcontainers/features/github-cli:1": {
       "installDirectlyFromGitHubRelease": true,
       "version": "latest"
-    },
-    "ghcr.io/devcontainers-extra/features/kotlin-sdkman:2": {
-      "version": "2.0.21",
-      "jdkVersion": "21",
-      "jdkDistro": "ms"
     }
   },
   "customizations": {
     "vscode": {
       "settings": {
         "dart.flutterSdkPath": "/sdks/flutter",
-        "dart.sdkPath": "/sdks/flutter/bin/cache/dart-sdk",
-        "scrcpy.path": "/usr/bin/scrcpy",
-        "scrcpy.adbPath": "/opt/android-sdk-linux/platform-tools/adb"
+        "dart.sdkPath": "/sdks/flutter/bin/cache/dart-sdk"
       },
       "extensions": [
         "Dart-Code.dart-code",
@@ -49,8 +42,7 @@
         "felixangelov.bloc",
         "nash.awesome-flutter-snippets",
         "pflannery.vscode-versionlens",
-        "GitHub.vscode-github-actions",
-        "izantech.scrcpy-vscode"
+        "GitHub.vscode-github-actions"
       ]
     }
   }
