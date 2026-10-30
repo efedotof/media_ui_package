@@ -22,7 +22,7 @@ Add the dependency to your `pubspec.yaml`:
 dependencies:
   media_ui_package:
     git:
-      url: https://github.com/your-repository/media_ui_package.git
+      url: https://github.com/efedotof/media_ui_package.git
   # Also requires the device_media_library plugin
 ```
 
