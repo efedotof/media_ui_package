@@ -1,17 +1,17 @@
 # Media UI Package
 
-A highly customizable Flutter package for selecting media and files. It provides a unified interface to access the device's MediaStore (images, videos, audio), as well as the Download and Documents directories on Android.
+A highly customizable Flutter package for selecting media and files. It provides a unified interface to access the device's MediaStore (images, videos, audio), as well as the Download and Documents directories on Android, plus a system file picker for other files.
 
 The package offers multiple UI presentations (full-screen, dialog, bottom sheet) with built-in lazy loading, caching, and permission handling.
 
 ## Features
 
 - **Multiple UI Options:** Full-screen widget, modal dialog, or resizable bottom sheet.
-- **Multiple Sources:** Access MediaStore (photos, videos), audio files, Downloads, and Documents.
+- **Multiple Sources:** Access MediaStore (photos, videos), audio files, Downloads, Documents, and the system file picker.
 - **Pagination & Lazy Loading:** Efficiently loads large directories in pages with automatic infinite scrolling.
 - **Lazy Preview:** Generates and caches image previews without loading entire files into memory.
 - **Permission Management:** Built-in handling for scoped media permissions, SAF (Storage Access Framework) folder selection, and `MANAGE_EXTERNAL_STORAGE`.
-- **Customizable UI:** Adjust grid spacing, border radius, and selection colors via `MediaPickerConfig`.
+- **Customizable UI:** Adjust grid spacing, border radius, selection colors, and customize the bottom navigation menu via `MediaPickerConfig` and `sections`.
 - **Multi-selection:** Support for single or multiple file selections with a contextual AppBar.
 
 ## Installation
@@ -23,6 +23,7 @@ dependencies:
   media_ui_package:
     git:
       url: https://github.com/your-repository/media_ui_package.git
+  # Also requires the device_media_library plugin
 ```
 
 ## Initialization
@@ -182,26 +183,74 @@ MediaPickerConfigScope(
 )
 ```
 
-## Available Sections
+## Available Sections (Menu Items)
 
-The picker organizes files into distinct sections that users can navigate via the bottom navigation menu:
+The bottom navigation menu is generated dynamically based on the `sections` list passed to the `show()` method. By default, five items are available:
 
-- **Media (`MediaPickerSection.media`):** Images and videos from the device MediaStore.
-- **Audio (`MediaPickerSection.audio`):** Audio files from the device.
-- **Download (`MediaPickerSection.downloads`):** Files in the device's Download folder.
-- **Documents (`MediaPickerSection.documents`):** Files in the device's Documents folder.
-- **Others (`MediaPickerSection.others`):** A custom section (by default, shows generic files from Downloads).
+1. **`MediaPickerSection.media` (Media)**
+   - Shows images and videos from the device's MediaStore.
+   - Supports lazy thumbnail loading and pagination.
 
-You can limit the visible sections using the `sections` parameter:
+2. **`MediaPickerSection.audio` (Audio)**
+   - Shows audio files from the device.
+   - Displays the artist, album, and track duration.
+
+3. **`MediaPickerSection.downloads` (Download)**
+   - Shows files from the system `Download` folder.
+   - *Requires permissions:* On Android 10+, a banner will prompt the user to select the folder via SAF (Storage Access Framework) or grant `MANAGE_EXTERNAL_STORAGE` access.
+
+4. **`MediaPickerSection.documents` (Documents)**
+   - Shows files from the `Documents` folder.
+   - *Requires permissions:* Similar to Downloads, it requests access via SAF.
+
+5. **`MediaPickerSection.others` (Others)**
+   - **Important difference:** Clicking this tab does **not** read a specific folder. Instead, it opens the **system file picker**.
+   - The user can select any files (PDF, ZIP, DOCX, etc.) from any location on the device.
+   - Selected files are added to the current list.
+
+### Customizing the Menu
+
+You can hide unnecessary sections. For example, if your application only needs photos and documents, pass the appropriate list to the `sections` parameter:
 
 ```dart
 MediaPickerDialog.show(
   context,
   sections: const [
     MediaPickerSection.media,
-    MediaPickerSection.audio,
+    MediaPickerSection.documents,
   ],
 );
+```
+In this case, only two buttons will appear in the bottom menu: "Media" and "Documents".
+
+### Adding a Custom Section
+
+If the standard sections are not enough, you can add your own:
+
+**1. Extend `enum MediaPickerSection`** in `media_picker_widget.dart`:
+```dart
+enum MediaPickerSection { media, audio, downloads, documents, others, myCustomFiles }
+```
+
+**2. Configure the controller logic** in the `_ensureController` method:
+```dart
+case MediaPickerSection.myCustomFiles:
+  return MediaPickerController(
+    source: MediaSource.downloads, // or your source
+    mediaFilter: MediaFilter.file, // filter by file type
+    multiSelect: widget.multiSelect,
+  );
+```
+
+**3. Add an icon and label** to the `_iconFor` and `_labelFor` methods inside `BuildBottomMenu`:
+```dart
+// In _iconFor:
+case MediaPickerSection.myCustomFiles:
+  return Icons.star; // Icon
+
+// In _labelFor:
+case MediaPickerSection.myCustomFiles:
+  return 'Favorites'; // Button text
 ```
 
 ## Handling Permissions
@@ -224,7 +273,7 @@ class SelectedMediaItem {
   final String type; // 'image', 'video', 'audio', 'file'
   final int size;
   final int? duration; // in milliseconds for video/audio
-  final MediaSource source; // device, downloads, documents
+  final MediaSource source; // device, downloads, documents, picked
 }
 ```
 

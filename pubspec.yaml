@@ -15,7 +15,7 @@ dependencies:
     git:
       url: https://github.com/efedotof/attach_file_photo_plugin
       path: .
-      ref: 961bd43d31ed0ff41c0d0a16a5bf6b3edb4b14d6
+      ref: ee16a8a515b4a10317ae4bbaf6ffa7a738e1d244
 
   cached_network_image: ^4.0.3
   visibility_detector: ^0.4.0+2

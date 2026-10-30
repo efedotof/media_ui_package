@@ -275,6 +275,10 @@ class MediaPickerWidgetState extends State<MediaPickerWidget>
 
         controller.addItems(items);
 
+        for (final item in items) {
+          controller.select(item);
+        }
+
         setState(() => _section = MediaPickerSection.others);
       }
     } catch (e) {
