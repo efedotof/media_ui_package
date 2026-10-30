@@ -32,7 +32,7 @@ The package must be initialized before use. It is recommended to do this in your
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:media_ui_package/src2/media_ui_package_initializer.dart';
+import "package:media_ui_package/media_ui_package.dart";
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -80,8 +80,7 @@ The package provides three ways to display the media picker depending on your ap
 Shows the picker inside a centered modal dialog.
 
 ```dart
-import 'package:media_ui_package/src2/widgets/media_picker_dialog.dart';
-import 'package:media_ui_package/src2/models/media_picker_result.dart';
+import "package:media_ui_package/media_ui_package.dart";
 
 Future<void> openDialog(BuildContext context) async {
   final MediaPickerResult? result = await MediaPickerDialog.show(
@@ -102,7 +101,7 @@ Future<void> openDialog(BuildContext context) async {
 Shows the picker as a resizable bottom sheet. You can configure the initial, minimum, and maximum height.
 
 ```dart
-import 'package:media_ui_package/src2/widgets/media_bottom_sheet.dart';
+import "package:media_ui_package/media_ui_package.dart";
 
 Future<void> openBottomSheet(BuildContext context) async {
   final MediaPickerResult? result = await MediaPickerBottomSheet.show(
@@ -123,7 +122,7 @@ Future<void> openBottomSheet(BuildContext context) async {
 Embed the picker directly into your own screen or route.
 
 ```dart
-import 'package:media_ui_package/src2/widgets/media_picker_widget.dart';
+import "package:media_ui_package/media_ui_package.dart";
 
 class MyCustomPickerScreen extends StatelessWidget {
   @override
@@ -153,7 +152,7 @@ You can customize the appearance of the picker by passing a `MediaPickerConfig` 
 ### Available Configuration Properties
 
 ```dart
-import 'package:media_ui_package/src2/themes/media_picker_theme.dart';
+import "package:media_ui_package/media_ui_package.dart";
 
 const customConfig = MediaPickerConfig(
   selectedColor: Colors.purple,     // Color of selection indicators and overlays
