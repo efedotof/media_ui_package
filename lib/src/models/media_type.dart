@@ -1,5 +1,5 @@
-// enum MediaType {
-//   all,
-//   images,
-//   videos,
-// }
+enum MediaType {
+  all,
+  images,
+  videos,
+}

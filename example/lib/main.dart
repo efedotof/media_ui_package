@@ -1,736 +1,734 @@
-// import 'dart:io';
-// import 'package:flutter/foundation.dart';
-// import 'package:flutter/material.dart';
-// import 'package:flutter_localizations/flutter_localizations.dart';
-// import 'package:media_ui_package/generated/l10n.dart';
-// import 'package:media_ui_package/media_ui_package.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:media_ui_package/media_ui_package.dart';
 
-// void main() {
-//   DeviceMediaLibrary.initialize();
-//   runApp(const MyApp());
-// }
+const int _maxPreviewBytes = 8 * 1024 * 1024;
+const int _inlineImageMaxBytes = 512 * 1024;
 
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await MediaUiPackageInitialize().initialize();
+  runApp(const MyApp());
+}
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Media UI Package Demo',
-//       theme: ThemeData(
-//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-//         useMaterial3: true,
-//       ),
-//       locale: Locale('ru'),
-//       localizationsDelegates: [
-//         S.delegate,
-//         GlobalMaterialLocalizations.delegate,
-//         GlobalWidgetsLocalizations.delegate,
-//         GlobalCupertinoLocalizations.delegate,
-//       ],
-//       home: const MyHomePage(title: 'Media UI Package Demo'),
-//     );
-//   }
-// }
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
-// class MyHomePage extends StatefulWidget {
-//   const MyHomePage({super.key, required this.title});
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Media UI Package Demo',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      home: const DemoHomePage(),
+    );
+  }
+}
 
-//   final String title;
+class DemoHomePage extends StatefulWidget {
+  const DemoHomePage({super.key});
 
-//   @override
-//   State<MyHomePage> createState() => _MyHomePageState();
-// }
+  @override
+  State<DemoHomePage> createState() => _DemoHomePageState();
+}
 
-// class _MyHomePageState extends State<MyHomePage> {
-//   List<MediaItem> _selectedMediaItems = [];
+class _DemoHomePageState extends State<DemoHomePage> {
+  final List<SelectedMediaItem> _selected = [];
 
-//   void _openMediaPickerScreen() async {
-//     final result = await Navigator.of(context).push<List<MediaItem>>(
-//       MaterialPageRoute(
-//         builder: (context) => MediaPickerScreen(
-//           allowMultiple: true,
-//           maxSelection: 5,
-//           showVideos: true,
-//           initialSelection: _selectedMediaItems,
-//           showSelectionIndicators: true,
-//           config: const MediaPickerConfig(),
-//           mediaLibrary: DeviceMediaLibrary(),
-//           onSelectionChanged: null,
-//           onConfirmed: null,
-//           onConfirmedWithBytes: null,
-//         ),
-//       ),
-//     );
+  void _addSelected(MediaPickerResult? result) {
+    if (result == null || result.isEmpty) {
+      _snack('Ничего не выбрано');
+      return;
+    }
+    var added = 0;
+    setState(() {
+      for (final item in result.items) {
+        final exists = _selected.any((e) => e.uri == item.uri);
+        if (!exists) {
+          _selected.add(item);
+          added++;
+        }
+      }
+    });
+    _snack(added == 0 ? 'Эти файлы уже в списке' : 'Добавлено: $added');
+  }
 
-//     if (result != null) {
-//       setState(() {
-//         _selectedMediaItems = result;
-//       });
-//     }
-//   }
+  void _removeSelected(SelectedMediaItem item) {
+    setState(() => _selected.removeWhere((e) => e.uri == item.uri));
+  }
 
-//   void _openMediaPickerDialog() async {
-//     final result = await MediaPickerBottomSheet.open(
-//       context: context,
-//       allowMultiple: false,
-//       showVideos: false,
-//       initialSelection: _selectedMediaItems,
-//       maxSelection: 5,
-//     );
+  void _clearSelected() {
+    setState(() => _selected.clear());
+  }
 
-//     if (result != null) {
-//       setState(() {
-//         _selectedMediaItems = result;
-//       });
-//     }
-//   }
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.maybeOf(
+      context,
+    )?.showSnackBar(SnackBar(content: Text(message)));
+  }
 
-//   void _openMediaPickerBottomSheet() async {
-//     final result = await MediaPickerBottomSheet.open(
-//       context: context,
-//       allowMultiple: true,
-//       maxSelection: 3,
-//       showVideos: true,
-//       initialSelection: _selectedMediaItems,
-//     );
+  Future<void> _openDialog({
+    bool multiSelect = true,
+    List<MediaPickerSection>? sections,
+  }) async {
+    final result = await MediaPickerDialog.show(
+      context,
+      title: multiSelect ? 'Выбрать файлы' : 'Выбрать файл',
+      multiSelect: multiSelect,
+      sections:
+          sections ??
+          const [
+            MediaPickerSection.media,
+            MediaPickerSection.audio,
+            MediaPickerSection.downloads,
+            MediaPickerSection.documents,
+            MediaPickerSection.others,
+          ],
+    );
+    _addSelected(result);
+  }
 
-//     if (result != null) {
-//       setState(() {
-//         _selectedMediaItems = result;
-//       });
-//     }
-//   }
+  Future<void> _openDialogThemed() async {
+    const config = MediaPickerConfig(
+      selectedColor: Colors.pink,
+      borderColor: Colors.pinkAccent,
+      borderRadius: 16,
+      gridSpacing: 6,
+    );
+    final result = await MediaPickerDialog.show(
+      context,
+      title: 'Кастомная тема',
+      config: config,
+    );
+    _addSelected(result);
+  }
 
-//   void _openMediaPickerUI() async {
-//     final result = await showDialog<List<MediaItem>>(
-//       context: context,
-//       builder: (context) => Dialog(
-//         insetPadding: const EdgeInsets.all(20),
-//         child: SizedBox(
-//           width: 500,
-//           height: 500,
-//           child: MediaPickerUI(
-//             initialSelection: _selectedMediaItems,
-//             maxSelection: 5,
-//             allowMultiple: true,
-//             showVideos: true,
-//             onFilesSelected: (files) {
-//               Navigator.of(context).pop(files);
-//             },
-//             showPickButton: true,
-//             enableDragDrop: true,
-//             child: Container(
-//               decoration: BoxDecoration(
-//                 color: Theme.of(context).colorScheme.surfaceContainer,
-//                 borderRadius: BorderRadius.circular(12),
-//               ),
-//               child: Center(
-//                 child: Column(
-//                   mainAxisAlignment: MainAxisAlignment.center,
-//                   children: [
-//                     const Icon(Icons.cloud_upload, size: 64),
-//                     const SizedBox(height: 16),
-//                     const Text('Drag & Drop Area'),
-//                     const Text('or click the + button'),
-//                     const SizedBox(height: 20),
-//                     ElevatedButton(
-//                       onPressed: () {
-//                         final pickerState = context
-//                             .findAncestorStateOfType<MediaPickerWidgetState>();
-//                         pickerState?.pickFiles();
-//                       },
-//                       child: const Text('Select Files Manually'),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
+  Future<void> _openSheet() async {
+    final result = await MediaPickerBottomSheet.show(
+      context,
+      title: 'Загрузить файл',
+      confirmLabel: 'Прикрепить',
+    );
+    _addSelected(result);
+  }
 
-//     if (result != null) {
-//       setState(() {
-//         _selectedMediaItems = result;
-//       });
-//     }
-//   }
+  Future<void> _openEmbedded() async {
+    final result = await Navigator.of(context).push<MediaPickerResult>(
+      MaterialPageRoute(builder: (_) => const _EmbeddedPickerPage()),
+    );
+    _addSelected(result);
+  }
 
-//   void _openPlatformMediaPicker() async {
-//     final result = await showDialog<List<MediaItem>>(
-//       context: context,
-//       builder: (context) => Dialog(
-//         insetPadding: const EdgeInsets.all(20),
-//         child: PlatformMediaPickerUI(
-//           initialSelection: _selectedMediaItems,
-//           maxSelection: 5,
-//           allowMultiple: true,
-//           showVideos: true,
-//           onConfirmed: (files) {
-//             Navigator.of(context).pop(files);
-//           },
-//           enableDragDrop: true,
-//           child: Container(
-//             height: 400,
-//             width: 400,
-//             decoration: BoxDecoration(
-//               color: Theme.of(context).colorScheme.surfaceContainer,
-//               borderRadius: BorderRadius.circular(12),
-//             ),
-//             child: const Center(
-//               child: Column(
-//                 mainAxisAlignment: MainAxisAlignment.center,
-//                 children: [
-//                   Icon(Icons.cloud_upload, size: 64),
-//                   SizedBox(height: 16),
-//                   Text('Platform Media Picker'),
-//                   Text('Supports drag & drop'),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
+  void _openResultPage() {
+    if (_selected.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _ResultPage(
+          result: MediaPickerResult.fromItems(List.of(_selected)),
+        ),
+      ),
+    );
+  }
 
-//     if (result != null) {
-//       setState(() {
-//         _selectedMediaItems = result;
-//       });
-//     }
-//   }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Media UI Package'),
+        actions: [
+          if (_selected.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete_sweep),
+              tooltip: 'Очистить выбранное',
+              onPressed: _clearSelected,
+            ),
+        ],
+      ),
+      body: ValueListenableBuilder<MediaPermissionState>(
+        valueListenable: MediaUiPackageInitialize().permissions,
+        builder: (context, perms, _) {
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _PermissionCard(perms: perms),
+              const SizedBox(height: 16),
+              _SelectedSection(
+                items: _selected,
+                onRemove: _removeSelected,
+                onClear: _selected.isEmpty ? null : _clearSelected,
+                onOpen: (item) => _previewItem(context, item),
+                onOpenAll: _selected.isEmpty ? null : _openResultPage,
+              ),
+              const SizedBox(height: 16),
+              _ActionTile(
+                icon: Icons.photo_library,
+                title: 'Диалог — мультивыбор',
+                subtitle: 'Все секции, тема по умолчанию',
+                onTap: _openDialog,
+              ),
+              _ActionTile(
+                icon: Icons.image,
+                title: 'Диалог — одиночный выбор',
+                subtitle: 'Только медиатека, одиночный',
+                onTap: () => _openDialog(
+                  multiSelect: false,
+                  sections: const [MediaPickerSection.media],
+                ),
+              ),
+              _ActionTile(
+                icon: Icons.palette,
+                title: 'Диалог — кастомная тема',
+                subtitle: 'Pink, radius 16, spacing 6',
+                onTap: _openDialogThemed,
+              ),
+              _ActionTile(
+                icon: Icons.expand_more,
+                title: 'Bottom sheet',
+                subtitle: 'Draggable, 85% экрана',
+                onTap: _openSheet,
+              ),
+              _ActionTile(
+                icon: Icons.fullscreen,
+                title: 'Встроить в свой экран',
+                subtitle: 'MediaPickerWidget напрямую',
+                onTap: _openEmbedded,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
 
-//   void _openFullscreenView() {
-//     if (_selectedMediaItems.isNotEmpty) {
-//       Navigator.of(context).push(
-//         MaterialPageRoute(
-//           builder: (context) => FullscreenMediaView(
-//             mediaItems: _selectedMediaItems,
-//             initialIndex: 0,
-//             selectedItems: _selectedMediaItems,
-//             onItemSelected: (item, selected) {
-//               setState(() {
-//                 if (selected) {
-//                   _selectedMediaItems.add(item);
-//                 } else {
-//                   _selectedMediaItems.remove(item);
-//                 }
-//               });
-//             },
-//           ),
-//         ),
-//       );
-//     } else {
-//       Navigator.of(context).push(
-//         MaterialPageRoute(
-//           builder: (context) => FullscreenMediaView(
-//             urlMedia: true,
-//             urlMedias: const [
-//               'https://picsum.photos/800/600',
-//               'https://picsum.photos/800/601',
-//               'https://picsum.photos/800/602',
-//             ],
-//           ),
-//         ),
-//       );
-//     }
-//   }
+class _SelectedSection extends StatelessWidget {
+  final List<SelectedMediaItem> items;
+  final void Function(SelectedMediaItem) onRemove;
+  final VoidCallback? onClear;
+  final void Function(SelectedMediaItem) onOpen;
+  final VoidCallback? onOpenAll;
 
-//   void _clearSelection() {
-//     setState(() {
-//       _selectedMediaItems.clear();
-//     });
-//   }
+  const _SelectedSection({
+    required this.items,
+    required this.onRemove,
+    required this.onOpen,
+    this.onClear,
+    this.onOpenAll,
+  });
 
-//   Widget _buildMediaPreview(MediaItem item, int index) {
-//     final isVideo = item.type.contains('video');
-//     final isNetwork = item.uri.startsWith('http');
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isEmpty = items.isEmpty;
 
-//     return GestureDetector(
-//       onTap: () {
-//         Navigator.of(context).push(
-//           MaterialPageRoute(
-//             builder: (context) => FullscreenMediaView(
-//               mediaItems: _selectedMediaItems,
-//               initialIndex: index,
-//               selectedItems: _selectedMediaItems,
-//               onItemSelected: (item, selected) {
-//                 setState(() {
-//                   if (selected) {
-//                     _selectedMediaItems.add(item);
-//                   } else {
-//                     _selectedMediaItems.remove(item);
-//                   }
-//                 });
-//               },
-//             ),
-//           ),
-//         );
-//       },
-//       child: Stack(
-//         fit: StackFit.expand,
-//         children: [
-//           // Media preview
-//           Container(
-//             decoration: BoxDecoration(
-//               color: Colors.grey[200],
-//               borderRadius: BorderRadius.circular(8),
-//             ),
-//             child: isVideo
-//                 ? const Center(
-//                     child: Column(
-//                       mainAxisAlignment: MainAxisAlignment.center,
-//                       children: [
-//                         Icon(Icons.videocam, size: 32, color: Colors.white),
-//                         SizedBox(height: 8),
-//                         Text(
-//                           'Video',
-//                           style: TextStyle(color: Colors.white, fontSize: 12),
-//                         ),
-//                       ],
-//                     ),
-//                   )
-//                 : isNetwork
-//                 ? Image.network(
-//                     item.uri,
-//                     fit: BoxFit.cover,
-//                     errorBuilder: (context, error, stackTrace) {
-//                       return const Center(child: Icon(Icons.broken_image));
-//                     },
-//                   )
-//                 : kIsWeb
-//                 ? FutureBuilder<Uint8List?>(
-//                     future: _loadImageBytes(item),
-//                     builder: (context, snapshot) {
-//                       if (snapshot.connectionState == ConnectionState.done &&
-//                           snapshot.hasData) {
-//                         return Image.memory(snapshot.data!, fit: BoxFit.cover);
-//                       }
-//                       return const Center(child: CircularProgressIndicator());
-//                     },
-//                   )
-//                 : Image.file(
-//                     File(item.uri),
-//                     fit: BoxFit.cover,
-//                     errorBuilder: (context, error, stackTrace) {
-//                       return const Center(child: Icon(Icons.broken_image));
-//                     },
-//                   ),
-//           ),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.check_circle_outline,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Выбрано: ${items.length}',
+                  style: theme.textTheme.titleSmall,
+                ),
+                const Spacer(),
+                if (!isEmpty && onOpenAll != null)
+                  TextButton(onPressed: onOpenAll, child: const Text('Все')),
+                if (!isEmpty && onClear != null)
+                  TextButton(onPressed: onClear, child: const Text('Очистить')),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: Text(
+                    'Пока ничего не выбрано',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.disabledColor,
+                    ),
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: 140,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, i) {
+                    final item = items[i];
+                    return _SelectedTile(
+                      item: item,
+                      onTap: () => onOpen(item),
+                      onRemove: () => onRemove(item),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-//           // Video indicator
-//           if (isVideo)
-//             Positioned(
-//               top: 8,
-//               left: 8,
-//               child: Container(
-//                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-//                 decoration: BoxDecoration(
-//                   color: Colors.black.withValues(alpha: 0.7 * 255),
-//                   borderRadius: BorderRadius.circular(4),
-//                 ),
-//                 child: Text(
-//                   _formatDuration(item.duration ?? 0),
-//                   style: const TextStyle(
-//                     color: Colors.white,
-//                     fontSize: 10,
-//                     fontWeight: FontWeight.bold,
-//                   ),
-//                 ),
-//               ),
-//             ),
+class _SelectedTile extends StatelessWidget {
+  final SelectedMediaItem item;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
 
-//           // Selection index
-//           if (_selectedMediaItems.contains(item))
-//             Positioned(
-//               top: 8,
-//               right: 8,
-//               child: Container(
-//                 width: 24,
-//                 height: 24,
-//                 decoration: BoxDecoration(
-//                   color: Colors.blue,
-//                   borderRadius: BorderRadius.circular(12),
-//                 ),
-//                 child: Center(
-//                   child: Text(
-//                     '${_selectedMediaItems.indexOf(item) + 1}',
-//                     style: const TextStyle(
-//                       color: Colors.white,
-//                       fontSize: 12,
-//                       fontWeight: FontWeight.bold,
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//             ),
+  const _SelectedTile({
+    required this.item,
+    required this.onTap,
+    required this.onRemove,
+  });
 
-//           // Remove button
-//           Positioned(
-//             top: 4,
-//             right: 4,
-//             child: GestureDetector(
-//               onTap: () {
-//                 setState(() {
-//                   _selectedMediaItems.remove(item);
-//                 });
-//               },
-//               child: Container(
-//                 width: 24,
-//                 height: 24,
-//                 decoration: BoxDecoration(
-//                   color: Colors.red,
-//                   borderRadius: BorderRadius.circular(12),
-//                 ),
-//                 child: const Icon(Icons.close, size: 16, color: Colors.white),
-//               ),
-//             ),
-//           ),
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 110,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: _ItemThumbnail(item: item),
+            ),
+            Positioned(
+              top: 2,
+              right: 2,
+              child: GestureDetector(
+                onTap: onRemove,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 14, color: Colors.white),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(8),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                    ),
+                    Text(
+                      _formatBytes(item.size),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-//           // File info overlay
-//           Positioned(
-//             bottom: 0,
-//             left: 0,
-//             right: 0,
-//             child: Container(
-//               padding: const EdgeInsets.all(4),
-//               decoration: BoxDecoration(
-//                 gradient: LinearGradient(
-//                   begin: Alignment.bottomCenter,
-//                   end: Alignment.topCenter,
-//                   colors: [
-//                     Colors.black.withValues(alpha: 0.7 * 255),
-//                     Colors.transparent,
-//                   ],
-//                 ),
-//                 borderRadius: const BorderRadius.only(
-//                   bottomLeft: Radius.circular(8),
-//                   bottomRight: Radius.circular(8),
-//                 ),
-//               ),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Text(
-//                     item.name,
-//                     maxLines: 1,
-//                     overflow: TextOverflow.ellipsis,
-//                     style: const TextStyle(color: Colors.white, fontSize: 10),
-//                   ),
-//                   Text(
-//                     _formatFileSize(item.size),
-//                     style: TextStyle(
-//                       color: Colors.white.withValues(alpha: 0.8 * 255),
-//                       fontSize: 8,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
+class _PermissionCard extends StatelessWidget {
+  final MediaPermissionState perms;
 
-//   Future<Uint8List?> _loadImageBytes(MediaItem item) async {
-//     try {
-//       return await DeviceMediaLibrary().getFileBytes(item.uri);
-//     } catch (e) {
-//       return null;
-//     }
-//   }
+  const _PermissionCard({required this.perms});
 
-//   String _formatDuration(int milliseconds) {
-//     final duration = Duration(milliseconds: milliseconds);
-//     final hours = duration.inHours;
-//     final minutes = duration.inMinutes.remainder(60);
-//     final seconds = duration.inSeconds.remainder(60);
+  @override
+  Widget build(BuildContext context) {
+    if (perms.isLoading) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 12),
+              Text('Проверка разрешений...'),
+            ],
+          ),
+        ),
+      );
+    }
 
-//     if (hours > 0) {
-//       return '${hours.toString().padLeft(2, '0')}:'
-//           '${minutes.toString().padLeft(2, '0')}:'
-//           '${seconds.toString().padLeft(2, '0')}';
-//     } else {
-//       return '${minutes.toString().padLeft(2, '0')}:'
-//           '${seconds.toString().padLeft(2, '0')}';
-//     }
-//   }
+    if (perms.hasScopedPermission) {
+      return Card(
+        child: ListTile(
+          leading: const Icon(Icons.verified, color: Colors.green),
+          title: const Text('Разрешения выданы'),
+          subtitle: Text(
+            perms.hasAllFilesPermission
+                ? 'MediaStore + полный доступ'
+                : 'MediaStore (Download/Documents по SAF)',
+          ),
+        ),
+      );
+    }
 
-//   String _formatFileSize(int bytes) {
-//     if (bytes < 1024) {
-//       return '$bytes B';
-//     } else if (bytes < 1048576) {
-//       return '${(bytes / 1024).toStringAsFixed(1)} KB';
-//     } else {
-//       return '${(bytes / 1048576).toStringAsFixed(1)} MB';
-//     }
-//   }
+    return Card(
+      color: Colors.orange.shade50,
+      child: ListTile(
+        leading: const Icon(Icons.warning_amber, color: Colors.orange),
+        title: const Text('Нужны разрешения на медиа'),
+        subtitle: const Text('Выдайте доступ к фото, видео и аудио'),
+        trailing: TextButton(
+          onPressed: () => MediaUiPackageInitialize().requestScopedPermission(),
+          child: const Text('Выдать'),
+        ),
+      ),
+    );
+  }
+}
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-//         title: Text(widget.title),
-//         actions: [
-//           if (_selectedMediaItems.isNotEmpty)
-//             IconButton(
-//               onPressed: _clearSelection,
-//               icon: const Icon(Icons.clear_all),
-//             ),
-//         ],
-//       ),
-//       body: Column(
-//         crossAxisAlignment: CrossAxisAlignment.stretch,
-//         children: [
-//           // Action buttons
-//           Padding(
-//             padding: const EdgeInsets.all(16.0),
-//             child: Column(
-//               children: [
-//                 SizedBox(
-//                   width: double.infinity,
-//                   child: FilledButton(
-//                     onPressed: _openMediaPickerScreen,
-//                     child: const Text('Open Media Picker Screen'),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 12),
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
-//                 SizedBox(
-//                   width: double.infinity,
-//                   child: OutlinedButton(
-//                     onPressed: _openMediaPickerDialog,
-//                     child: const Text('Open Media Picker Dialog'),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 12),
+  const _ActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
-//                 SizedBox(
-//                   width: double.infinity,
-//                   child: OutlinedButton(
-//                     onPressed: _openMediaPickerBottomSheet,
-//                     child: const Text('Open Media Picker Bottom Sheet'),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 12),
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
+      ),
+    );
+  }
+}
 
-//                 SizedBox(
-//                   width: double.infinity,
-//                   child: FilledButton.tonal(
-//                     onPressed: _openMediaPickerUI,
-//                     child: const Text('Open Media Picker UI (Drag & Drop)'),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 12),
+class _EmbeddedPickerPage extends StatefulWidget {
+  const _EmbeddedPickerPage();
 
-//                 SizedBox(
-//                   width: double.infinity,
-//                   child: FilledButton.tonal(
-//                     onPressed: _openPlatformMediaPicker,
-//                     child: const Text('Open Platform Media Picker'),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 12),
+  @override
+  State<_EmbeddedPickerPage> createState() => _EmbeddedPickerPageState();
+}
 
-//                 SizedBox(
-//                   width: double.infinity,
-//                   child: FilledButton.tonal(
-//                     onPressed: _openFullscreenView,
-//                     child: const Text('Open Fullscreen View'),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
+class _EmbeddedPickerPageState extends State<_EmbeddedPickerPage> {
+  final _pickerKey = GlobalKey<MediaPickerWidgetState>();
 
-//           // Selected media preview
-//           Expanded(
-//             child: Padding(
-//               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-//               child: Card(
-//                 child: Padding(
-//                   padding: const EdgeInsets.all(16.0),
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       Row(
-//                         children: [
-//                           Text(
-//                             'Selected Media: ${_selectedMediaItems.length}',
-//                             style: Theme.of(context).textTheme.titleMedium,
-//                           ),
-//                           const Spacer(),
-//                           if (_selectedMediaItems.isNotEmpty)
-//                             OutlinedButton(
-//                               onPressed: _clearSelection,
-//                               style: OutlinedButton.styleFrom(
-//                                 padding: const EdgeInsets.symmetric(
-//                                   horizontal: 16,
-//                                   vertical: 4,
-//                                 ),
-//                               ),
-//                               child: const Text('Clear All'),
-//                             ),
-//                         ],
-//                       ),
-//                       const SizedBox(height: 16),
+  MediaPickerResult? _readSelection() {
+    final r = _pickerKey.currentState?.currentResult;
+    if (r == null || r.isEmpty) return null;
+    return r;
+  }
 
-//                       if (_selectedMediaItems.isEmpty)
-//                         Expanded(
-//                           child: Center(
-//                             child: Column(
-//                               mainAxisAlignment: MainAxisAlignment.center,
-//                               children: [
-//                                 Icon(
-//                                   Icons.photo_library,
-//                                   size: 64,
-//                                   color: Theme.of(context).colorScheme.outline
-//                                       .withValues(alpha: 0.5 * 255),
-//                                 ),
-//                                 const SizedBox(height: 16),
-//                                 Text(
-//                                   'No media selected',
-//                                   style: Theme.of(context).textTheme.bodyLarge
-//                                       ?.copyWith(
-//                                         color: Theme.of(
-//                                           context,
-//                                         ).colorScheme.outline,
-//                                       ),
-//                                 ),
-//                                 const SizedBox(height: 8),
-//                                 Text(
-//                                   'Use buttons above to select media files',
-//                                   style: Theme.of(context).textTheme.bodySmall
-//                                       ?.copyWith(
-//                                         color: Theme.of(context)
-//                                             .colorScheme
-//                                             .outline
-//                                             .withValues(alpha: 0.7 * 255),
-//                                       ),
-//                                 ),
-//                               ],
-//                             ),
-//                           ),
-//                         )
-//                       else
-//                         Expanded(
-//                           child: GridView.builder(
-//                             gridDelegate:
-//                                 const SliverGridDelegateWithFixedCrossAxisCount(
-//                                   crossAxisCount: 3,
-//                                   crossAxisSpacing: 8,
-//                                   mainAxisSpacing: 8,
-//                                   childAspectRatio: 0.8,
-//                                 ),
-//                             itemCount: _selectedMediaItems.length,
-//                             itemBuilder: (context, index) {
-//                               return _buildMediaPreview(
-//                                 _selectedMediaItems[index],
-//                                 index,
-//                               );
-//                             },
-//                           ),
-//                         ),
-//                     ],
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           ),
+  @override
+  Widget build(BuildContext context) {
+    return PopScope<MediaPickerResult>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.of(context).pop(_readSelection());
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: MediaPickerWidget(
+            key: _pickerKey,
+            title: 'Встроенный пикер',
+            confirmLabel: 'Выбрать',
+            multiSelect: true,
+            onConfirm: (result) => Navigator.of(context).pop(result),
+            onCancel: () => Navigator.of(context).pop(_readSelection()),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-//           // Feature cards list
-//           SizedBox(
-//             height: 180,
-//             child: Padding(
-//               padding: const EdgeInsets.all(16.0),
-//               child: ListView(
-//                 children: [
-//                   _buildFeatureCard(
-//                     context,
-//                     'Media Picker Screen',
-//                     'Full-screen media selection with multi-select, video support, and selection indicators',
-//                     Icons.photo_library,
-//                     _openMediaPickerScreen,
-//                   ),
-//                   _buildFeatureCard(
-//                     context,
-//                     'Media Picker Dialog',
-//                     'Dialog-based media selection. Uses MediaPickerUI with drag&drop on Windows/Web',
-//                     Icons.photo,
-//                     _openMediaPickerDialog,
-//                   ),
-//                   _buildFeatureCard(
-//                     context,
-//                     'Media Picker Bottom Sheet',
-//                     'Bottom Sheet for media selection. Uses MediaPickerUI on Windows/Web',
-//                     Icons.grid_view,
-//                     _openMediaPickerBottomSheet,
-//                   ),
-//                   _buildFeatureCard(
-//                     context,
-//                     'Media Picker UI',
-//                     'Direct use of MediaPickerUI with drag&drop support for Windows/Web',
-//                     Icons.cloud_upload,
-//                     _openMediaPickerUI,
-//                   ),
-//                   _buildFeatureCard(
-//                     context,
-//                     'Platform Media Picker',
-//                     'Cross-platform picker with direct access to DeviceMediaLibrary',
-//                     Icons.perm_media,
-//                     _openPlatformMediaPicker,
-//                   ),
-//                   _buildFeatureCard(
-//                     context,
-//                     'Fullscreen Media View',
-//                     'Fullscreen media viewer with zoom gestures, video player, and overlay',
-//                     Icons.fullscreen,
-//                     _openFullscreenView,
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
+class _ResultPage extends StatelessWidget {
+  final MediaPickerResult result;
 
-//   Widget _buildFeatureCard(
-//     BuildContext context,
-//     String title,
-//     String description,
-//     IconData icon,
-//     VoidCallback onTap,
-//   ) {
-//     return Card(
-//       margin: const EdgeInsets.only(bottom: 8),
-//       child: ListTile(
-//         leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
-//         title: Text(
-//           title,
-//           style: Theme.of(
-//             context,
-//           ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-//         ),
-//         subtitle: Text(
-//           description,
-//           style: Theme.of(context).textTheme.bodySmall,
-//           maxLines: 2,
-//           overflow: TextOverflow.ellipsis,
-//         ),
-//         trailing: Icon(
-//           Icons.arrow_forward_ios,
-//           size: 16,
-//           color: Theme.of(context).colorScheme.outline,
-//         ),
-//         onTap: onTap,
-//         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-//       ),
-//     );
-//   }
-// }
+  const _ResultPage({required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Выбрано: ${result.count}'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.list),
+            tooltip: 'Подробности',
+            onPressed: () => _showDetails(context),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                const Icon(Icons.data_usage, size: 18),
+                const SizedBox(width: 8),
+                Text('Общий размер: ${_formatBytes(result.totalSize)}'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.all(2),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 140,
+                crossAxisSpacing: 2,
+                mainAxisSpacing: 2,
+              ),
+              itemCount: result.count,
+              itemBuilder: (context, i) {
+                final item = result.items[i];
+                return _ResultItemTile(
+                  item: item,
+                  onTap: () => _previewItem(context, item),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDetails(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => SafeArea(
+        child: ListView.separated(
+          shrinkWrap: true,
+          itemCount: result.count,
+          separatorBuilder: (_, _) => const Divider(height: 1),
+          itemBuilder: (context, i) {
+            final item = result.items[i];
+            return ListTile(
+              leading: Icon(_iconForType(item.type)),
+              title: Text(item.name),
+              subtitle: Text('${item.type} · ${_formatBytes(item.size)}'),
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: item.uri));
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('URI скопирован')));
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ResultItemTile extends StatelessWidget {
+  final SelectedMediaItem item;
+  final VoidCallback onTap;
+
+  const _ResultItemTile({required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _ItemThumbnail(item: item),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              color: Colors.black54,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                item.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white, fontSize: 10),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ItemThumbnail extends StatelessWidget {
+  final SelectedMediaItem item;
+
+  const _ItemThumbnail({required this.item});
+
+  bool get _isDeviceSource => item.source == MediaSource.device;
+
+  @override
+  Widget build(BuildContext context) {
+    if (item.isImage && _isDeviceSource) return _mediaStoreThumb();
+    if (item.isVideo && _isDeviceSource) return _mediaStoreThumb();
+    if (item.isImage) return _fileBytesThumb();
+    final color = item.isAudio ? Colors.purple : Colors.blueGrey;
+    return Container(
+      color: color.withValues(alpha: 0.15),
+      child: Icon(_iconForType(item.type), color: color),
+    );
+  }
+
+  Widget _mediaStoreThumb() {
+    return FutureBuilder<Uint8List?>(
+      future: MediaThumbnailCache.load(item.id, item.type, 200, 200),
+      builder: (context, snap) {
+        final bytes = snap.data;
+        if (bytes != null) {
+          return Image.memory(bytes, fit: BoxFit.cover);
+        }
+        return _placeholder(item.isVideo ? Icons.videocam : Icons.image);
+      },
+    );
+  }
+
+  Widget _fileBytesThumb() {
+    if (item.size > _inlineImageMaxBytes) {
+      return _placeholder(Icons.image);
+    }
+    final cached = FileBytesCache.cached(item.uri);
+    if (cached != null) {
+      return Image.memory(cached, fit: BoxFit.cover);
+    }
+    return FutureBuilder<Uint8List?>(
+      future: FileBytesCache.load(item.uri),
+      builder: (context, snap) {
+        final bytes = snap.data;
+        if (bytes != null) {
+          return Image.memory(bytes, fit: BoxFit.cover);
+        }
+        return _placeholder(Icons.image);
+      },
+    );
+  }
+
+  Widget _placeholder(IconData icon) => Container(
+    color: Colors.grey.shade300,
+    child: Icon(icon, color: Colors.grey.shade600),
+  );
+}
+
+Future<void> _previewItem(BuildContext context, SelectedMediaItem item) async {
+  if (item.size > _maxPreviewBytes) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Файл слишком большой для превью: ${_formatBytes(item.size)}',
+        ),
+      ),
+    );
+    return;
+  }
+
+  if (!item.isImage) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${item.name} · ${_formatBytes(item.size)}')),
+    );
+    return;
+  }
+
+  final cached = FileBytesCache.cached(item.uri);
+  if (cached != null) {
+    _showImageDialog(context, cached);
+    return;
+  }
+
+  final bytes = await FileBytesCache.load(item.uri);
+  if (!context.mounted) return;
+  if (bytes == null) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Не удалось прочитать файл')));
+    return;
+  }
+  _showImageDialog(context, bytes);
+}
+
+void _showImageDialog(BuildContext context, Uint8List bytes) {
+  showDialog<void>(
+    context: context,
+    builder: (_) =>
+        Dialog(child: InteractiveViewer(child: Image.memory(bytes))),
+  );
+}
+
+String _formatBytes(int bytes) {
+  if (bytes < 1024) return '$bytes B';
+  if (bytes < 1024 * 1024) {
+    return '${(bytes / 1024).toStringAsFixed(1)} KB';
+  }
+  if (bytes < 1024 * 1024 * 1024) {
+    return '${(bytes / 1024 / 1024).toStringAsFixed(1)} MB';
+  }
+  return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(2)} GB';
+}
+
+IconData _iconForType(String type) {
+  switch (type) {
+    case 'image':
+      return Icons.image;
+    case 'video':
+      return Icons.videocam;
+    case 'audio':
+      return Icons.music_note;
+    default:
+      return Icons.insert_drive_file;
+  }
+}

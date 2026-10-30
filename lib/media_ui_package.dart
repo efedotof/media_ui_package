@@ -1,20 +1,22 @@
 library media_ui_package;
 
-export 'src/models/media_item.dart';
-export 'src/models/album.dart';
-export 'src/widgets/fullscreen_media_view/fullscreen_media_view.dart';
-export 'src/widgets/media_grid/media_grid.dart';
-export 'src/themes/media_picker_theme.dart';
-export 'src/utils/utils_media.dart';
-export 'src/utils/platform_media_picker_utils.dart';
-export 'src/widgets/drag_drop/universal_drop_zone.dart';
-export 'src/widgets/fullscreen_media_view/cubit/full_screen_media_cubit.dart';
-export 'src/widgets/media_grid/cubit/media_grid_cubit.dart';
-export 'package:device_media_library/device_media_library.dart';
+//initializer
+export 'src/media_ui_package_initializer.dart';
 
-export 'src/widgets/media_picker_bottom_sheet.dart';
-export 'src/widgets/media_picker_dialog.dart';
-export 'src/widgets/media_picker_screen.dart';
-export 'src/widgets/media_picker_ui.dart';
-export 'src/widgets/platform_media_picker_ui.dart';
-export 'src/widgets/media_picker_widget.dart';
+// model
+export 'src/models/models.dart';
+
+//themes
+export 'src/themes/media_picker_theme.dart';
+
+//utils
+export 'src/utils/platform_media_picker_utils.dart';
+export 'src/utils/utils_media.dart';
+
+//widgets
+export 'src/widgets/media_bottom_sheet/media_bottom_sheet.dart';
+export 'src/widgets/media_picker_dialog/media_picker_dialog.dart';
+export 'src/widgets/media_picker_screen/media_picker_screen.dart';
+export 'src/widgets/media_picker_ui/media_picker_ui.dart';
+export 'src/widgets/media_picker_widget/media_picker_widget.dart';
+export 'src/widgets/media_picker_ui/media_thumbnail_cache.dart';

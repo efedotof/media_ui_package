@@ -133,8 +133,8 @@ packages:
     dependency: transitive
     description:
       path: "."
-      ref: "5b1f9afd860c5964544ab44b53d300f3ce84e908"
-      resolved-ref: "5b1f9afd860c5964544ab44b53d300f3ce84e908"
+      ref: "961bd43d31ed0ff41c0d0a16a5bf6b3edb4b14d6"
+      resolved-ref: "961bd43d31ed0ff41c0d0a16a5bf6b3edb4b14d6"
       url: "https://github.com/efedotof/attach_file_photo_plugin"
     source: git
     version: "0.0.1"
