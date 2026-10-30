@@ -1,477 +1,247 @@
-# 📸 Media Attach Package
+# Media UI Package
 
-A beautiful and customizable Flutter package for media selection with multiple UI options - full-screen, dialog, and resizable bottom sheet.
+A highly customizable Flutter package for selecting media and files. It provides a unified interface to access the device's MediaStore (images, videos, audio), as well as the Download and Documents directories on Android.
+
+The package offers multiple UI presentations (full-screen, dialog, bottom sheet) with built-in lazy loading, caching, and permission handling.
 
 ## Features
 
-- 🎨 **Multiple UI Options**
-  - Full-screen media picker
-  - Dialog-based picker
-  - Resizable bottom sheet with customizable border radius
-- 🎯 **Smart Selection**
-  - Single or multiple selection
-  - Visual selection indicators
-  - Selection limits
-- 🌈 **Customizable Themes**
-  - Light, dark, and custom themes
-  - Fully customizable colors
-  - Adaptive design
-  - Customizable border radius for bottom sheet
-- 📱 **User-Friendly**
-  - Drag-to-resize bottom sheet
-  - Smooth animations
-  - Intuitive gestures
-- 🔄 **Media Support**
-  - Image and video support
-  - Thumbnail previews
-  - Video duration indicators
+- **Multiple UI Options:** Full-screen widget, modal dialog, or resizable bottom sheet.
+- **Multiple Sources:** Access MediaStore (photos, videos), audio files, Downloads, and Documents.
+- **Pagination & Lazy Loading:** Efficiently loads large directories in pages with automatic infinite scrolling.
+- **Lazy Preview:** Generates and caches image previews without loading entire files into memory.
+- **Permission Management:** Built-in handling for scoped media permissions, SAF (Storage Access Framework) folder selection, and `MANAGE_EXTERNAL_STORAGE`.
+- **Customizable UI:** Adjust grid spacing, border radius, and selection colors via `MediaPickerConfig`.
+- **Multi-selection:** Support for single or multiple file selections with a contextual AppBar.
 
-## Getting started
+## Installation
 
-### Installation
-
-Add this to your `pubspec.yaml`:
+Add the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  media_attach_package: ^1.0.0
+  media_ui_package:
+    git:
+      url: https://github.com/your-repository/media_ui_package.git
 ```
 
-### Android Permissions
+## Initialization
 
-Add these permissions to your `android/app/src/main/AndroidManifest.xml`:
+The package must be initialized before use. It is recommended to do this in your `main.dart` file.
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:media_ui_package/src2/media_ui_package_initializer.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize permissions and DeviceMediaLibrary
+  await MediaUiPackageInitialize().initialize();
+  
+  runApp(const MyApp());
+}
+```
+
+## Android Configuration
+
+Add the following permissions to your `android/app/src/main/AndroidManifest.xml`:
 
 ```xml
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-```
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-### iOS Permissions
-
-Add these to your `ios/Runner/Info.plist`:
-
-```xml
-<key>NSPhotoLibraryUsageDescription</key>
-<string>This app needs access to your photo library to select media</string>
-```
-
-## Usage
-
-### 1. Full-Screen Media Picker
-
-```dart
-import 'package:media_attach_package/media_attach_package.dart';
-
-void openFullScreenPicker(BuildContext context) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => MediaPickerScreen(
-        maxSelection: 10,
-        allowMultiple: true,
-        theme: MediaPickerTheme.lightTheme,
-        title: 'Select Photos',
-        onSelectionChanged: (selectedItems) {
-          print('Selected: ${selectedItems.length} items');
-        },
-      ),
-    ),
-  ).then((selectedItems) {
-    if (selectedItems != null) {
-      // Handle selected items
-      print('Final selection: ${selectedItems.length} items');
-    }
-  });
-}
-```
-
-### 2. Dialog Media Picker
-
-```dart
-void showMediaPickerDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (context) => MediaPickerDialog(
-      maxSelection: 5,
-      allowMultiple: true,
-      theme: MediaPickerTheme.darkTheme,
-      onConfirmed: (selectedItems) {
-        print('Confirmed selection: ${selectedItems.length} items');
-      },
-    ),
-  );
-}
-```
-
-### 3. Resizable Bottom Sheet with Customizable Border Radius
-
-```dart
-void showMediaPickerBottomSheet(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => MediaPickerBottomSheet(
-      maxSelection: 10,
-      allowMultiple: true,
-      theme: MediaPickerTheme.customTheme,
-      initialChildSize: 0.7,
-      minChildSize: 0.4,
-      maxChildSize: 0.9,
-      borderRadius: 18.0, // Customize border radius (optional)
-      onConfirmed: (selectedItems) {
-        print('Bottom sheet selection: ${selectedItems.length} items');
-      },
-    ),
-  );
-}
-
-// Without border radius (sharp corners)
-void showMediaPickerBottomSheetNoRadius(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => MediaPickerBottomSheet(
-      maxSelection: 10,
-      allowMultiple: true,
-      theme: MediaPickerTheme.customTheme,
-      initialChildSize: 0.7,
-      minChildSize: 0.4,
-      maxChildSize: 0.9,
-      // borderRadius is omitted - will have no rounded corners
-      onConfirmed: (selectedItems) {
-        print('Bottom sheet selection: ${selectedItems.length} items');
-      },
-    ),
-  );
-}
-```
-
-### Customization
-
-#### Using Built-in Themes
-
-```dart
-// Light theme
-MediaPickerTheme.lightTheme
-
-// Dark theme  
-MediaPickerTheme.darkTheme
-
-// Custom theme
-MediaPickerTheme.customTheme
-```
-
-#### Creating Custom Theme
-
-```dart
-const myCustomTheme = MediaPickerTheme(
-  backgroundColor: Color(0xFFF8F9FA),
-  appBarColor: Color(0xFF6200EE),
-  primaryColor: Color(0xFF6200EE),
-  accentColor: Color(0xFF03DAC6),
-  textColor: Colors.black87,
-  secondaryTextColor: Colors.grey,
-  borderColor: Colors.grey.shade300,
-  selectedColor: Color(0xFF6200EE),
-  borderRadius: 12.0,
-  gridSpacing: 2.0,
-);
-```
-
-#### Advanced Customization
-
-```dart
-MediaPickerScreen(
-  theme: MediaPickerTheme.lightTheme.copyWith(
-    primaryColor: Colors.deepPurple,
-    borderRadius: 16.0,
-    gridSpacing: 4.0,
-  ),
-  initialSelection: previouslySelectedItems,
-  maxSelection: 15,
-  showVideos: false, // Hide videos
-  allowMultiple: true,
-);
-```
-
-## API Reference
-
-### MediaPickerScreen
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `initialSelection` | `List<MediaItem>` | `[]` | Pre-selected items |
-| `maxSelection` | `int` | `10` | Maximum selectable items |
-| `allowMultiple` | `bool` | `true` | Allow multiple selection |
-| `showVideos` | `bool` | `true` | Show video files |
-| `theme` | `MediaPickerTheme` | `MediaPickerTheme()` | Custom theme |
-| `title` | `String` | `'Select Media'` | Screen title |
-| `onSelectionChanged` | `Function(List<MediaItem>)` | `null` | Selection change callback |
-| `thumbnailBuilder` | `Uint8List? Function(MediaItem)?` | `null` | Custom thumbnail builder |
-| `albumId` | `String?` | `null` | Specific album ID to show |
-| `mediaType` | `MediaType` | `MediaType.all` | Type of media to display |
-| `config` | `MediaPickerConfig?` | `null` | Advanced configuration |
-
-### MediaPickerDialog
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `initialSelection` | `List<MediaItem>` | `[]` | Pre-selected items |
-| `maxSelection` | `int` | `10` | Maximum selectable items |
-| `allowMultiple` | `bool` | `true` | Allow multiple selection |
-| `showVideos` | `bool` | `true` | Show video files |
-| `onSelectionChanged` | `Function(List<MediaItem>)` | `null` | Selection change callback |
-| `onConfirmed` | `Function(List<MediaItem>)` | `null` | Confirmation callback |
-| `config` | `MediaPickerConfig?` | `null` | Advanced configuration |
-
-### MediaPickerBottomSheet
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `initialSelection` | `List<MediaItem>` | `[]` | Pre-selected items |
-| `maxSelection` | `int` | `10` | Maximum selectable items |
-| `allowMultiple` | `bool` | `true` | Allow multiple selection |
-| `showVideos` | `bool` | `true` | Show video files |
-| `onSelectionChanged` | `Function(List<MediaItem>)` | `null` | Selection change callback |
-| `onConfirmed` | `Function(List<MediaItem>)` | `null` | Confirmation callback |
-| `initialChildSize` | `double` | `0.7` | Initial sheet height (0.0-1.0) |
-| `minChildSize` | `double` | `0.4` | Minimum sheet height (0.0-1.0) |
-| `maxChildSize` | `double` | `0.9` | Maximum sheet height (0.0-1.0) |
-| `showSelectionIndicators` | `bool` | `true` | Show selection indicators |
-| `config` | `MediaPickerConfig?` | `null` | Advanced configuration |
-| **`borderRadius`** | **`double?`** | **`null`** | **Custom border radius. If `null`, no rounding is applied** |
-
-### MediaItem Model
-
-```dart
-MediaItem(
-  id: '1',
-  name: 'photo.jpg',
-  path: '/storage/photo.jpg',
-  dateAdded: 1633046400000,
-  size: 2048576, // bytes
-  width: 1920,
-  height: 1080,
-  albumId: 'camera',
-  albumName: 'Camera',
-  type: 'image', // or 'video'
-  duration: 60000, // milliseconds for videos
-  thumbnail: thumbnailBytes, // optional
-);
-```
-
-### FullscreenMediaView
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `mediaItems` | `List<MediaItem>?` | `null` | List of media items |
-| `initialIndex` | `int?` | `null` | Initial media index |
-| `selectedItems` | `List<MediaItem>?` | `null` | Pre-selected items |
-| `onItemSelected` | `Function(MediaItem, bool)?` | `null` | Item selection callback |
-| `urlMedia` | `bool` | `false` | Use URL media mode |
-| `urlMedial` | `String?` | `null` | Single URL for media |
-| `urlMedias` | `List<String>?` | `null` | List of media URLs |
-| `mediaLoaded` | `Uint8List?` | `null` | Single loaded media |
-| `mediasLoaded` | `List<Uint8List>?` | `null` | List of loaded media |
-| `showSelectionIndicator` | `bool` | `true` | Show selection indicators |
-
-## Examples
-
-### Basic Implementation
-
-```dart
-class MediaPickerExample extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Media Picker Example')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: () => openFullScreenPicker(context),
-              child: Text('Full Screen Picker'),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => showMediaPickerDialog(context),
-              child: Text('Dialog Picker'),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => showMediaPickerBottomSheet(context),
-              child: Text('Bottom Sheet Picker'),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => showMediaPickerBottomSheetNoRadius(context),
-              child: Text('Bottom Sheet (No Radius)'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-```
-
-### Advanced Usage with State Management
-
-```dart
-class AdvancedMediaPicker extends StatefulWidget {
-  @override
-  _AdvancedMediaPickerState createState() => _AdvancedMediaPickerState();
-}
-
-class _AdvancedMediaPickerState extends State<AdvancedMediaPicker> {
-  List<MediaItem> _selectedMedia = [];
-
-  void _handleMediaSelection(List<MediaItem> selectedItems) {
-    setState(() {
-      _selectedMedia = selectedItems;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Selected: ${_selectedMedia.length}')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => MediaPickerBottomSheet(
-            maxSelection: 10,
-            allowMultiple: true,
-            borderRadius: 24.0, // Custom border radius
-            initialChildSize: 0.7,
-            minChildSize: 0.4,
-            maxChildSize: 0.9,
-            onConfirmed: _handleMediaSelection,
-          ),
-        ),
-        child: Icon(Icons.add_photo_alternate),
-      ),
-      body: _buildSelectedMediaGrid(),
-    );
-  }
-
-  Widget _buildSelectedMediaGrid() {
-    if (_selectedMedia.isEmpty) {
-      return Center(child: Text('No media selected'));
-    }
+    <!-- For Android 12 and below -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 4,
-        mainAxisSpacing: 4,
+    <!-- For Android 13 and above -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    
+    <!-- Optional: For full access to Downloads/Documents on Android 11+ -->
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
+    <application ...>
+        ...
+    </application>
+</manifest>
+```
+
+## UI Variants
+
+The package provides three ways to display the media picker depending on your application's design.
+
+### 1. Media Picker Dialog
+
+Shows the picker inside a centered modal dialog.
+
+```dart
+import 'package:media_ui_package/src2/widgets/media_picker_dialog.dart';
+import 'package:media_ui_package/src2/models/media_picker_result.dart';
+
+Future<void> openDialog(BuildContext context) async {
+  final MediaPickerResult? result = await MediaPickerDialog.show(
+    context,
+    title: 'Attach Files',
+    multiSelect: true,
+    confirmLabel: 'Attach',
+  );
+
+  if (result != null && result.isNotEmpty) {
+    print('Selected items: ${result.count}');
+  }
+}
+```
+
+### 2. Media Picker Bottom Sheet
+
+Shows the picker as a resizable bottom sheet. You can configure the initial, minimum, and maximum height.
+
+```dart
+import 'package:media_ui_package/src2/widgets/media_bottom_sheet.dart';
+
+Future<void> openBottomSheet(BuildContext context) async {
+  final MediaPickerResult? result = await MediaPickerBottomSheet.show(
+    context,
+    title: 'Select Media',
+    initialChildSize: 0.85,
+    minChildSize: 0.4,
+    maxChildSize: 0.95,
+    enableDrag: false, // Set to true to allow drag-to-dismiss
+  );
+  
+  // Handle result...
+}
+```
+
+### 3. Inline Full-Screen Widget
+
+Embed the picker directly into your own screen or route.
+
+```dart
+import 'package:media_ui_package/src2/widgets/media_picker_widget.dart';
+
+class MyCustomPickerScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: MediaPickerWidget(
+          title: 'Custom Selection',
+          multiSelect: true,
+          onConfirm: (result) {
+            Navigator.of(context).pop(result);
+          },
+          onCancel: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
-      itemCount: _selectedMedia.length,
-      itemBuilder: (context, index) {
-        final item = _selectedMedia[index];
-        return Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: MemoryImage(item.thumbnail!),
-              fit: BoxFit.cover,
-            ),
-          ),
-        );
-      },
     );
   }
 }
 ```
 
-### Fullscreen Media Viewer
+## Theming and Customization
+
+You can customize the appearance of the picker by passing a `MediaPickerConfig` instance to any of the UI methods (Dialog, Bottom Sheet, or Widget). 
+
+### Available Configuration Properties
 
 ```dart
-void viewMediaFullscreen(BuildContext context, MediaItem item) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => FullscreenMediaView(
-        mediaItems: [item],
-        initialIndex: 0,
-        showSelectionIndicator: false,
-      ),
-    ),
-  );
-}
+import 'package:media_ui_package/src2/themes/media_picker_theme.dart';
 
-// View loaded media
-void viewLoadedMedia(BuildContext context, Uint8List imageBytes) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => FullscreenMediaView(
-        mediaLoaded: imageBytes,
-        showSelectionIndicator: false,
-      ),
-    ),
-  );
-}
+const customConfig = MediaPickerConfig(
+  selectedColor: Colors.purple,     // Color of selection indicators and overlays
+  borderColor: Colors.purpleAccent, // Border color of unselected indicators
+  borderRadius: 12.0,               // Corner radius for media tiles
+  gridSpacing: 4.0,                 // Spacing between items in the grid/list
+);
 
-// View URL media
-void viewUrlMedia(BuildContext context, String imageUrl) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => FullscreenMediaView(
-        urlMedia: true,
-        urlMedial: imageUrl,
-        showSelectionIndicator: false,
-      ),
-    ),
-  );
-}
+await MediaPickerDialog.show(
+  context,
+  config: customConfig,
+  // ...
+);
 ```
 
-## New Features
+### Using MediaPickerConfigScope (InheritedWidget)
 
-### Customizable Border Radius for Bottom Sheet
-
-The latest version introduces a new `borderRadius` parameter for the `MediaPickerBottomSheet` widget:
+If you want to apply a theme to a whole subtree without passing it to every dialog, you can wrap your widget with `MediaPickerConfigScope`:
 
 ```dart
-// With rounded corners (18px radius)
-MediaPickerBottomSheet(
-  borderRadius: 18.0,
-  // other parameters...
-)
-
-// With no rounded corners (sharp edges)
-MediaPickerBottomSheet(
-  // borderRadius omitted or set to null
-  // other parameters...
-)
-
-// Custom radius
-MediaPickerBottomSheet(
-  borderRadius: 12.0, // 12px radius
-  // other parameters...
+MediaPickerConfigScope(
+  config: const MediaPickerConfig(
+    selectedColor: Colors.green,
+    borderRadius: 16.0,
+  ),
+  child: YourAppOrWidget(),
 )
 ```
 
-**Note:** When `borderRadius` is `null` or not provided, the bottom sheet will have no rounded corners (`BorderRadius.zero`).
+## Available Sections
 
-## Contributing
+The picker organizes files into distinct sections that users can navigate via the bottom navigation menu:
 
-We welcome contributions! Please feel free to submit issues and pull requests.
+- **Media (`MediaPickerSection.media`):** Images and videos from the device MediaStore.
+- **Audio (`MediaPickerSection.audio`):** Audio files from the device.
+- **Download (`MediaPickerSection.downloads`):** Files in the device's Download folder.
+- **Documents (`MediaPickerSection.documents`):** Files in the device's Documents folder.
+- **Others (`MediaPickerSection.others`):** A custom section (by default, shows generic files from Downloads).
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+You can limit the visible sections using the `sections` parameter:
 
+```dart
+MediaPickerDialog.show(
+  context,
+  sections: const [
+    MediaPickerSection.media,
+    MediaPickerSection.audio,
+  ],
+);
+```
 
-## Bug Reports & Feature Requests
+## Handling Permissions
 
-Found a bug or have a feature request? Please [open an issue](https://github.com/efedotof/media_ui_package/issues) on GitHub.
+The package automatically handles media permissions on startup via `MediaUiPackageInitialize`. 
+
+For accessing Download and Documents folders on Android 10+, users must explicitly grant access.
+- **Scoped Access (Android 11+):** The picker will automatically show a banner asking the user to select the folder via the Storage Access Framework (SAF).
+- **Manage All Files:** If you need direct filesystem access, the UI will prompt the user to open system settings. The app will automatically refresh when returning to the foreground.
+
+## Result Model
+
+The `MediaPickerResult` contains a list of `SelectedMediaItem` objects.
+
+```dart
+class SelectedMediaItem {
+  final String id;
+  final String uri;
+  final String name;
+  final String type; // 'image', 'video', 'audio', 'file'
+  final int size;
+  final int? duration; // in milliseconds for video/audio
+  final MediaSource source; // device, downloads, documents
+}
+```
+
+Example of handling the result:
+
+```dart
+if (result != null && result.isNotEmpty) {
+  // Total size of all selected files
+  print('Total size: ${result.totalSize} bytes');
+  
+  // Iterate through selected items
+  for (final item in result.items) {
+    print('File: ${item.name}, URI: ${item.uri}, Type: ${item.type}');
+  }
+}
+```
+
+## License
+
+This project is licensed under the MIT License.
